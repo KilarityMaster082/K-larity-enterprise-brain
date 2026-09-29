@@ -1,12 +1,13 @@
 # Owner task: EB-16 Repo scaffold with docs pack, CLAUDE.md and AGENTS.md
 UPSTREAM ?= ../.upstream
 PYTHON ?= python3
-PYTHONPATH_DEV = packages/connectors-sdk:services/ingestion
+PYTHONPATH_DEV = packages/connectors-sdk:packages/tenant-context:packages/storage:services/ingestion:services/control-plane
 
 .PHONY: governance borrow-map vendor test
 
-governance:  ## layout, ownership, licence boundaries, vendored-code integrity, borrow map freshness
+governance:  ## layout, ownership, licence boundaries, vendored-code integrity, tenant scope, borrow map freshness
 	python3 ops/ci/check_structure.py
+	python3 ops/ci/check_tenant_scope.py
 	python3 ops/ci/borrow_map.py --check
 
 borrow-map:  ## regenerate docs/borrow/BORROW_MAP.md from docs/borrow/borrow-register.json
@@ -17,4 +18,5 @@ vendor:  ## re-vendor approved upstream features from pinned clones in $(UPSTREA
 	python3 ops/ci/borrow_map.py
 
 test:  ## unit tests (stdlib + pytest only)
-	PYTHONPATH=$(PYTHONPATH_DEV) $(PYTHON) -m pytest -q -p no:cacheprovider packages/connectors-sdk/tests services/ingestion/connectors/file_drop/tests
+	PYTHONPATH=$(PYTHONPATH_DEV) $(PYTHON) -m pytest -q -p no:cacheprovider packages/connectors-sdk/tests services/ingestion/connectors/file_drop/tests \
+		packages/tenant-context/tests packages/storage/tests services/control-plane/tests

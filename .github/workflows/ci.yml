@@ -21,6 +21,8 @@ jobs:
           python-version: "3.12"
       - name: Layout, ownership, licence boundaries, vendored-code integrity
         run: python ops/ci/check_structure.py
+      - name: No store call outside a tenant-scoped wrapper
+        run: python ops/ci/check_tenant_scope.py
       - name: Borrow map is up to date with the register snapshot
         run: python ops/ci/borrow_map.py --check
 

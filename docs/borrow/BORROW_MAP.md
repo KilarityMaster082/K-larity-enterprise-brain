@@ -31,7 +31,7 @@ Caveat: Community edition is single-tenant; RBAC, SSO, audit, API keys, secret m
 | A5 | EB-66 | `packages/approvals/` | 29 | vendored, review pending |
 | A7 | EB-66 | `packages/approvals/ (versions)` | 1 | vendored, review pending |
 | A8 | EB-29 | `services/ingestion/workflows/` | 1 | vendored, review pending |
-| A9 | EB-85 | `services/control-plane/ (credential store)` | 14 | vendored, review pending |
+| A9 | EB-85 | `services/control-plane/ (credential store)` | 14 | in review |
 | A10 | EB-28 | `apps/api/ (MCP gateway, next)` | 91 | vendored, review pending |
 
 ### Onyx (ex-Danswer) — `a18fc1a652` — MIT (Expat); ee/ directories excluded
@@ -50,7 +50,7 @@ Caveat: MIT utils/encryption.py stores credentials as PLAINTEXT - never copy. Pe
 | O4-web | EB-28 | `services/ingestion/connectors/ (next)` | 3 | vendored, review pending |
 | O4-microsoft | EB-28 | `services/ingestion/connectors/ (next 30 days)` | 47 | vendored, review pending |
 | O5 | EB-42 | `packages/permissions/filter.py` | 4 | vendored, review pending |
-| O6 | EB-85 | `packages/tenant-context/` | 1 | vendored, review pending |
+| O6 | EB-85 | `packages/tenant-context/` | 1 | adapted into target |
 | O7 | EB-36 | `services/context-engine/indexing/` | 1 | vendored, review pending |
 | O8 | EB-29 | `services/ingestion/workflows/` | 1 | vendored, review pending |
 | O9 | EB-36 | `services/context-engine/indexing/` | 1 | vendored, review pending |

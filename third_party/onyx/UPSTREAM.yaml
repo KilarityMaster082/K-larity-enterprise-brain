@@ -149,7 +149,7 @@ features:
   O6:
     task: EB-85
     target: packages/tenant-context/
-    review: pending
+    review: adapted
     files:
       - {path: backend/shared_configs/contextvars.py, sha256: 6adb090c2d709e26}
   O7:

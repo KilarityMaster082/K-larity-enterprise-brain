@@ -1,0 +1,18 @@
+# Owner task: EB-85 Tenant registry and control plane
+# Stdlib only at runtime — no new dependency to licence-review (CLAUDE.md rule 7).
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "klarity-tenant-context"
+version = "0.1.0"
+description = "K!larity TenantContext, placement resolver and tenant-scoped store guard"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = ["tenant_context"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
