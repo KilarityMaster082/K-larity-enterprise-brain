@@ -1,56 +1,112 @@
-// Owner task: EB-50 Ask Brain UI — question composer, progress states and the answer thread.
 "use client";
-
+// Owner task: EB-50 Ask Brain UI (streaming: EB-96) — composer, live progress, streamed answer, Stop, and the
+// answer thread. A stopped or dropped stream never leaves a half answer on screen.
+import { Badge, Icon } from "@klarity/ui";
 import { useEffect, useRef, useState } from "react";
 
-import { ApiError, askBrain } from "@/lib/api";
-import type { AnswerContract, Evidence } from "@/lib/contracts";
+import { ApiError, askStream } from "@/lib/api";
+import { apply, EMPTY_PARTIAL, STAGES, type PartialAnswer } from "@/lib/ask/stream";
+import { ANSWER_CONTRACT_VERSION, type AnswerContract, type Evidence } from "@/lib/contracts";
 
 import { SourcePanel } from "../sources/SourcePanel";
-import { Icon } from "../ui/Icon";
 import AnswerCard from "./AnswerCard";
 
 interface Turn {
   id: number;
   question: string;
+  partial?: PartialAnswer;
   answer?: AnswerContract;
   error?: string;
+  stopped?: boolean;
 }
 
-// Shown while the context engine works; wording mirrors the real pipeline stages (EB-47).
-const STEPS = ["Understanding the question", "Searching sources you can access", "Checking every claim against evidence"];
+function asContract(question: string, p: PartialAnswer): AnswerContract {
+  return {
+    version: ANSWER_CONTRACT_VERSION,
+    question,
+    status: "answered",
+    answer: p.answer,
+    facts: p.facts,
+    causes: p.causes,
+    risks: p.risks,
+    unknowns: p.unknowns,
+    confidence: { level: "medium", reason: "" },
+    actions: [],
+    evidence: p.evidence,
+    generatedAt: "",
+  };
+}
 
-export function AskView({ workspace, suggestions }: { workspace: string; suggestions: string[] }) {
+export function AskView({
+  workspace,
+  suggestions,
+  scope,
+  initialQuestion,
+  onFirstAnswer,
+}: {
+  workspace: string;
+  suggestions: string[];
+  scope?: { id: string; name: string };
+  initialQuestion?: string;
+  onFirstAnswer?: () => void;
+}) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [scoped, setScoped] = useState(scope);
   const [source, setSource] = useState<{ evidence: Evidence; citedFor: string[] } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(1);
+  const ctl = useRef<AbortController | null>(null);
+  const autoAsked = useRef(false);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [turns.length, busy]);
 
+  useEffect(() => {
+    if (initialQuestion && !autoAsked.current) {
+      autoAsked.current = true;
+      void ask(initialQuestion);
+    }
+    return () => ctl.current?.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const update = (id: number, f: (t: Turn) => Turn) => setTurns((ts) => ts.map((t) => (t.id === id ? f(t) : t)));
+
   async function ask(question: string) {
     const q = question.trim();
     if (!q || busy) return;
     const id = nextId.current++;
-    setTurns((t) => [...t, { id, question: q }]);
+    setTurns((t) => [...t, { id, question: q, partial: EMPTY_PARTIAL }]);
     setDraft("");
     setBusy(true);
+    const controller = new AbortController();
+    ctl.current = controller;
     try {
-      const answer = await askBrain(q);
-      setTurns((t) => t.map((x) => (x.id === id ? { ...x, answer } : x)));
+      for await (const ev of askStream(q, scoped?.id, controller.signal)) {
+        if (ev.type === "done") {
+          update(id, (t) => ({ ...t, partial: undefined, answer: ev.contract }));
+          onFirstAnswer?.();
+        } else if (ev.type === "error") {
+          update(id, (t) => ({ ...t, partial: undefined, error: ev.message }));
+        } else {
+          update(id, (t) => ({ ...t, partial: t.partial ? apply(t.partial, ev) : t.partial }));
+        }
+      }
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) {
+      if (controller.signal.aborted) {
+        update(id, (t) => ({ ...t, partial: undefined, stopped: true }));
+      } else if (e instanceof ApiError && e.status === 401) {
         window.location.href = "/login?next=/ask";
         return;
+      } else {
+        update(id, (t) => ({ ...t, partial: undefined, error: e instanceof Error ? e.message : "something went wrong" }));
       }
-      const message = e instanceof Error ? e.message : "Something went wrong";
-      setTurns((t) => t.map((x) => (x.id === id ? { ...x, error: message } : x)));
     } finally {
       setBusy(false);
+      ctl.current = null;
     }
   }
 
@@ -62,8 +118,8 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
         <div className="ask-hero">
           <h1>What do you want to know?</h1>
           <p>
-            Ask anything about {workspace}. Answers come from your email, chats, documents and ledgers, with the source
-            for every claim. Figures come from the ledger, never from the AI.
+            Ask anything about {scoped ? scoped.name : workspace}. Answers come from your email, chats, documents and ledgers, with
+            the source for every claim. Figures come from the ledger, never from the AI.
           </p>
         </div>
       ) : (
@@ -75,10 +131,7 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
                 {t.question}
               </p>
               {t.answer ? (
-                <AnswerCard
-                  answer={t.answer}
-                  onOpenEvidence={(evidence, citedFor) => setSource({ evidence, citedFor })}
-                />
+                <AnswerCard answer={t.answer} onOpenEvidence={(evidence, citedFor) => setSource({ evidence, citedFor })} />
               ) : t.error ? (
                 <div className="card answer answer-error" role="alert">
                   <Icon name="alert" /> Couldn&apos;t get an answer: {t.error}.{" "}
@@ -86,8 +139,17 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
                     Try again
                   </button>
                 </div>
+              ) : t.stopped ? (
+                <div className="card answer answer-error" role="status">
+                  <Icon name="info" /> Stopped. The partial answer was discarded so nothing unchecked stays on screen.{" "}
+                  <button type="button" className="btn btn-sm" onClick={() => void ask(t.question)}>
+                    Ask again
+                  </button>
+                </div>
+              ) : t.partial && t.partial.answer.length ? (
+                <AnswerCard answer={asContract(t.question, t.partial)} streaming onOpenEvidence={(evidence, citedFor) => setSource({ evidence, citedFor })} />
               ) : (
-                <Progress />
+                <Progress stage={t.partial?.stage ?? 0} />
               )}
             </div>
           ))}
@@ -102,6 +164,16 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
           void ask(draft);
         }}
       >
+        {scoped ? (
+          <div className="row">
+            <Badge tone="brand" icon="projects">
+              Only {scoped.name}
+            </Badge>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setScoped(undefined)} aria-label={`Remove the ${scoped.name} scope`}>
+              <Icon name="close" size={14} /> All projects
+            </button>
+          </div>
+        ) : null}
         <label htmlFor="question" className="visually-hidden">
           Ask a question
         </label>
@@ -110,7 +182,7 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
           className="composer-input"
           rows={empty ? 3 : 1}
           maxLength={2000}
-          placeholder="Ask about a project, decision, payment or document…"
+          placeholder={scoped ? `Ask about ${scoped.name}…` : "Ask about a project, decision, payment or document…"}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -124,9 +196,15 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
           <span className="composer-hint">
             <Icon name="lock" size={14} /> Only sources you can access are searched
           </span>
-          <button type="submit" className="btn btn-primary" disabled={busy || !draft.trim()} aria-label="Ask">
-            <Icon name="send" size={16} /> Ask
-          </button>
+          {busy ? (
+            <button type="button" className="btn btn-dark" onClick={() => ctl.current?.abort()}>
+              <Icon name="close" size={16} /> Stop
+            </button>
+          ) : (
+            <button type="submit" className="btn btn-primary" disabled={!draft.trim()} aria-label="Ask">
+              <Icon name="send" size={16} /> Ask
+            </button>
+          )}
         </div>
       </form>
 
@@ -145,19 +223,14 @@ export function AskView({ workspace, suggestions }: { workspace: string; suggest
   );
 }
 
-function Progress() {
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setStep((s) => Math.min(s + 1, STEPS.length - 1)), 450);
-    return () => clearInterval(t);
-  }, []);
+function Progress({ stage }: { stage: number }) {
   return (
     <div className="card answer progress" role="status" aria-label="Working on your answer">
       <ol className="steps">
-        {STEPS.map((label, i) => (
-          <li key={label} className={i < step ? "done" : i === step ? "active" : ""}>
+        {STAGES.map((label, i) => (
+          <li key={label} className={i < stage ? "done" : i === stage ? "active" : ""}>
             <span className="step-dot" aria-hidden="true">
-              {i < step ? <Icon name="check" size={12} /> : null}
+              {i < stage ? <Icon name="check" size={12} /> : null}
             </span>
             {label}
           </li>

@@ -1,39 +1,34 @@
-// Owner task: EB-23 Web UI shell — navigation model. Items are filtered by role, never just hidden by CSS.
-import type { Role } from "./session";
+// Owner task: EB-23 Web UI shell — navigation. Items are filtered by capability on the server; pages check
+// again, so hiding an item is a convenience, never the protection.
+import type { IconName } from "@klarity/ui";
 
-export type IconName =
-  | "ask"
-  | "projects"
-  | "finance"
-  | "decisions"
-  | "documents"
-  | "approvals"
-  | "executive"
-  | "settings";
+import type { Role } from "./data/types";
+import { can, type Capability } from "./permissions";
 
 export interface NavItem {
   href: string;
   label: string;
   icon: IconName;
   section: "brain" | "workspace";
-  roles?: Role[]; // omitted = everyone
+  cap: Capability;
 }
 
 export const NAV: NavItem[] = [
-  { href: "/ask", label: "Ask Brain", icon: "ask", section: "brain" },
-  { href: "/projects", label: "Projects", icon: "projects", section: "brain" },
-  { href: "/finance", label: "Finance", icon: "finance", section: "brain", roles: ["owner", "partner"] },
-  { href: "/decisions", label: "Decisions", icon: "decisions", section: "brain" },
-  { href: "/documents", label: "Documents", icon: "documents", section: "brain" },
-  { href: "/executive", label: "Executive", icon: "executive", section: "workspace", roles: ["owner", "partner"] },
-  { href: "/approvals", label: "Approvals", icon: "approvals", section: "workspace" },
-  { href: "/settings", label: "Settings", icon: "settings", section: "workspace", roles: ["owner"] },
+  { href: "/ask", label: "Ask Brain", icon: "ask", section: "brain", cap: "ask" },
+  { href: "/projects", label: "Projects", icon: "projects", section: "brain", cap: "projects.view" },
+  { href: "/finance", label: "Finance", icon: "finance", section: "brain", cap: "finance.view" },
+  { href: "/decisions", label: "Decisions", icon: "decisions", section: "brain", cap: "decisions.view" },
+  { href: "/documents", label: "Documents", icon: "documents", section: "brain", cap: "documents.view" },
+  { href: "/executive", label: "Executive", icon: "executive", section: "workspace", cap: "executive.view" },
+  { href: "/approvals", label: "Approvals", icon: "approvals", section: "workspace", cap: "approvals.view" },
+  { href: "/settings", label: "Settings", icon: "settings", section: "workspace", cap: "settings.view" },
 ];
 
 export function navFor(role: Role): NavItem[] {
-  return NAV.filter((i) => !i.roles || i.roles.includes(role));
+  return NAV.filter((i) => can(role, i.cap));
 }
 
 export function titleFor(pathname: string): string {
+  if (pathname.startsWith("/design")) return "Design system";
   return NAV.find((i) => pathname === i.href || pathname.startsWith(i.href + "/"))?.label ?? "K!larity";
 }

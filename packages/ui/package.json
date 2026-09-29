@@ -1,0 +1,24 @@
+{
+  "name": "@klarity/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "K!larity design system: brand, tokens, components and data components shared by apps/web and apps/admin",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles/index.css",
+    "./brand/*": "./brand/*"
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "5.9.3",
+    "@types/node": "24.19.0"
+  }
+}

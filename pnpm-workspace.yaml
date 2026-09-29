@@ -2,3 +2,6 @@
 # JavaScript workspace. Python packages are not listed here (see Makefile PYTHONPATH_DEV).
 packages:
   - apps/web
+  - apps/admin
+  - packages/ui
+  - packages/web-auth

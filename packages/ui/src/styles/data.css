@@ -1,0 +1,403 @@
+/* Owner task: EB-97 Shared data components — table, KPI tile, bar chart, meter, timeline, stepper, money. */
+
+/* ---------- money & source ---------- */
+.money {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.money-neg {
+  color: var(--danger);
+}
+.source-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--brand-ink);
+  background: var(--brand-weak);
+  border-radius: var(--r-full);
+  padding: 1px 8px;
+  line-height: 20px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.source-tag:hover {
+  text-decoration: underline;
+}
+
+/* ---------- KPI tile ---------- */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-3);
+}
+.kpi {
+  display: grid;
+  gap: 6px;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  color: inherit;
+  text-decoration: none;
+  text-align: left;
+  font: inherit;
+}
+a.kpi:hover,
+button.kpi:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-2);
+  cursor: pointer;
+}
+.kpi-label {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  font-weight: 600;
+}
+.kpi-value {
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.kpi-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.kpi-accent {
+  border-top: 3px solid var(--brand);
+}
+.kpi-danger .kpi-value {
+  color: var(--danger);
+}
+
+/* ---------- data table ---------- */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+.table-tools .input {
+  max-width: 320px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+.table tr:last-child td {
+  border-bottom: 0;
+}
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.table th.num,
+.table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+.table tr.row-link {
+  cursor: pointer;
+}
+.table a.cell-link {
+  color: var(--text);
+  font-weight: 650;
+  text-decoration: none;
+}
+.table a.cell-link:hover {
+  text-decoration: underline;
+}
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.th-sort .sort-ind {
+  opacity: 0.45;
+}
+th[aria-sort="ascending"] .sort-ind,
+th[aria-sort="descending"] .sort-ind {
+  opacity: 1;
+  color: var(--brand-ink);
+}
+.table-empty {
+  padding: var(--s-6);
+  text-align: center;
+  color: var(--text-3);
+}
+.table-caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0;
+}
+
+/* ---------- bar chart (CSS bars + table alternative) ---------- */
+.bars {
+  display: grid;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 180px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--fs-sm);
+}
+.bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.bar-track {
+  position: relative;
+  height: 12px;
+  border-radius: var(--r-full);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-full);
+  background: var(--series-1);
+}
+.bar-fill.tone-2 {
+  background: var(--series-2);
+}
+.bar-fill.tone-3 {
+  background: var(--series-3);
+}
+.bar-fill.tone-danger {
+  background: var(--danger);
+}
+.bar-fill.tone-ok {
+  background: var(--ok);
+}
+.bar-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 80px;
+  text-align: right;
+}
+.chart-toggle {
+  margin-top: var(--s-3);
+}
+@media (max-width: 560px) {
+  .bar-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .bar-track {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+/* ---------- meter (budget used etc.) ---------- */
+.meter {
+  display: grid;
+  gap: 4px;
+}
+.meter-track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-full);
+  background: var(--ok);
+}
+.meter-fill.warn {
+  background: var(--warn);
+}
+.meter-fill.danger {
+  background: var(--danger);
+}
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- timeline ---------- */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  position: relative;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--border);
+}
+.tl-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--s-3);
+  padding-bottom: var(--s-4);
+}
+.tl-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  color: var(--text-2);
+}
+.tl-item[data-tone="brand"] .tl-dot {
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+.tl-item[data-tone="danger"] .tl-dot {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.tl-item[data-tone="ok"] .tl-dot {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.tl-when {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.tl-title {
+  font-weight: 650;
+  font-size: var(--fs-sm);
+}
+.tl-desc {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+/* ---------- stepper (project stage) ---------- */
+.stepper {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.step {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  color: var(--text-3);
+}
+.step::before {
+  content: "";
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--surface-3);
+}
+.step[data-state="done"]::before {
+  background: var(--ink);
+}
+.step[data-state="current"]::before {
+  background: var(--brand);
+}
+.step[data-state="current"] {
+  color: var(--text);
+}
+.step span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- key/value list ---------- */
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px var(--s-4);
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+.kv dt {
+  color: var(--text-3);
+}
+.kv dd {
+  margin: 0;
+}
+
+/* six tiles read best as 3 × 2 on wide screens */
+.kpis-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .kpis-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .kpis-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,19 +1,12 @@
 // Owner task: EB-50 Ask Brain UI — numbered list of the sources behind an answer.
 "use client";
 
-import type { Evidence, SourceType } from "@/lib/contracts";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, Icon } from "@klarity/ui";
 
-import { Icon } from "../ui/Icon";
+import type { Evidence } from "@/lib/contracts";
+import { SOURCE_META } from "@/lib/sources";
 
-export const SOURCE_META: Record<SourceType, { icon: string; label: string }> = {
-  email: { icon: "mail", label: "Email" },
-  whatsapp: { icon: "chat", label: "WhatsApp" },
-  sheet: { icon: "sheet", label: "Sheet" },
-  document: { icon: "documents", label: "Document" },
-  drawing: { icon: "drawing", label: "Drawing" },
-  meeting: { icon: "chat", label: "Meeting" },
-};
+
 
 export default function CitationList({ evidence, onOpen }: { evidence: Evidence[]; onOpen: (e: Evidence) => void }) {
   if (!evidence.length) return null;

@@ -11,6 +11,7 @@ const securityHeaders = [
 
 const config: NextConfig = {
   poweredByHeader: false,
+  transpilePackages: ["@klarity/ui", "@klarity/web-auth"],
   reactStrictMode: true,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

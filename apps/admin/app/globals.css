@@ -1,0 +1,54 @@
+/* Owner task: EB-100 Admin console shell — operator-app specifics; everything else comes from @klarity/ui. */
+.login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--s-6);
+  background: radial-gradient(1200px 500px at 90% -10%, color-mix(in srgb, var(--ink) 10%, transparent), transparent 60%), var(--bg);
+}
+.login-card {
+  width: min(420px, 100%);
+  padding: var(--s-8);
+  display: grid;
+  gap: var(--s-5);
+}
+.steps-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: var(--fs-sm);
+}
+.steps-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text-3);
+}
+.steps-list li[data-state="done"] {
+  color: var(--text);
+}
+.steps-list li[data-state="running"] {
+  color: var(--brand-ink);
+  font-weight: 650;
+}
+.hit {
+  display: grid;
+  gap: 6px;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border);
+}
+.hit:last-child {
+  border-bottom: 0;
+}
+.hit mark {
+  background: var(--mark-bg);
+  color: var(--mark-text);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.over-target {
+  color: var(--danger);
+  font-weight: 700;
+}

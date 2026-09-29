@@ -2,7 +2,7 @@
 // Owner task: EB-23 Web UI shell — light/dark toggle; follows the OS until the user picks.
 import { useEffect, useState } from "react";
 
-import { Icon } from "../ui/Icon";
+import { Icon } from "@klarity/ui";
 
 import { THEME_COOKIE, parseTheme, type ThemePref } from "@/lib/theme";
 

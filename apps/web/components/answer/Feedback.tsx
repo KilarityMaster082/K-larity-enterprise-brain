@@ -6,7 +6,7 @@ import { useState } from "react";
 import { sendFeedback } from "@/lib/api";
 import { FEEDBACK_REASONS, FEEDBACK_REASON_LABELS, type FeedbackReason } from "@/lib/contracts";
 
-import { Icon } from "../ui/Icon";
+import { Icon } from "@klarity/ui";
 
 type State = "idle" | "choosing" | "sending" | "sent" | "error";
 

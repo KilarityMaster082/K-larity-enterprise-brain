@@ -1,27 +1,42 @@
-// Owner task: EB-57 Documents view
-// Status: designed placeholder (EB-23 shell) — data arrives with the owning task.
+// Owner task: EB-57 Documents view — find the latest revision of any document or drawing in seconds.
+import { PageHeader } from "@klarity/ui";
 import type { Metadata } from "next";
 
-import { NoAccess, PagePlaceholder } from "@/components/ui/PagePlaceholder";
-import { requirePage } from "@/lib/guard";
+import { NoAccess, NotSyncedYet } from "@/components/page/common";
+import { evidenceById } from "@/lib/data/store";
+import { pageContext } from "@/lib/page";
+
+import { DocumentsView, type DocRow } from "./DocumentsView";
 
 export const metadata: Metadata = { title: "Documents" };
 
-export default async function DocumentsPage() {
-  const { allowed } = await requirePage("/documents");
-  if (!allowed) return <NoAccess what="documents" />;
+export default async function DocumentsPage({ searchParams }: { searchParams: Promise<{ doc?: string; project?: string; q?: string }> }) {
+  const ctx = await pageContext("/documents", "documents.view");
+  if (!ctx.allowed) return <NoAccess what="documents" />;
+  const sp = await searchParams;
+  const { data } = ctx.view;
+  const name = (id: string) => data.projects.find((p) => p.projectId === id)?.name ?? id;
+  const showMoney = ctx.can("finance.view");
+  const rows: DocRow[] = data.documents.map((d) => ({
+    ...d,
+    amount: showMoney ? d.amount : undefined,
+    projectName: name(d.projectId),
+    evidence: evidenceById(ctx.view, [d.evidenceId]),
+  }));
   return (
-    <PagePlaceholder
-      title="Documents"
-      lead="Find the latest revision of any document or drawing in seconds."
-      icon="documents"
-      emptyTitle="No documents indexed yet"
-      emptyBody="Documents and drawings from Drive and email attachments appear once they are indexed."
-      willShow={[
-        "Search across sources with filters for project, type, revision and date",
-        "Latest-revision badges on drawings",
-        "Preview with summary and extracted facts"
-      ]}
-    />
+    <div className="content content-wide">
+      <PageHeader title="Documents" lead="Drawings, quotations, contracts and reports across every source — latest revision first." />
+      {rows.length ? (
+        <DocumentsView
+          rows={rows}
+          projects={data.projects.map((p) => ({ id: p.projectId, name: p.name }))}
+          initialDoc={sp.doc}
+          initialProject={sp.project}
+          initialQuery={sp.q}
+        />
+      ) : (
+        <NotSyncedYet what="documents" />
+      )}
+    </div>
   );
 }

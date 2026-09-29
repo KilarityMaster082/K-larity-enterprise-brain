@@ -5,6 +5,10 @@
   "scripts": {
     "web:dev": "pnpm --filter @klarity/web dev",
     "web:build": "pnpm --filter @klarity/web build",
-    "web:typecheck": "pnpm --filter @klarity/web typecheck"
+    "web:typecheck": "pnpm --filter @klarity/web typecheck",
+    "admin:dev": "pnpm --filter @klarity/admin dev",
+    "admin:build": "pnpm --filter @klarity/admin build",
+    "ui:test": "pnpm --filter @klarity/ui test",
+    "test:js": "pnpm -r --if-present test"
   }
 }

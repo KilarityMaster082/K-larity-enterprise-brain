@@ -6,12 +6,15 @@
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start --port 3000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/*.test.ts\""
   },
   "dependencies": {
     "next": "16.3.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "@klarity/ui": "workspace:*",
+    "@klarity/web-auth": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "24.19.0",

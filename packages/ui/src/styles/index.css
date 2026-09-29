@@ -1,0 +1,6 @@
+/* Owner task: EB-91 UI design system — single entry point; apps import "@klarity/ui/styles.css" once. */
+@import "./tokens.css";
+@import "./base.css";
+@import "./components.css";
+@import "./shell.css";
+@import "./data.css";

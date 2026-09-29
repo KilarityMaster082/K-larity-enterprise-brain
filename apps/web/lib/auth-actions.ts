@@ -1,44 +1,53 @@
 "use server";
-// Owner task: EB-23 Web UI shell — sign-in, sign-out and tenant switch (DEV session only).
-// With Keycloak (OIDC + Organizations) switching tenant becomes a re-authentication into the chosen
-// organization; the server never trusts a tenant id sent by the browser for data access.
-import { cookies } from "next/headers";
+// Owner task: EB-92 Web auth — sign-in (development), sign-out and workspace switch.
+// With Keycloak, switching workspace is a new sign-in into that organization; in development the signed
+// session simply changes its active tenant, but only to a tenant it is already a member of.
 import { redirect } from "next/navigation";
 
-import { DEV_MEMBERSHIPS, DEV_USER, SESSION_COOKIE, authMode, encodeSession, getSession } from "./session";
-
-const COOKIE_OPTS = { httpOnly: true, sameSite: "lax" as const, path: "/", secure: false, maxAge: 60 * 60 * 8 };
-
-function safeNext(next: FormDataEntryValue | null): string {
-  const n = typeof next === "string" ? next : "";
-  return n.startsWith("/") && !n.startsWith("//") ? n : "/ask"; // no open redirects
-}
+import { authMode, oidcConfig } from "./auth/config";
+import { logoutUrl } from "./auth/oidc";
+import { safeNext } from "@klarity/web-auth";
+import { clearSession, getSession, writeSession, type Membership } from "./auth/session";
+import type { Role } from "./data/types";
+import { ROLES } from "./permissions";
+import { TENANTS } from "./tenants";
 
 export async function devSignIn(formData: FormData): Promise<void> {
-  if (authMode() !== "dev") throw new Error("dev sign-in is disabled outside development");
+  if (authMode() !== "dev") throw new Error("development sign-in is disabled");
   const tenantId = String(formData.get("tenantId") ?? "");
-  const membership = DEV_MEMBERSHIPS.find((m) => m.tenantId === tenantId) ?? DEV_MEMBERSHIPS[0]!;
-  const jar = await cookies();
-  jar.set(
-    SESSION_COOKIE,
-    encodeSession({ user: DEV_USER, tenantId: membership.tenantId, memberships: DEV_MEMBERSHIPS }),
-    COOKIE_OPTS,
-  );
+  const roleIn = String(formData.get("role") ?? "admin");
+  const role: Role = (ROLES as string[]).includes(roleIn) ? (roleIn as Role) : "admin";
+  const memberships: Membership[] = TENANTS.filter((t) => t.status === "active").map((t) => ({
+    tenantId: t.tenantId,
+    slug: t.slug,
+    name: t.name,
+    role: t.tenantId === tenantId ? role : t.isSynthetic ? "owner" : "admin",
+    isSynthetic: t.isSynthetic,
+  }));
+  const active = memberships.find((m) => m.tenantId === tenantId) ?? memberships[0]!;
+  await writeSession({
+    mode: "dev",
+    user: { id: "dev-user", name: "Demo user", email: "demo.user@example.com" },
+    tenantId: active.tenantId,
+    memberships,
+  });
   redirect(safeNext(formData.get("next")));
 }
 
 export async function signOut(): Promise<void> {
-  const jar = await cookies();
-  jar.delete(SESSION_COOKIE);
-  redirect("/login");
+  await clearSession();
+  const cfg = oidcConfig();
+  const url = cfg ? await logoutUrl(cfg) : null;
+  redirect(url ?? "/login");
 }
 
 export async function switchTenant(formData: FormData): Promise<void> {
   const session = await getSession();
   if (!session) redirect("/login");
   const tenantId = String(formData.get("tenantId") ?? "");
-  if (!session.memberships.some((m) => m.tenantId === tenantId)) throw new Error("not a member of that tenant");
-  const jar = await cookies();
-  jar.set(SESSION_COOKIE, encodeSession({ ...session, tenantId }), COOKIE_OPTS);
-  redirect("/ask"); // never keep a page from the previous tenant on screen
+  const target = session.memberships.find((m) => m.tenantId === tenantId);
+  if (!target) throw new Error("not a member of that workspace");
+  if (session.mode === "oidc") redirect(`/api/auth/login?org=${encodeURIComponent(target.slug)}&next=/ask`);
+  await writeSession({ mode: session.mode, user: session.user, tenantId, memberships: session.memberships });
+  redirect("/ask"); // never keep a page from the previous workspace on screen
 }

@@ -1,49 +1,78 @@
-// Owner task: EB-50 Ask Brain UI — renders one answer contract as a card.
-// Trust rules made visible: every claim cites evidence; figures show they came from SQL; the card says
-// what it could not confirm; actions that change anything are marked as needing approval.
 "use client";
-
-import { useState, type ReactNode } from "react";
+// Owner task: EB-50 Ask Brain UI — renders one answer contract as a card (also while it streams in).
+// Trust rules made visible: every claim cites evidence; figures show they came from SQL; the card says what it
+// could not confirm; actions that change anything become drafts in Approvals (CLAUDE.md rule 10).
+import { Badge, formatINR, formatINRShort, Icon, useToast } from "@klarity/ui";
+import Link from "next/link";
+import { useState, useTransition, type ReactNode } from "react";
 
 import CitationList from "@/components/citations/CitationList";
-import type { AnswerContract, Claim, ConfidenceLevel, Evidence } from "@/lib/contracts";
-import { formatINR, formatINRShort } from "@/lib/format";
+import type { AnswerContract, Claim, ConfidenceLevel, Evidence, SuggestedAction } from "@/lib/contracts";
+import { requestApprovalAction } from "@/lib/data/actions";
 
-import { Icon } from "../ui/Icon";
 import { Feedback } from "./Feedback";
 
-const CONFIDENCE: Record<ConfidenceLevel, { label: string; cls: string }> = {
-  high: { label: "High confidence", cls: "badge-ok" },
-  medium: { label: "Medium confidence", cls: "badge-warn" },
-  low: { label: "Low confidence", cls: "badge-danger" },
+const CONFIDENCE: Record<ConfidenceLevel, { label: string; tone: "ok" | "warn" | "danger" }> = {
+  high: { label: "High confidence", tone: "ok" },
+  medium: { label: "Medium confidence", tone: "warn" },
+  low: { label: "Low confidence", tone: "danger" },
 };
 
 interface Props {
   answer: AnswerContract;
+  streaming?: boolean;
   onOpenEvidence: (evidence: Evidence, citedFor: string[]) => void;
 }
 
-export default function AnswerCard({ answer, onOpenEvidence }: Props) {
-  const [queued, setQueued] = useState<string | null>(null);
+function CiteChips({ ids, number, byId, open }: { ids?: string[]; number: Map<string, number>; byId: Map<string, Evidence>; open: (id: string) => void }) {
+  if (!ids?.length) return null;
+  return (
+    <span className="cites">
+      {ids.map((id) =>
+        number.has(id) ? (
+          <button key={id} type="button" className="cite" onClick={() => open(id)} aria-label={`Source ${number.get(id)}: ${byId.get(id)?.title}`}>
+            {number.get(id)}
+          </button>
+        ) : null,
+      )}
+    </span>
+  );
+}
+
+export default function AnswerCard({ answer, streaming, onOpenEvidence }: Props) {
+  const [queued, setQueued] = useState<Record<string, string>>({});
+  const [busy, start] = useTransition();
+  const toast = useToast();
   const number = new Map(answer.evidence.map((e, i) => [e.id, i + 1]));
   const byId = new Map(answer.evidence.map((e) => [e.id, e]));
 
   const citedFor = (id: string): string[] =>
     [...answer.facts, ...answer.causes, ...answer.risks].filter((c) => c.evidenceIds.includes(id)).map((c) => c.text);
-
   const open = (id: string) => {
     const e = byId.get(id);
     if (e) onOpenEvidence(e, citedFor(id));
   };
+  const cite = (ids?: string[]) => <CiteChips ids={ids} number={number} byId={byId} open={open} />;
 
+  function accept(a: SuggestedAction) {
+    if (!a.draft) return;
+    const draft = a.draft;
+    start(async () => {
+      const res = await requestApprovalAction({ ...draft, kind: a.kind === "create_task" ? "create_task" : "draft_message" });
+      if (res.ok) {
+        setQueued((q) => ({ ...q, [a.id]: res.message ?? "" }));
+        toast("Draft sent to Approvals. Nothing is sent until someone approves it.");
+      } else toast(res.error, "danger");
+    });
+  }
 
-  if (answer.status === "insufficient_evidence" || answer.status === "no_access") {
+  if (!streaming && (answer.status === "insufficient_evidence" || answer.status === "no_access")) {
     return (
       <article className="card answer answer-empty" aria-label="Answer">
         <div className="answer-head">
-          <span className="badge badge-danger">
-            <Icon name="question" size={14} /> Not enough evidence
-          </span>
+          <Badge tone={answer.status === "no_access" ? "warn" : "danger"} icon={answer.status === "no_access" ? "lock" : "question"}>
+            {answer.status === "no_access" ? "Restricted" : "Not enough evidence"}
+          </Badge>
         </div>
         <p className="answer-text">{answer.answer.map((s) => s.text).join("")}</p>
         {answer.unknowns.length ? (
@@ -62,13 +91,18 @@ export default function AnswerCard({ answer, onOpenEvidence }: Props) {
   const figures = answer.facts.filter((f) => f.figure);
 
   return (
-    <article className="card answer" aria-label="Answer">
+    <article className="card answer" aria-label="Answer" aria-busy={streaming || undefined}>
       <div className="answer-head">
-        <span className={`badge ${conf.cls}`} title={answer.confidence.reason}>
-          {conf.label}
-        </span>
+        {streaming ? (
+          <Badge tone="info">Checking evidence…</Badge>
+        ) : (
+          <Badge tone={conf.tone} title={answer.confidence.reason}>
+            {conf.label}
+          </Badge>
+        )}
         <span className="answer-meta">
-          {answer.evidence.length} source{answer.evidence.length === 1 ? "" : "s"} · {answer.confidence.reason}
+          {answer.evidence.length} source{answer.evidence.length === 1 ? "" : "s"}
+          {streaming ? "" : ` · ${answer.confidence.reason}`}
         </span>
       </div>
 
@@ -76,9 +110,10 @@ export default function AnswerCard({ answer, onOpenEvidence }: Props) {
         {answer.answer.map((s, i) => (
           <span key={i}>
             {s.text}
-            <CiteChips number={number} byId={byId} open={open} ids={s.evidenceIds} />
+            {cite(s.evidenceIds)}
           </span>
         ))}
+        {streaming ? <span className="stream-caret" aria-hidden="true" /> : null}
       </p>
 
       {figures.length ? (
@@ -91,10 +126,10 @@ export default function AnswerCard({ answer, onOpenEvidence }: Props) {
                   {formatINRShort(f.figure!.amount)}
                 </span>
                 <span className="figure-foot">
-                  <span className="badge badge-brand" title={`Computed by ${f.figure!.query ?? "a reviewed SQL query"}`}>
+                  <span className="source-tag" style={{ cursor: "default" }} title={`Computed by ${f.figure!.query ?? "a reviewed SQL query"}`}>
                     <Icon name="database" size={12} /> From ledger
                   </span>
-                  <CiteChips number={number} byId={byId} open={open} ids={f.evidenceIds} />
+                  {cite(f.evidenceIds)}
                 </span>
               </div>
             ))}
@@ -102,7 +137,7 @@ export default function AnswerCard({ answer, onOpenEvidence }: Props) {
         </section>
       ) : null}
 
-      <ClaimList title="Why" items={answer.causes} cite={(ids) => <CiteChips ids={ids} number={number} byId={byId} open={open} />} />
+      <ClaimList title="Why" items={answer.causes} cite={cite} />
 
       {answer.risks.length ? (
         <section className="answer-section" aria-label="Risks">
@@ -110,9 +145,8 @@ export default function AnswerCard({ answer, onOpenEvidence }: Props) {
           <ul className="claims">
             {answer.risks.map((r) => (
               <li key={r.id}>
-                <span className={`badge ${r.severity === "high" ? "badge-danger" : "badge-warn"}`}>{r.severity}</span>{" "}
-                {r.text}
-                <CiteChips number={number} byId={byId} open={open} ids={r.evidenceIds} />
+                <Badge tone={r.severity === "high" ? "danger" : "warn"}>{r.severity}</Badge> {r.text}
+                {cite(r.evidenceIds)}
               </li>
             ))}
           </ul>
@@ -132,60 +166,33 @@ export default function AnswerCard({ answer, onOpenEvidence }: Props) {
         </section>
       ) : null}
 
-      {answer.actions.length ? (
+      {!streaming && answer.actions.length ? (
         <section className="answer-section" aria-label="Suggested actions">
           <h3>Suggested next steps</h3>
           <div className="actions">
-            {answer.actions.map((a) => (
-              <button key={a.id} type="button" className="btn" onClick={() => setQueued(a.label)}>
-                {a.label}
-                {a.requiresApproval ? <span className="badge">Needs approval</span> : null}
-              </button>
-            ))}
+            {answer.actions.map((a) =>
+              a.kind === "open_source" ? (
+                <Link key={a.id} className="btn" href="/documents">
+                  {a.label}
+                </Link>
+              ) : queued[a.id] ? (
+                <Link key={a.id} className="btn" href={`/approvals?focus=${queued[a.id]}`}>
+                  <Icon name="check" size={16} /> In Approvals — view draft
+                </Link>
+              ) : (
+                <button key={a.id} type="button" className="btn btn-wrap" disabled={busy} onClick={() => accept(a)}>
+                  {a.label}
+                  {a.requiresApproval ? <Badge>Needs approval</Badge> : null}
+                </button>
+              ),
+            )}
           </div>
-          {queued ? (
-            <p className="queued" role="status">
-              <Icon name="check" size={16} /> Draft prepared for approval: “{queued}”. Nothing is sent until someone
-              approves it in Approvals.
-            </p>
-          ) : null}
         </section>
       ) : null}
 
-      <CitationList evidence={answer.evidence} onOpen={(e) => open(e.id)} />
-      <Feedback question={answer.question} />
+      {answer.evidence.length ? <CitationList evidence={answer.evidence} onOpen={(e) => open(e.id)} /> : null}
+      {!streaming ? <Feedback question={answer.question} /> : null}
     </article>
-  );
-}
-
-function CiteChips({
-  ids,
-  number,
-  byId,
-  open,
-}: {
-  ids?: string[];
-  number: Map<string, number>;
-  byId: Map<string, Evidence>;
-  open: (id: string) => void;
-}) {
-  if (!ids?.length) return null;
-  return (
-    <span className="cites">
-      {ids.map((id) =>
-        number.has(id) ? (
-          <button
-            key={id}
-            type="button"
-            className="cite"
-            onClick={() => open(id)}
-            aria-label={`Source ${number.get(id)}: ${byId.get(id)?.title}`}
-          >
-            {number.get(id)}
-          </button>
-        ) : null,
-      )}
-    </span>
   );
 }
 

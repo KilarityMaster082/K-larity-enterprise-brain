@@ -1,4 +1,4 @@
-/* Owner task: EB-50 Ask Brain UI — composer, answer card, citations and source sheet. */
+/* Owner task: EB-50 Ask Brain UI — composer, answer card, citations and source-sheet content. */
 
 .ask {
   display: flex;
@@ -377,7 +377,7 @@
   height: 18px;
   border-radius: 50%;
   border: 2px solid var(--border-strong);
-  color: var(--text-on-brand);
+  color: var(--on-brand);
 }
 .steps li.done .step-dot {
   border-color: var(--ok);
@@ -394,46 +394,7 @@
   }
 }
 
-/* source side sheet */
-.sheet {
-  margin: 0 0 0 auto;
-  width: min(var(--sheet-w), 100vw);
-  max-width: none;
-  height: 100dvh;
-  max-height: none;
-  padding: 0;
-  border: 0;
-  border-left: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-2);
-}
-.sheet::backdrop {
-  background: rgb(8 12 24 / 0.35);
-}
-.sheet[open] {
-  animation: sheet-in 180ms var(--ease);
-}
-@keyframes sheet-in {
-  from {
-    transform: translateX(24px);
-    opacity: 0;
-  }
-}
-.sheet-body {
-  display: grid;
-  gap: var(--s-5);
-  padding: var(--s-5) var(--s-6) var(--s-8);
-}
-.sheet-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.sheet-body h2 {
-  font-size: var(--fs-xl);
-  letter-spacing: -0.01em;
-}
+/* source sheet content (the sheet itself comes from @klarity/ui) */
 .sheet-meta {
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -455,7 +416,7 @@
 .excerpt blockquote {
   margin: 0;
   padding: var(--s-4);
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--brand);
   border-radius: 0 var(--r-md) var(--r-md) 0;
   background: var(--surface-2);
   line-height: 1.7;
@@ -498,5 +459,20 @@
   }
   .figure-value {
     font-size: var(--fs-lg);
+  }
+}
+
+.stream-caret {
+  display: inline-block;
+  width: 8px;
+  height: 1.1em;
+  margin-left: 4px;
+  vertical-align: -3px;
+  background: var(--brand);
+  animation: caret 1s steps(2, start) infinite;
+}
+@keyframes caret {
+  to {
+    visibility: hidden;
   }
 }

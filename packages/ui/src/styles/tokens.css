@@ -1,0 +1,177 @@
+/* Owner task: EB-90 Brand guide and logo sign-off — design tokens for every K!larity app.
+   Brand colours are sampled from the logo (orange #fd5910, ink #030303). Change values here only; components
+   read tokens, never raw colours. The two dark blocks must stay identical (a test enforces it), and
+   packages/ui/tests/contrast.test.ts fails if any text pair drops below WCAG 2.1 AA. */
+
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #f7f6f4;
+  --surface: #ffffff;
+  --surface-2: #f1efec;
+  --surface-3: #e7e4df;
+  --border: #e2dfda;
+  --border-strong: #c9c5be;
+
+  /* text */
+  --text: #0d0d0e;
+  --text-2: #47474d;
+  --text-3: #62626a;
+
+  /* brand: the K!larity orange (#fd5910, sampled from the logo) and ink */
+  --brand: #fd5910;
+  --brand-hover: #e9500a;
+  --on-brand: #0d0d0e;
+  --brand-ink: #b33700; /* orange used as text or a link on light surfaces */
+  --brand-weak: #ffede4;
+  --ink: #0d0d0e; /* the logo's black */
+  --focus-ring: #0d0d0e;
+
+  /* semantic */
+  --ok: #157a3a;
+  --ok-weak: #e6f5ea;
+  --warn: #7a4f00;
+  --warn-weak: #fff3d1;
+  --danger: #b42318;
+  --danger-weak: #fdecea;
+  --info: #1f5fbf;
+  --info-weak: #e8f0fc;
+
+  /* evidence highlight */
+  --mark-bg: #ffe9a8;
+  --mark-text: #2e2200;
+
+  /* chart series (paired with labels and patterns, never colour alone) */
+  --series-1: #fd5910;
+  --series-2: #0d0d0e;
+  --series-3: #1f5fbf;
+  --series-4: #157a3a;
+  --series-5: #8a5cf6;
+
+  --shadow-1: 0 1px 2px rgb(13 13 14 / 0.06), 0 1px 1px rgb(13 13 14 / 0.04);
+  --shadow-2: 0 8px 24px rgb(13 13 14 / 0.12), 0 2px 6px rgb(13 13 14 / 0.06);
+
+  /* type */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+    "Noto Sans Telugu", "Noto Sans Devanagari", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.0625rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+
+  /* space, radius, motion */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-full: 999px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* layout */
+  --sidebar-w: 248px;
+  --topbar-h: 56px;
+  --content-w: 880px;
+  --content-wide-w: 1200px;
+  --sheet-w: 440px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      color-scheme: dark;
+
+      --bg: #0c0c0e;
+      --surface: #151518;
+      --surface-2: #1d1d21;
+      --surface-3: #26262b;
+      --border: #2c2c32;
+      --border-strong: #3d3d45;
+
+      --text: #f3f3f4;
+      --text-2: #b9b9c1;
+      --text-3: #9a9aa4;
+
+      --brand: #fd5910;
+      --brand-hover: #ff7134;
+      --on-brand: #0d0d0e;
+      --brand-ink: #ff8a57;
+      --brand-weak: #2a170e;
+      --ink: #f3f3f4;
+      --focus-ring: #ffb08a;
+
+      --ok: #4cc47a;
+      --ok-weak: #11301f;
+      --warn: #f0b04a;
+      --warn-weak: #35270a;
+      --danger: #ff7b70;
+      --danger-weak: #3a1512;
+      --info: #7fb0ff;
+      --info-weak: #13264a;
+
+      --mark-bg: #4a3a12;
+      --mark-text: #fff1cf;
+
+      --series-1: #fd5910;
+      --series-2: #f3f3f4;
+      --series-3: #7fb0ff;
+      --series-4: #4cc47a;
+      --series-5: #b79cff;
+
+      --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+      --shadow-2: 0 10px 30px rgb(0 0 0 / 0.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0c0c0e;
+  --surface: #151518;
+  --surface-2: #1d1d21;
+  --surface-3: #26262b;
+  --border: #2c2c32;
+  --border-strong: #3d3d45;
+
+  --text: #f3f3f4;
+  --text-2: #b9b9c1;
+  --text-3: #9a9aa4;
+
+  --brand: #fd5910;
+  --brand-hover: #ff7134;
+  --on-brand: #0d0d0e;
+  --brand-ink: #ff8a57;
+  --brand-weak: #2a170e;
+  --ink: #f3f3f4;
+  --focus-ring: #ffb08a;
+
+  --ok: #4cc47a;
+  --ok-weak: #11301f;
+  --warn: #f0b04a;
+  --warn-weak: #35270a;
+  --danger: #ff7b70;
+  --danger-weak: #3a1512;
+  --info: #7fb0ff;
+  --info-weak: #13264a;
+
+  --mark-bg: #4a3a12;
+  --mark-text: #fff1cf;
+
+  --series-1: #fd5910;
+  --series-2: #f3f3f4;
+  --series-3: #7fb0ff;
+  --series-4: #4cc47a;
+  --series-5: #b79cff;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 10px 30px rgb(0 0 0 / 0.5);
+}

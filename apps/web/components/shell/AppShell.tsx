@@ -1,15 +1,17 @@
 "use client";
-// Owner task: EB-23 Web UI shell — sidebar navigation, tenant switcher, top bar, mobile drawer.
+// Owner task: EB-23 Web UI shell — the Brain's frame: logo, workspace switcher, role-filtered navigation,
+// search (⌘K), theme and account menu. Built on @klarity/ui ShellFrame.
+import { Badge, Icon, Kbd, Logo, ShellFrame, ToastProvider, initials } from "@klarity/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { signOut, switchTenant } from "@/lib/auth-actions";
-import { initials } from "@/lib/format";
+import type { Membership } from "@/lib/auth/session";
 import { titleFor, type NavItem } from "@/lib/nav";
-import type { Membership } from "@/lib/session";
+import { ROLE_LABEL } from "@/lib/permissions";
 
-import { Icon } from "../ui/Icon";
+import { CommandPalette } from "./CommandPalette";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface Props {
@@ -17,95 +19,57 @@ interface Props {
   active: Membership;
   memberships: Membership[];
   nav: NavItem[];
+  counts: Partial<Record<string, number>>;
+  devMode: boolean;
   children: ReactNode;
 }
 
-export function AppShell({ user, active, memberships, nav, children }: Props) {
+export function AppShell({ user, active, memberships, nav, counts, devMode, children }: Props) {
   const pathname = usePathname();
-  const drawer = useRef<HTMLDialogElement>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
-  // Close the mobile drawer after navigating.
   useEffect(() => {
-    drawer.current?.close();
-  }, [pathname]);
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
-  const sidebar = (
-    <Sidebar user={user} active={active} memberships={memberships} nav={nav} pathname={pathname} />
-  );
-
-  return (
-    <div className="shell">
-      <a className="skip-link" href="#main">
-        Skip to content
-      </a>
-      {sidebar}
-      <dialog ref={drawer} className="nav-drawer" aria-label="Navigation">
-        {sidebar}
-      </dialog>
-      <div className="main">
-        <header className="topbar">
-          <button
-            type="button"
-            className="btn btn-ghost btn-icon menu-btn"
-            aria-label="Open navigation"
-            onClick={() => drawer.current?.showModal()}
-          >
-            <Icon name="menu" />
-          </button>
-          <span className="topbar-title">{titleFor(pathname)}</span>
-          {active.isSynthetic ? <span className="badge badge-warn">Synthetic test tenant</span> : null}
-          <span className="topbar-spacer" />
-          <ThemeToggle />
-          <details className="menu">
-            <summary className="btn btn-ghost btn-icon" aria-label={`Account: ${user.name}`}>
-              <span className="avatar">{initials(user.name)}</span>
-            </summary>
-            <div className="menu-panel right" role="menu">
-              <div className="menu-label">
-                {user.name}
-                <br />
-                {user.email}
-              </div>
-              <form action={signOut}>
-                <button type="submit" className="menu-item" role="menuitem">
-                  <Icon name="logout" size={16} /> Sign out
-                </button>
-              </form>
-            </div>
-          </details>
-        </header>
-        <main id="main" className="main-content" tabIndex={-1}>
-          {children}
-        </main>
-      </div>
-    </div>
-  );
-}
-
-function Sidebar({
-  user,
-  active,
-  memberships,
-  nav,
-  pathname,
-}: Omit<Props, "children"> & { pathname: string }) {
   const sections: { key: NavItem["section"]; label: string }[] = [
     { key: "brain", label: "Brain" },
     { key: "workspace", label: "Workspace" },
   ];
-  return (
-    <aside className="sidebar" aria-label="Primary">
-      <Link href="/ask" className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          K<span className="brand-bang">!</span>
-        </span>
-        <span>
-          K<span className="brand-bang">!</span>larity
-          <span className="brand-sub">Enterprise Brain</span>
-        </span>
+
+  const sidebar = (
+    <>
+      <Link href="/ask" className="logo-link" aria-label="K!larity Enterprise Brain — Ask Brain">
+        <Logo width={128} caption="Enterprise Brain" />
       </Link>
 
-      <TenantSwitcher active={active} memberships={memberships} />
+      <details className="menu">
+        <summary className="tenant-btn" aria-label={`Workspace: ${active.name}. Switch workspace`}>
+          <span className="tenant-avatar">{initials(active.name)}</span>
+          <span className="tenant-name">{active.name}</span>
+          <Icon name="chevronDown" size={16} />
+        </summary>
+        <div className="menu-panel" role="menu">
+          <div className="menu-label">Switch workspace</div>
+          {memberships.map((m) => (
+            <form key={m.tenantId} action={switchTenant}>
+              <input type="hidden" name="tenantId" value={m.tenantId} />
+              <button type="submit" className="menu-item" role="menuitemradio" aria-checked={m.tenantId === active.tenantId}>
+                <span className="tenant-avatar">{initials(m.name)}</span>
+                <span className="tenant-name">{m.name}</span>
+                {m.tenantId === active.tenantId ? <Icon name="check" size={16} /> : null}
+              </button>
+            </form>
+          ))}
+        </div>
+      </details>
 
       <nav className="nav" aria-label="Main">
         {sections.map((s) => {
@@ -116,10 +80,16 @@ function Sidebar({
               <div className="nav-section">{s.label}</div>
               {items.map((i) => {
                 const current = pathname === i.href || pathname.startsWith(i.href + "/");
+                const count = counts[i.href];
                 return (
                   <Link key={i.href} href={i.href} className="nav-link" aria-current={current ? "page" : undefined}>
                     <Icon name={i.icon} />
                     {i.label}
+                    {count ? (
+                      <span className="nav-count" aria-label={`${count} waiting`}>
+                        {count}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
@@ -129,36 +99,54 @@ function Sidebar({
       </nav>
 
       <div className="sidebar-foot">
-        <span className="badge badge-info" title="Answers are generated only from sources you can access">
-          <Icon name="shield" size={14} /> Permission-aware answers
-        </span>
-        <span className="visually-hidden">Signed in as {user.name}</span>
+        <Badge tone="info" icon="shield" title="Answers use only sources you can access">
+          Permission-aware answers
+        </Badge>
+        {devMode ? <Badge tone="warn">Development sign-in</Badge> : null}
       </div>
-    </aside>
+    </>
   );
-}
 
-function TenantSwitcher({ active, memberships }: { active: Membership; memberships: Membership[] }) {
   return (
-    <details className="menu">
-      <summary className="tenant-btn" aria-label={`Workspace: ${active.name}. Switch workspace`}>
-        <span className="tenant-avatar">{initials(active.name)}</span>
-        <span className="tenant-name">{active.name}</span>
-        <Icon name="chevronDown" size={16} />
-      </summary>
-      <div className="menu-panel" role="menu">
-        <div className="menu-label">Switch workspace</div>
-        {memberships.map((m) => (
-          <form key={m.tenantId} action={switchTenant}>
-            <input type="hidden" name="tenantId" value={m.tenantId} />
-            <button type="submit" className="menu-item" role="menuitemradio" aria-checked={m.tenantId === active.tenantId}>
-              <span className="tenant-avatar">{initials(m.name)}</span>
-              <span className="tenant-name">{m.name}</span>
-              {m.tenantId === active.tenantId ? <Icon name="check" size={16} /> : null}
+    <ToastProvider>
+      <ShellFrame
+        routeKey={pathname}
+        sidebar={sidebar}
+        title={titleFor(pathname)}
+        topbarExtra={active.isSynthetic ? <Badge tone="warn">Synthetic test tenant</Badge> : null}
+        topbarRight={
+          <>
+            <button type="button" className="search-trigger" onClick={() => setPaletteOpen(true)} aria-label="Search and jump (Ctrl K)">
+              <Icon name="search" size={16} />
+              <span className="search-label">Search or jump to…</span>
+              <Kbd>⌘K</Kbd>
             </button>
-          </form>
-        ))}
-      </div>
-    </details>
+            <ThemeToggle />
+            <details className="menu">
+              <summary className="btn btn-ghost btn-icon" aria-label={`Account: ${user.name}`}>
+                <span className="avatar">{initials(user.name)}</span>
+              </summary>
+              <div className="menu-panel right" role="menu">
+                <div className="menu-label">
+                  {user.name}
+                  <br />
+                  {user.email}
+                  <br />
+                  {ROLE_LABEL[active.role]} · {active.name}
+                </div>
+                <form action={signOut}>
+                  <button type="submit" className="menu-item" role="menuitem">
+                    <Icon name="logout" size={16} /> Sign out
+                  </button>
+                </form>
+              </div>
+            </details>
+          </>
+        }
+      >
+        {children}
+      </ShellFrame>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} nav={nav} />
+    </ToastProvider>
   );
 }

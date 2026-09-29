@@ -1,14 +1,10 @@
-// Owner task: EB-50 Ask Brain UI — side sheet that opens a citation at the exact supporting span.
-// Native <dialog>: Esc closes, focus is trapped while open and returns to the citation afterwards.
 "use client";
+// Owner task: EB-50 Ask Brain UI — side sheet that opens a citation at the exact supporting span.
+// Uses @klarity/ui Sheet (native <dialog>): Esc closes, focus is trapped and returns to the opener.
+import { Badge, formatDateTime, Icon, Sheet } from "@klarity/ui";
 
-import { useEffect, useRef } from "react";
-
-import { SOURCE_META } from "@/components/citations/CitationList";
+import { SOURCE_META } from "@/lib/sources";
 import type { Evidence } from "@/lib/contracts";
-import { formatDateTime } from "@/lib/format";
-
-import { Icon } from "../ui/Icon";
 
 export function SourcePanel({
   evidence,
@@ -19,44 +15,14 @@ export function SourcePanel({
   citedFor: string[];
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const opener = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (evidence && !d.open) {
-      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      d.showModal();
-    }
-    if (!evidence && d.open) d.close();
-  }, [evidence]);
-
   const meta = evidence ? SOURCE_META[evidence.sourceType] : null;
   const { start, end } = evidence?.highlight ?? { start: 0, end: 0 };
-
   return (
-    <dialog
-      ref={ref}
-      className="sheet"
-      aria-labelledby="source-title"
-      onClose={() => {
-        onClose();
-        opener.current?.focus(); // return focus to the citation that opened the sheet
-      }}
-      onClick={(e) => {
-        if (e.target === ref.current) ref.current?.close(); // click on backdrop
-      }}
-    >
+    <Sheet open={Boolean(evidence)} onClose={onClose} labelledBy="source-title">
       {evidence && meta ? (
-        <div className="sheet-body">
-          <div className="sheet-head">
-            <span className="badge">
-              <Icon name={meta.icon} size={14} /> {meta.label}
-            </span>
-            <button type="button" className="btn btn-ghost btn-icon" aria-label="Close source" onClick={() => ref.current?.close()}>
-              <Icon name="close" />
-            </button>
+        <>
+          <div>
+            <Badge icon={meta.icon}>{meta.label}</Badge>
           </div>
           <h2 id="source-title">{evidence.title}</h2>
           <dl className="sheet-meta">
@@ -86,7 +52,7 @@ export function SourcePanel({
               <mark>{evidence.excerpt.slice(start, end)}</mark>
               {evidence.excerpt.slice(end)}
             </blockquote>
-            <figcaption>The highlighted passage is what the answer relies on.</figcaption>
+            <figcaption>The highlighted passage is what the figure or answer relies on.</figcaption>
           </figure>
 
           {citedFor.length ? (
@@ -111,8 +77,8 @@ export function SourcePanel({
               </button>
             )}
           </div>
-        </div>
+        </>
       ) : null}
-    </dialog>
+    </Sheet>
   );
 }

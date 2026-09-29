@@ -2,7 +2,7 @@
 // This is a UX gate only. Authorisation happens on the server for every page and API call.
 import { NextResponse, type NextRequest } from "next/server";
 
-const SESSION_COOKIE = "kb_dev_session"; // keep in step with lib/session.ts
+const SESSION_COOKIE = "kb_session"; // keep in step with lib/auth/session.ts
 
 export function proxy(req: NextRequest) {
   if (req.cookies.has(SESSION_COOKIE)) return NextResponse.next();

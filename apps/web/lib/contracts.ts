@@ -6,7 +6,7 @@
 
 export const ANSWER_CONTRACT_VERSION = "0.1-ui-draft";
 
-export type SourceType = "email" | "whatsapp" | "sheet" | "document" | "drawing" | "meeting";
+export type SourceType = "email" | "whatsapp" | "sheet" | "document" | "drawing" | "meeting" | "ledger";
 export type ConfidenceLevel = "high" | "medium" | "low";
 export type AnswerStatus = "answered" | "partial" | "insufficient_evidence" | "no_access";
 
@@ -51,6 +51,8 @@ export interface SuggestedAction {
   label: string;
   kind: "draft_message" | "create_task" | "open_source";
   requiresApproval: boolean; // CLAUDE.md rule 10: side effects go through the approval model
+  /** What goes to Approvals when the user accepts the suggestion. Nothing is sent before approval. */
+  draft?: { title: string; body: string; reason: string; evidenceIds: string[]; projectId?: string };
 }
 
 export interface AnswerContract {
