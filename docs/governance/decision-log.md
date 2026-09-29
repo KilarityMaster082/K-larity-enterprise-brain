@@ -19,4 +19,5 @@
 | 2026-09-30 | EB-19 / D-12 | Temporal knowledge graph edges (`valid_from`, `valid_to`) | Enables point-in-time historical traversal and supersession tracking without destructive updates. | Approved |
 | 2026-09-30 | EB-19 / D-13 | Mandatory provenance columns (`source_id`, `source_ref`, `ingested_at`, `content_hash`) | Guarantees end-to-end evidence citation and cryptographic verifiability for every fact and entity. | Approved |
 | 2026-09-30 | EB-19 / D-14 | Approve `sqlalchemy 2.0.34` (MIT) under Rule 7 | Required for declarative ORM models and ontology schema representation in `packages/ontology`. | Approved |
+| 2026-09-30 | EB-20 / D-15 | Row-Level Security (`FORCE ROW LEVEL SECURITY`), `NOBYPASSRLS` app role, and store guard filter injection | Eliminates Risk R-6 by enforcing non-bypassable database RLS with `SET LOCAL app.tenant_id = :tenant_id`, dedicated `klarity_app` unprivileged role, pure ASGI TenantMiddleware, and automated Qdrant/OpenSearch tenant filter injection in `packages/storage`. | Approved |
 
