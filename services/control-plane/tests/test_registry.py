@@ -159,3 +159,91 @@ def test_suspended_tenant_stops_resolving(reg):
     resolver.invalidate(STUDIO8_ID)
     with pytest.raises(TenantUnavailableError):
         resolver.resolve(STUDIO8_ID)
+
+
+class SqlitePgConnection:
+    def __init__(self, conn):
+        self._conn = conn
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def cursor(self):
+        return SqlitePgCursor(self._conn.cursor())
+
+    def commit(self):
+        self._conn.commit()
+
+
+class SqlitePgCursor:
+    def __init__(self, cur):
+        self._cur = cur
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def execute(self, sql, params=None):
+        sql = sql.replace("%s", "?")
+        if params is None:
+            return self._cur.execute(sql)
+        return self._cur.execute(sql, params)
+
+    def fetchone(self):
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        return self._cur.fetchall()
+
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+
+    @property
+    def description(self):
+        return self._cur.description
+
+
+def test_postgres_tenant_registry_lifecycle():
+    import sqlite3
+    from control_plane import PostgresTenantRegistry
+
+    raw_conn = sqlite3.connect(":memory:")
+    raw_conn.execute("CREATE TABLE cells (cell_id text primary key, region text, kind text, pg_cluster text, "
+                     "object_bucket text, qdrant_cluster text, opensearch_cluster text, fga_store text, "
+                     "temporal_namespace text)")
+    raw_conn.execute("CREATE TABLE tenants (tenant_id text primary key, slug text unique, display_name text, "
+                     "status text, tier text, plan_id text, cell_id text, region text, is_synthetic integer, "
+                     "created_at text, updated_at text)")
+    raw_conn.execute("CREATE TABLE tenant_resources (tenant_id text, kind text, ref text, created_at text, "
+                     "updated_at text, primary key(tenant_id, kind))")
+
+    class Factory:
+        def __call__(self):
+            return SqlitePgConnection(raw_conn)
+
+    reg = PostgresTenantRegistry(Factory())
+    reg.add_cell(POOL_CELL)
+    assert reg.cell(POOL_CELL.cell_id).region == "ap-south-2"
+
+    t = reg.register(tenant_id="tenant-x", slug="tenant-x", display_name="Tenant X",
+                     tier=Tier.POOL, plan="standard", cell_id=POOL_CELL.cell_id)
+    assert t.status == TenantStatus.PROVISIONING
+
+    ctx = reg.lookup("tenant-x")
+    assert ctx is not None
+    assert ctx.tenant_id == "tenant-x"
+    assert ctx.placement.object_bucket == POOL_CELL.object_bucket
+
+    reg.set_status("tenant-x", TenantStatus.ACTIVE)
+    assert reg.lookup_tenant("tenant-x").status == TenantStatus.ACTIVE
+
+    reg.set_resource("tenant-x", "keycloak_org_id", "kc-123")
+    assert reg.lookup("tenant-x").placement.keycloak_org_id == "kc-123"
+    assert len(reg.list()) == 1
+

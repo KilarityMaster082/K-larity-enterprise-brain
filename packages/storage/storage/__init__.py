@@ -13,14 +13,24 @@ from .credential_store import (
     CredentialStatus,
     CredentialStore,
     FileCredentialBackend,
+    PostgresCredentialBackend,
     Secret,
 )
-from .envelope import DecryptionError, DevKeyring, Envelope, EnvelopeError, KeyProvider, KeyUnavailableError
-from .object_store import LocalObjectBackend, ObjectBackend, ObjectStore, check_key
+from .envelope import (
+    DecryptionError,
+    DevKeyring,
+    Envelope,
+    EnvelopeError,
+    KeyProvider,
+    KeyUnavailableError,
+    KmsKeyProvider,
+)
+from .object_store import LocalObjectBackend, ObjectBackend, ObjectStore, S3ObjectBackend, check_key
 
 __all__ = [
     "ConcurrentUpdateError", "CredentialBackend", "CredentialError", "CredentialMeta",
     "CredentialNeedsReauthError", "CredentialNotFoundError", "CredentialStatus", "CredentialStore",
     "DecryptionError", "DevKeyring", "Envelope", "EnvelopeError", "FileCredentialBackend", "KeyProvider",
-    "KeyUnavailableError", "LocalObjectBackend", "ObjectBackend", "ObjectStore", "Secret", "check_key",
+    "KeyUnavailableError", "KmsKeyProvider", "LocalObjectBackend", "ObjectBackend", "ObjectStore",
+    "PostgresCredentialBackend", "S3ObjectBackend", "Secret", "check_key",
 ]

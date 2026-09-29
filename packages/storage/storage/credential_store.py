@@ -275,3 +275,105 @@ class FileCredentialBackend:
             lk = self._locks.setdefault((tenant_id, credential_id), threading.Lock())
         with lk:
             yield
+
+
+class PostgresCredentialBackend:
+    """Postgres backend for connector credentials (db/migrations/0003_connector_credentials.sql).
+
+    Implements CredentialBackend using a database connection or connection factory.
+    Advisory transaction lock guarantees single-worker refresh across distributed nodes.
+    """
+
+    def __init__(self, connection_factory: Callable[[], Any]) -> None:
+        self._conn_factory = connection_factory
+        self._local_locks: dict[tuple[str, str], threading.Lock] = {}
+        self._guard = threading.Lock()
+
+    def load(self, tenant_id: str, credential_id: str) -> dict[str, Any] | None:
+        with self._conn_factory() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT tenant_id, credential_id, connector_type, display_name, version, "
+                    "status, expires_at, envelope, created_at, updated_at "
+                    "FROM connector_credentials WHERE tenant_id = %s AND credential_id = %s",
+                    (tenant_id, credential_id),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    return None
+                if isinstance(row, dict):
+                    res = dict(row)
+                else:
+                    cols = [d[0] for d in cur.description]
+                    res = dict(zip(cols, row))
+                if isinstance(res.get("envelope"), str):
+                    res["envelope"] = json.loads(res["envelope"])
+                return res
+
+    def save(self, tenant_id: str, credential_id: str, row: dict[str, Any], expected_version: int) -> None:
+        envelope_json = json.dumps(row["envelope"]) if isinstance(row["envelope"], dict) else row["envelope"]
+        with self._conn_factory() as conn:
+            with conn.cursor() as cur:
+                if expected_version == 0:
+                    cur.execute(
+                        "INSERT INTO connector_credentials (tenant_id, credential_id, connector_type, "
+                        "display_name, version, status, expires_at, envelope, created_at, updated_at) "
+                        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                        (tenant_id, credential_id, row["connector_type"], row["display_name"],
+                         row["version"], row["status"], row.get("expires_at"), envelope_json,
+                         row["created_at"], row["updated_at"]),
+                    )
+                else:
+                    cur.execute(
+                        "UPDATE connector_credentials SET "
+                        "connector_type = %s, display_name = %s, version = %s, status = %s, "
+                        "expires_at = %s, envelope = %s, updated_at = %s "
+                        "WHERE tenant_id = %s AND credential_id = %s AND version = %s",
+                        (row["connector_type"], row["display_name"], row["version"], row["status"],
+                         row.get("expires_at"), envelope_json, row["updated_at"],
+                         tenant_id, credential_id, expected_version),
+                    )
+                    if cur.rowcount == 0:
+                        raise ConcurrentUpdateError(
+                            f"{credential_id}: version mismatch or missing (expected v{expected_version})")
+            if hasattr(conn, "commit"):
+                conn.commit()
+
+    def delete(self, tenant_id: str, credential_id: str) -> None:
+        with self._conn_factory() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM connector_credentials WHERE tenant_id = %s AND credential_id = %s",
+                    (tenant_id, credential_id),
+                )
+            if hasattr(conn, "commit"):
+                conn.commit()
+
+    def list(self, tenant_id: str) -> list[dict[str, Any]]:
+        with self._conn_factory() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT tenant_id, credential_id, connector_type, display_name, version, "
+                    "status, expires_at, envelope, created_at, updated_at "
+                    "FROM connector_credentials WHERE tenant_id = %s",
+                    (tenant_id,),
+                )
+                rows = cur.fetchall()
+                if not rows:
+                    return []
+                cols = [d[0] for d in cur.description]
+                result = []
+                for r in rows:
+                    item = dict(r) if isinstance(r, dict) else dict(zip(cols, r))
+                    if isinstance(item.get("envelope"), str):
+                        item["envelope"] = json.loads(item["envelope"])
+                    result.append(item)
+                return result
+
+    @contextmanager
+    def lock(self, tenant_id: str, credential_id: str) -> Iterator[None]:
+        with self._guard:
+            lk = self._local_locks.setdefault((tenant_id, credential_id), threading.Lock())
+        with lk:
+            yield
+

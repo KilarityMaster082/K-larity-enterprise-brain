@@ -99,3 +99,63 @@ class LocalObjectBackend:
                 key = f.relative_to(base).as_posix()
                 if key.startswith(prefix):
                     yield key
+
+
+class S3ObjectBackend:
+    """S3-compatible object storage backend (AWS S3, MinIO, SeaweedFS).
+
+    Accepts an existing boto3 S3 client, or creates one lazily.
+    """
+
+    def __init__(self, client: Any = None, *, endpoint_url: str | None = None,
+                 region_name: str | None = None) -> None:
+        self._client = client
+        self._endpoint_url = endpoint_url
+        self._region_name = region_name
+
+    def _get_client(self) -> Any:
+        if self._client is None:
+            try:
+                import boto3  # noqa: PLC0415
+            except ImportError as e:
+                raise RuntimeError("boto3 is required for S3ObjectBackend when client is not passed") from e
+            self._client = boto3.client("s3", endpoint_url=self._endpoint_url, region_name=self._region_name)
+        return self._client
+
+    def put(self, bucket: str, key: str, data: bytes, content_type: str) -> None:
+        self._get_client().put_object(Bucket=bucket, Key=key, Body=data, ContentType=content_type)
+
+    def get(self, bucket: str, key: str) -> bytes:
+        resp = self._get_client().get_object(Bucket=bucket, Key=key)
+        body = resp["Body"]
+        return body.read() if hasattr(body, "read") else bytes(body)
+
+    def exists(self, bucket: str, key: str) -> bool:
+        client = self._get_client()
+        try:
+            client.head_object(Bucket=bucket, Key=key)
+            return True
+        except Exception as e:
+            err_code = getattr(e, "response", {}).get("Error", {}).get("Code", "")
+            if err_code in ("404", "NoSuchKey", "NotFound") or "404" in str(e) or "NoSuchKey" in str(e):
+                return False
+            raise
+
+    def delete(self, bucket: str, key: str) -> None:
+        self._get_client().delete_object(Bucket=bucket, Key=key)
+
+    def list(self, bucket: str, prefix: str) -> Iterator[str]:
+        client = self._get_client()
+        paginator = getattr(client, "get_paginator", None)
+        if callable(paginator):
+            try:
+                p = client.get_paginator("list_objects_v2")
+                for page in p.paginate(Bucket=bucket, Prefix=prefix):
+                    for item in page.get("Contents", []):
+                        yield item["Key"]
+                return
+            except Exception:
+                pass
+        resp = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        for item in resp.get("Contents", []):
+            yield item["Key"]

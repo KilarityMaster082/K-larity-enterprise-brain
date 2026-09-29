@@ -18,7 +18,8 @@ from dataclasses import dataclass, fields
 from enum import Enum
 
 # Lowercase so the id is valid unchanged in every store name (OpenSearch index, Temporal queue, KMS alias).
-_TENANT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,62}$")
+# Starts and ends with an alphanumeric character, length 2 to 63.
+_TENANT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$")
 
 
 class TenantContextError(Exception):

@@ -93,7 +93,7 @@ def test_concurrent_tasks_keep_their_own_tenant():
     assert asyncio.run(main()) == ["tenant-b" if i % 2 == 0 else "tenant-a" for i in range(20)]
 
 
-@pytest.mark.parametrize("bad", ["", "a", "Acme", "acme/../x", "-acme", "acme_1", "a" * 64, "acme.io"])
+@pytest.mark.parametrize("bad", ["", "a", "Acme", "acme/../x", "-acme", "acme-", "acme_1", "a" * 64, "acme.io"])
 def test_tenant_id_shape(bad):
     with pytest.raises(ValueError):
         validate_tenant_id(bad)

@@ -7,10 +7,11 @@ from .placement import Cell, CellKind, place
 from .registry import (
     FileTenantRegistry,
     InvalidTransitionError,
+    PostgresTenantRegistry,
     RegistryConflictError,
     RegistryError,
     Tenant,
 )
 
-__all__ = ["Cell", "CellKind", "FileTenantRegistry", "InvalidTransitionError", "RegistryConflictError",
-           "RegistryError", "Tenant", "place"]
+__all__ = ["Cell", "CellKind", "FileTenantRegistry", "InvalidTransitionError", "PostgresTenantRegistry",
+           "RegistryConflictError", "RegistryError", "Tenant", "place"]

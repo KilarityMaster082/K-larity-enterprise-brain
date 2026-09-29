@@ -157,3 +157,59 @@ class DevKeyring:
             return kek.decrypt(wrapped[:_NONCE_BYTES], wrapped[_NONCE_BYTES:], context_bytes(context))
         except InvalidTag:
             raise DecryptionError("data key failed authentication") from None
+
+
+class KmsKeyProvider:
+    """AWS KMS key provider for envelope encryption (Risk R-12).
+
+    Mirrors AWS KMS GenerateDataKey and Decrypt with EncryptionContext.
+    Accepts an existing boto3 KMS client, or creates one lazily.
+    """
+
+    def __init__(self, client: Any = None, *, region_name: str | None = None) -> None:
+        self._client = client
+        self._region_name = region_name
+
+    def _get_client(self) -> Any:
+        if self._client is None:
+            try:
+                import boto3  # noqa: PLC0415
+            except ImportError as e:
+                raise RuntimeError("boto3 is required for KmsKeyProvider when client is not passed") from e
+            self._client = boto3.client("kms", region_name=self._region_name)
+        return self._client
+
+    def generate_data_key(self, key_ref: str, context: Mapping[str, str]) -> tuple[bytes, bytes]:
+        ctx = dict(context)
+        try:
+            resp = self._get_client().generate_data_key(
+                KeyId=key_ref,
+                KeySpec="AES_256",
+                EncryptionContext=ctx,
+            )
+            return resp["Plaintext"], resp["CiphertextBlob"]
+        except Exception as e:
+            err_code = getattr(e, "response", {}).get("Error", {}).get("Code", "")
+            if err_code in ("NotFoundException", "DisabledException", "AccessDeniedException", "KeyUnavailableException") \
+                    or "NotFoundException" in str(e) or "DisabledException" in str(e):
+                raise KeyUnavailableError(f"KMS key {key_ref!r} unavailable: {e}") from e
+            raise EnvelopeError(f"generate_data_key failed: {e}") from e
+
+    def unwrap(self, key_ref: str, wrapped: bytes, context: Mapping[str, str]) -> bytes:
+        ctx = dict(context)
+        try:
+            resp = self._get_client().decrypt(
+                CiphertextBlob=wrapped,
+                EncryptionContext=ctx,
+                KeyId=key_ref,
+            )
+            return resp["Plaintext"]
+        except Exception as e:
+            err_code = getattr(e, "response", {}).get("Error", {}).get("Code", "")
+            if err_code in ("NotFoundException", "DisabledException", "AccessDeniedException", "KeyUnavailableException") \
+                    or "NotFoundException" in str(e) or "DisabledException" in str(e):
+                raise KeyUnavailableError(f"KMS key {key_ref!r} unavailable: {e}") from e
+            if err_code in ("InvalidCiphertextException", "IncorrectKeyException") \
+                    or "InvalidCiphertextException" in str(e) or "IncorrectKeyException" in str(e):
+                raise DecryptionError(f"KMS decryption failed: {e}") from e
+            raise DecryptionError(f"KMS decryption failed: {e}") from e

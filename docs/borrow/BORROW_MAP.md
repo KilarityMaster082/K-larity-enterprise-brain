@@ -31,7 +31,7 @@ Caveat: Community edition is single-tenant; RBAC, SSO, audit, API keys, secret m
 | A5 | EB-66 | `packages/approvals/` | 29 | vendored, review pending |
 | A7 | EB-66 | `packages/approvals/ (versions)` | 1 | vendored, review pending |
 | A8 | EB-29 | `services/ingestion/workflows/` | 1 | vendored, review pending |
-| A9 | EB-85 | `services/control-plane/ (credential store)` | 14 | adapted into target |
+| A9 | EB-85 | `packages/storage/ (credential store)` | 14 | adapted into target |
 | A10 | EB-28 | `apps/api/ (MCP gateway, next)` | 91 | vendored, review pending |
 
 ### Onyx (ex-Danswer) — `a18fc1a652` — MIT (Expat); ee/ directories excluded

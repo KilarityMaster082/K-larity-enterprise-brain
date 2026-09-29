@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import json
+import os
 import pickle
 import stat
 import threading
 import time
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import pytest
 
@@ -317,3 +319,128 @@ def test_stale_write_is_rejected(env, ctx):
         _put(store, secret={"refresh_token": "newer"})
         with pytest.raises(ConcurrentUpdateError):
             backend.save("tenant-a", "gmail-1", row, row["version"])
+
+
+class MockKmsClient:
+    def __init__(self) -> None:
+        self.keys: dict[str, bool] = {}
+
+    def generate_data_key(self, KeyId: str, KeySpec: str,
+                          EncryptionContext: dict[str, str]) -> dict[str, Any]:
+        import base64
+        if KeyId not in self.keys or not self.keys[KeyId]:
+            raise Exception(f"NotFoundException: Key {KeyId} not found")
+        dek = os.urandom(32)
+        ctx_bytes = json.dumps(EncryptionContext, sort_keys=True).encode()
+        blob = (b"WRAPPED:" + base64.b64encode(KeyId.encode()) + b":"
+                + base64.b64encode(ctx_bytes) + b":" + base64.b64encode(dek))
+        return {"Plaintext": dek, "CiphertextBlob": blob}
+
+    def decrypt(self, CiphertextBlob: bytes, EncryptionContext: dict[str, str],
+                KeyId: str | None = None) -> dict[str, Any]:
+        import base64
+        if not CiphertextBlob.startswith(b"WRAPPED:"):
+            raise Exception("InvalidCiphertextException")
+        parts = CiphertextBlob.split(b":")
+        key_id = base64.b64decode(parts[1]).decode()
+        if key_id not in self.keys or not self.keys[key_id]:
+            raise Exception(f"NotFoundException: Key {key_id} not found")
+        ctx_stored = json.loads(base64.b64decode(parts[2]).decode())
+        if ctx_stored != EncryptionContext:
+            raise Exception("InvalidCiphertextException: context mismatch")
+        return {"Plaintext": base64.b64decode(parts[3])}
+
+
+def test_kms_key_provider_envelope_end_to_end():
+    from storage import KmsKeyProvider
+    mock = MockKmsClient()
+    mock.keys["alias/klarity-tenant-a"] = True
+    provider = KmsKeyProvider(client=mock)
+
+    context = {"purpose": "connector-credential", "tenant_id": "tenant-a", "credential_id": "cred-1"}
+    env = seal(provider, "alias/klarity-tenant-a", b"super-secret-token", context)
+
+    # Open with matching context
+    decrypted = open_envelope(provider, env, context)
+    assert decrypted == b"super-secret-token"
+
+    # Context mismatch fails
+    bad_context = {"purpose": "connector-credential", "tenant_id": "tenant-b", "credential_id": "cred-1"}
+    with pytest.raises(DecryptionError):
+        open_envelope(provider, env, bad_context)
+
+    # Destroy/disable key -> KeyUnavailableError (crypto-shredding)
+    mock.keys["alias/klarity-tenant-a"] = False
+    with pytest.raises(KeyUnavailableError):
+        open_envelope(provider, env, context)
+
+
+def test_postgres_credential_backend_lifecycle():
+    import sqlite3
+    from storage import PostgresCredentialBackend
+
+    raw_conn = sqlite3.connect(":memory:")
+    raw_conn.execute("CREATE TABLE connector_credentials (tenant_id text, credential_id text, connector_type text, "
+                     "display_name text, version integer, status text, expires_at text, envelope text, "
+                     "created_at text, updated_at text, primary key (tenant_id, credential_id))")
+
+    class SqliteConn:
+        def __init__(self, c):
+            self.c = c
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def cursor(self):
+            return SqliteCur(self.c.cursor())
+        def commit(self):
+            self.c.commit()
+
+    class SqliteCur:
+        def __init__(self, cur):
+            self.cur = cur
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def execute(self, sql, params=None):
+            sql = sql.replace("%s", "?")
+            return self.cur.execute(sql, params or ())
+        def fetchone(self):
+            return self.cur.fetchone()
+        def fetchall(self):
+            return self.cur.fetchall()
+        @property
+        def rowcount(self):
+            return self.cur.rowcount
+        @property
+        def description(self):
+            return self.cur.description
+
+    backend = PostgresCredentialBackend(lambda: SqliteConn(raw_conn))
+    assert backend.load("tenant-a", "cred-1") is None
+
+    row = {
+        "tenant_id": "tenant-a", "credential_id": "cred-1", "connector_type": "gmail",
+        "display_name": "Gmail Cred", "version": 1, "status": "active",
+        "envelope": {"v": 1, "alg": "AES-256-GCM", "wrapped_key": "abc"},
+        "created_at": "2026-09-30T12:00:00Z", "updated_at": "2026-09-30T12:00:00Z",
+    }
+    backend.save("tenant-a", "cred-1", row, expected_version=0)
+    loaded = backend.load("tenant-a", "cred-1")
+    assert loaded["version"] == 1
+    assert loaded["envelope"]["alg"] == "AES-256-GCM"
+
+    # Version mismatch raises ConcurrentUpdateError
+    row["version"] = 2
+    with pytest.raises(ConcurrentUpdateError):
+        backend.save("tenant-a", "cred-1", row, expected_version=99)
+
+    backend.save("tenant-a", "cred-1", row, expected_version=1)
+    assert backend.load("tenant-a", "cred-1")["version"] == 2
+
+    # List and delete
+    assert len(backend.list("tenant-a")) == 1
+    backend.delete("tenant-a", "cred-1")
+    assert backend.load("tenant-a", "cred-1") is None
+

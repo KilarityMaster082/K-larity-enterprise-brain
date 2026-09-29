@@ -429,7 +429,7 @@ features:
       - {path: packages/server/engine/src/lib/helper/error-handling.ts, sha256: e290ec02562cf9f4}
   A9:
     task: EB-85
-    target: services/control-plane/ (credential store)
+    target: packages/storage/ (credential store)
     review: adapted
     files:
       - {path: packages/server/api/src/app/app-connection/app-connection-service/app-connection-service.ts, sha256: 5815523f64fa7f7e}

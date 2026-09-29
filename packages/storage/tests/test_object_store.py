@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from storage import LocalObjectBackend, ObjectStore
@@ -58,3 +60,44 @@ def test_every_call_needs_a_context(store, ctx):
                  lambda: s.delete("k"), s.list):
         with pytest.raises(NoTenantContextError):
             call()
+
+
+class MockS3Client:
+    def __init__(self) -> None:
+        self.objects: dict[tuple[str, str], bytes] = {}
+
+    def put_object(self, Bucket: str, Key: str, Body: bytes, ContentType: str = "application/octet-stream") -> None:
+        self.objects[(Bucket, Key)] = Body
+
+    def get_object(self, Bucket: str, Key: str) -> dict[str, Any]:
+        if (Bucket, Key) not in self.objects:
+            raise Exception("NoSuchKey (404)")
+        return {"Body": self.objects[(Bucket, Key)]}
+
+    def head_object(self, Bucket: str, Key: str) -> dict[str, Any]:
+        if (Bucket, Key) not in self.objects:
+            raise Exception("NoSuchKey (404)")
+        return {}
+
+    def delete_object(self, Bucket: str, Key: str) -> None:
+        self.objects.pop((Bucket, Key), None)
+
+    def list_objects_v2(self, Bucket: str, Prefix: str = "") -> dict[str, Any]:
+        contents = [{"Key": k} for (b, k) in self.objects if b == Bucket and k.startswith(Prefix)]
+        return {"Contents": contents}
+
+
+def test_s3_object_backend_with_mock_client(ctx):
+    from storage import S3ObjectBackend
+    mock = MockS3Client()
+    s3_backend = S3ObjectBackend(client=mock)
+    store = ObjectStore(s3_backend)
+
+    with tenant_scope(ctx("tenant-a")):
+        store.put("raw/file.csv", b"col1,col2\n1,2")
+        assert store.exists("raw/file.csv")
+        assert store.get("raw/file.csv") == b"col1,col2\n1,2"
+        assert store.list("raw/") == ["raw/file.csv"]
+        store.delete("raw/file.csv")
+        assert not store.exists("raw/file.csv")
+        assert store.list("raw/") == []

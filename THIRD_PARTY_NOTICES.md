@@ -31,7 +31,9 @@ Installed as packages, not copied. Pinned in `.github/workflows/ci.yml`.
 | cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause | Runtime: AES-256-GCM envelope encryption of tenant secrets (`packages/storage`, Risk R-12) | 30 Sep 2026 |
 | cffi | (dependency of cryptography) | MIT-0 | Runtime, transitive | 30 Sep 2026 |
 | pycparser | (dependency of cffi) | BSD-3-Clause | Runtime, transitive | 30 Sep 2026 |
-| pytest | 8.3.3 | MIT | Development and CI only | Pending sign-off (EB-28) |
+| pytest | 8.3.3 | MIT | Development and CI only | 30 Sep 2026 (EB-28 sign-off) |
+| boto3 | 1.35.30 | Apache-2.0 | Runtime: S3 object store backend & AWS KMS key provider (`packages/storage`, EB-85) | 30 Sep 2026 |
+| botocore | (dependency of boto3) | Apache-2.0 | Runtime, transitive | 30 Sep 2026 |
 
 ## MIT licence text (applies to both projects above, outside their `ee` directories)
 
