@@ -1,1 +1,10 @@
-{}
+{
+  "name": "klarity-enterprise-brain",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "scripts": {
+    "web:dev": "pnpm --filter @klarity/web dev",
+    "web:build": "pnpm --filter @klarity/web build",
+    "web:typecheck": "pnpm --filter @klarity/web typecheck"
+  }
+}

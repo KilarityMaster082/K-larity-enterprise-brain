@@ -1,2 +1,4 @@
-# Owner task: UNOWNED — assign an EB task
-# Status: scaffold placeholder — not implemented
+# Owner task: EB-23 Web UI shell
+# JavaScript workspace. Python packages are not listed here (see Makefile PYTHONPATH_DEV).
+packages:
+  - apps/web
