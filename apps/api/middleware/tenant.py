@@ -1,0 +1,3 @@
+"""Owner task: EB-20 RLS and tenant middleware
+Status: scaffold placeholder — not implemented
+"""

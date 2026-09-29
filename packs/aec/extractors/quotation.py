@@ -1,0 +1,3 @@
+"""Owner task: EB-65 AEC pack
+Status: scaffold placeholder — not implemented
+"""

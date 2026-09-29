@@ -1,0 +1,2 @@
+-- Owner task: EB-19 Database schema v1
+-- Status: scaffold placeholder — not implemented

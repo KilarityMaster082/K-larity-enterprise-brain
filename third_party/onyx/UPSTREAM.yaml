@@ -1,0 +1,179 @@
+tool: onyx
+repo: https://github.com/onyx-dot-app/onyx
+commit: a18fc1a652ff2b67ef7b1aae59dbfed013739365
+licence: MIT (Expat); ee/ directories excluded
+borrow_register: https://app.notion.com/3eae3304343e8179b7d2dae74281a0c6
+status: vendored-verbatim  # not reviewed, not modified, not wired into the build
+features:
+  O1:
+    task: EB-28
+    target: packages/connectors-sdk/
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/interfaces.py, sha256: 59833c772c4848c5}
+      - {path: backend/onyx/connectors/models.py, sha256: 431b08dcd3dd8cbe}
+      - {path: backend/onyx/connectors/exceptions.py, sha256: c4b1dc9d4255e398}
+      - {path: backend/onyx/connectors/connector_runner.py, sha256: 076cb02180e0986f}
+      - {path: backend/onyx/connectors/credentials_provider.py, sha256: 6aa0ad5715a51bea}
+  O2:
+    task: EB-28
+    target: packages/connectors-sdk/
+    review: pending
+    files:
+      - {path: backend/onyx/background/indexing/checkpointing_utils.py, sha256: 6525d663e3b8cbff}
+  O3:
+    task: EB-28
+    target: packages/connectors-sdk/
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/cross_connector_utils/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/cross_connector_utils/download.py, sha256: b8d419f269441f06}
+      - {path: backend/onyx/connectors/cross_connector_utils/miscellaneous_utils.py, sha256: 5a0220615e8bec30}
+      - {path: backend/onyx/connectors/cross_connector_utils/rate_limit_wrapper.py, sha256: f44ae5b5eef324f1}
+      - {path: backend/onyx/connectors/cross_connector_utils/section_utils.py, sha256: 4887cba2e45018a2}
+      - {path: backend/onyx/connectors/cross_connector_utils/server_wait.py, sha256: 1ad99df50c957fe8}
+      - {path: backend/onyx/connectors/cross_connector_utils/tabular_section_utils.py, sha256: 9abc51086f138352}
+  O4-gmail:
+    task: EB-31
+    target: services/ingestion/connectors/gmail/
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/gmail/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/gmail/config.py, sha256: abea12445cfaa5a6}
+      - {path: backend/onyx/connectors/gmail/connector.py, sha256: 79c952ba0414bd25}
+      - {path: backend/onyx/connectors/google_utils/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/google_utils/google_auth.py, sha256: 8afed67faee69915}
+      - {path: backend/onyx/connectors/google_utils/google_kv.py, sha256: 165b004f3b4e26df}
+      - {path: backend/onyx/connectors/google_utils/google_utils.py, sha256: 1b8c440ccf05924d}
+      - {path: backend/onyx/connectors/google_utils/resources.py, sha256: 6fcb8867c270d4db}
+      - {path: backend/onyx/connectors/google_utils/shared_constants.py, sha256: 7e9b941cd7eb62c7}
+  O4-drive:
+    task: EB-33
+    target: services/ingestion/connectors/drive/ + sheets/
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/google_drive/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/google_drive/config.py, sha256: 855e87e6a78d1d3b}
+      - {path: backend/onyx/connectors/google_drive/connector.py, sha256: 24e715b940f8d4d6}
+      - {path: backend/onyx/connectors/google_drive/constants.py, sha256: 7acf50ec980628b8}
+      - {path: backend/onyx/connectors/google_drive/doc_conversion.py, sha256: 72c2e398fe39580b}
+      - {path: backend/onyx/connectors/google_drive/file_retrieval.py, sha256: 8b17c0e52ab1c12d}
+      - {path: backend/onyx/connectors/google_drive/models.py, sha256: 775d8b5313917566}
+      - {path: backend/onyx/connectors/google_drive/section_extraction.py, sha256: 0e9fbca97cb99226}
+  O4-file:
+    task: EB-35
+    target: services/ingestion/connectors/file_drop/
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/file/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/file/config.py, sha256: 7fc2db2556d84d61}
+      - {path: backend/onyx/connectors/file/connector.py, sha256: 154a32a21f652401}
+  O4-imap:
+    task: EB-31
+    target: services/ingestion/connectors/ (next)
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/imap/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/imap/config.py, sha256: 2a9e558c3c2034fc}
+      - {path: backend/onyx/connectors/imap/connector.py, sha256: 06c6612688ac1b88}
+      - {path: backend/onyx/connectors/imap/models.py, sha256: f5c8468d1fa196bd}
+  O4-web:
+    task: EB-28
+    target: services/ingestion/connectors/ (next)
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/web/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/web/config.py, sha256: 80d0b0ae5775146b}
+      - {path: backend/onyx/connectors/web/connector.py, sha256: defc0846f8c863b9}
+  O4-microsoft:
+    task: EB-28
+    target: services/ingestion/connectors/ (next 30 days)
+    review: pending
+    files:
+      - {path: backend/onyx/connectors/microsoft_utils/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/microsoft_utils/config.py, sha256: e9be737a242e3ed5}
+      - {path: backend/onyx/connectors/microsoft_utils/drive_delta.py, sha256: 3ce0af60f225e6bb}
+      - {path: backend/onyx/connectors/microsoft_utils/drive_items.py, sha256: def8e0059dfd7274}
+      - {path: backend/onyx/connectors/microsoft_utils/entra.py, sha256: 559c3db971fc40b7}
+      - {path: backend/onyx/connectors/microsoft_utils/graph_auth.py, sha256: 4a053947b8145900}
+      - {path: backend/onyx/connectors/microsoft_utils/graph_client.py, sha256: f0d096e57793630d}
+      - {path: backend/onyx/connectors/microsoft_utils/graph_env.py, sha256: 4350d3e1ebc21b89}
+      - {path: backend/onyx/connectors/microsoft_utils/graph_errors.py, sha256: de160dc6b5db8f6d}
+      - {path: backend/onyx/connectors/microsoft_utils/graph_gateway.py, sha256: 908a37c69bf7e895}
+      - {path: backend/onyx/connectors/sharepoint/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/sharepoint/config.py, sha256: 42d67215d7214282}
+      - {path: backend/onyx/connectors/sharepoint/connector.py, sha256: b0a7862917f344e7}
+      - {path: backend/onyx/connectors/sharepoint/connector_utils.py, sha256: c3e3e44fc5dfe5be}
+      - {path: backend/onyx/connectors/onedrive/__init__.py, sha256: 01ba4719c80b6fe9}
+      - {path: backend/onyx/connectors/onedrive/access.py, sha256: 11f0de9f5e730d87}
+      - {path: backend/onyx/connectors/onedrive/capability_checks.py, sha256: 9ac23b92600c3169}
+      - {path: backend/onyx/connectors/onedrive/config.py, sha256: 2fde1e009f62755f}
+      - {path: backend/onyx/connectors/onedrive/connector.py, sha256: 8751f2269bb1afd7}
+      - {path: backend/onyx/connectors/onedrive/models.py, sha256: c058e142326eb811}
+      - {path: backend/onyx/connectors/onedrive/scope.py, sha256: a99ecb8a2ec04522}
+      - {path: backend/onyx/connectors/onedrive/source_operations.py, sha256: d2ab5dd93a389665}
+      - {path: backend/onyx/connectors/outlook/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/outlook/capability_checks.py, sha256: 73f6eb2b75232f0c}
+      - {path: backend/onyx/connectors/outlook/config.py, sha256: 970aa8094bb9d6bf}
+      - {path: backend/onyx/connectors/outlook/connector.py, sha256: 35ac5f92cfde2d34}
+      - {path: backend/onyx/connectors/outlook/errors.py, sha256: ce058523ee089f08}
+      - {path: backend/onyx/connectors/outlook/mailboxes.py, sha256: fc1c4672a9f2a103}
+      - {path: backend/onyx/connectors/outlook/models.py, sha256: 6f8c41b024eb3649}
+      - {path: backend/onyx/connectors/outlook/source_operations.py, sha256: a065300782c81e98}
+      - {path: backend/onyx/connectors/teams/__init__.py, sha256: e3b0c44298fc1c14}
+      - {path: backend/onyx/connectors/teams/config.py, sha256: 53a327c7dc83c1da}
+      - {path: backend/onyx/connectors/teams/connector.py, sha256: 9c7aa1c7a4e44534}
+      - {path: backend/onyx/connectors/teams/files.py, sha256: 9bccf2b86b6bcdf4}
+      - {path: backend/onyx/connectors/teams/groups.py, sha256: acf8f661acccb865}
+      - {path: backend/onyx/connectors/teams/images.py, sha256: bb82ef03ae6eec81}
+      - {path: backend/onyx/connectors/teams/listing.py, sha256: 407c664a9152ebfb}
+      - {path: backend/onyx/connectors/teams/meeting_chats.py, sha256: 6a63147e7a830220}
+      - {path: backend/onyx/connectors/teams/messages.py, sha256: fa87b88809454c0c}
+      - {path: backend/onyx/connectors/teams/models.py, sha256: 4fc41f60d8884854}
+      - {path: backend/onyx/connectors/teams/organizers.py, sha256: 7a3c09776f634771}
+      - {path: backend/onyx/connectors/teams/refusals.py, sha256: 703c6e3badf5dcbc}
+      - {path: backend/onyx/connectors/teams/session.py, sha256: 231f51f36841b317}
+      - {path: backend/onyx/connectors/teams/sources.py, sha256: 9382b7d7c51e261a}
+      - {path: backend/onyx/connectors/teams/threads.py, sha256: a12fe0f5cef699f2}
+      - {path: backend/onyx/connectors/teams/transcripts.py, sha256: 41d608ba006f2c42}
+      - {path: backend/onyx/connectors/teams/utils.py, sha256: e68fabf461042333}
+  O5:
+    task: EB-42
+    target: packages/permissions/filter.py
+    review: pending
+    files:
+      - {path: backend/onyx/access/utils.py, sha256: ae3987615719bc47}
+      - {path: backend/onyx/access/models.py, sha256: 6f1077b7a66aab94}
+      - {path: backend/onyx/access/access.py, sha256: 42ad10e99e7b6999}
+      - {path: backend/onyx/document_index/opensearch/search.py, sha256: a7ee1053c10863b9}
+  O6:
+    task: EB-85
+    target: packages/tenant-context/
+    review: pending
+    files:
+      - {path: backend/shared_configs/contextvars.py, sha256: 6adb090c2d709e26}
+  O7:
+    task: EB-36
+    target: services/context-engine/indexing/
+    review: pending
+    files:
+      - {path: backend/onyx/document_index/opensearch/schema.py, sha256: 4658f3fe52483dc3}
+  O8:
+    task: EB-29
+    target: services/ingestion/workflows/
+    review: pending
+    files:
+      - {path: backend/onyx/background/indexing/run_docfetching.py, sha256: d479f5d1aa9e42fb}
+  O9:
+    task: EB-36
+    target: services/context-engine/indexing/
+    review: pending
+    files:
+      - {path: backend/onyx/document_index/factory.py, sha256: b0abed2aa2d5d903}
+  O10:
+    task: EB-36
+    target: services/context-engine/indexing/
+    review: pending
+    files:
+      - {path: backend/onyx/indexing/indexing_pipeline.py, sha256: e78ca5fbc8ceef3f}
+refused: []

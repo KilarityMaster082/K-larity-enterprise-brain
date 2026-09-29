@@ -1,0 +1,3 @@
+"""Owner task: EB-22 OpenFGA model and tuple sync
+Status: scaffold placeholder — not implemented
+"""

@@ -1,0 +1,23 @@
+# Owner task: EB-16 Repo scaffold — keep OS, build and secret artefacts out of git
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
+.turbo/
+.next/
+coverage/
+
+# secrets never live in source (CLAUDE.md rule 5)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# upstream clones used only by ops/ci/vendor_upstream.py
+.upstream/

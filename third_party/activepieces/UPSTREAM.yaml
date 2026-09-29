@@ -1,0 +1,545 @@
+tool: activepieces
+repo: https://github.com/activepieces/activepieces
+commit: 611db01a865b84a0f900f4b078de275d43529423
+licence: MIT (Expat); packages/ee, server/api/src/app/ee and every other ee/ folder excluded
+borrow_register: https://app.notion.com/3eae3304343e814a9b73f47299508c13
+status: vendored-verbatim  # not reviewed, not modified, not wired into the build
+features:
+  A1:
+    task: EB-28
+    target: packages/connectors-sdk/ (actions/triggers)
+    review: pending
+    files:
+      - {path: packages/pieces/framework/src/lib/action/action.ts, sha256: 1e04801af5a6e930}
+      - {path: packages/pieces/framework/src/lib/context/index.ts, sha256: ed1436fa7afbcb98}
+      - {path: packages/pieces/framework/src/lib/context/versioning.ts, sha256: 01f351c1c85c84ea}
+      - {path: packages/pieces/framework/src/lib/i18n.ts, sha256: 124200a95d93c915}
+      - {path: packages/pieces/framework/src/lib/index.ts, sha256: c2879a76fa9b25c4}
+      - {path: packages/pieces/framework/src/lib/output-schema.ts, sha256: 1c9468fb3c62dd45}
+      - {path: packages/pieces/framework/src/lib/piece-metadata.ts, sha256: b26c1a3130dc05c4}
+      - {path: packages/pieces/framework/src/lib/piece.ts, sha256: 4b67437b12051d23}
+      - {path: packages/pieces/framework/src/lib/property/authentication/basic-auth-prop.ts, sha256: 0bab77788e50ad70}
+      - {path: packages/pieces/framework/src/lib/property/authentication/common.ts, sha256: 006e7b0bc25cfe4c}
+      - {path: packages/pieces/framework/src/lib/property/authentication/custom-auth-prop.ts, sha256: 24d06ae2c932c55a}
+      - {path: packages/pieces/framework/src/lib/property/authentication/index.ts, sha256: 647ed1c70af8b4ca}
+      - {path: packages/pieces/framework/src/lib/property/authentication/oauth2-prop.ts, sha256: 7ae54547bb027950}
+      - {path: packages/pieces/framework/src/lib/property/authentication/oidc-prop.ts, sha256: d05775d3ad4c3546}
+      - {path: packages/pieces/framework/src/lib/property/authentication/secret-text-property.ts, sha256: 086d170fed5c2b44}
+      - {path: packages/pieces/framework/src/lib/property/index.ts, sha256: 1663f2eed7d73b5d}
+      - {path: packages/pieces/framework/src/lib/property/input/array-property.ts, sha256: 3f89a8bc56c502bb}
+      - {path: packages/pieces/framework/src/lib/property/input/checkbox-property.ts, sha256: c1d8dbf9b7585edc}
+      - {path: packages/pieces/framework/src/lib/property/input/color-property.ts, sha256: 17c132971f6ef1d9}
+      - {path: packages/pieces/framework/src/lib/property/input/common.ts, sha256: d3ba31a58065ef39}
+      - {path: packages/pieces/framework/src/lib/property/input/custom-property.ts, sha256: 843f5b8df9edb520}
+      - {path: packages/pieces/framework/src/lib/property/input/date-range-property.spec.ts, sha256: 97f87aa5d0496f64}
+      - {path: packages/pieces/framework/src/lib/property/input/date-range-property.ts, sha256: a6a44d0b851891a8}
+      - {path: packages/pieces/framework/src/lib/property/input/date-time-property.ts, sha256: bdfb3aa3ba4b091b}
+      - {path: packages/pieces/framework/src/lib/property/input/dropdown/common.ts, sha256: 54c99d55c29bccc0}
+      - {path: packages/pieces/framework/src/lib/property/input/dropdown/dropdown-prop.ts, sha256: e05edef9a88ebd02}
+      - {path: packages/pieces/framework/src/lib/property/input/dropdown/static-dropdown.ts, sha256: df68fb28aef65dc5}
+      - {path: packages/pieces/framework/src/lib/property/input/dynamic-prop.ts, sha256: 7dbd3ca9704a1b2c}
+      - {path: packages/pieces/framework/src/lib/property/input/file-property.ts, sha256: a8b0fcd141f961ba}
+      - {path: packages/pieces/framework/src/lib/property/input/index.ts, sha256: 36443e764ae53f8c}
+      - {path: packages/pieces/framework/src/lib/property/input/json-property.ts, sha256: 2c3c38c40a578066}
+      - {path: packages/pieces/framework/src/lib/property/input/markdown-property.ts, sha256: 024d50c41bd84829}
+      - {path: packages/pieces/framework/src/lib/property/input/number-property.ts, sha256: ac00cb7c9ff63db5}
+      - {path: packages/pieces/framework/src/lib/property/input/object-property.ts, sha256: a1c01d17de55199d}
+      - {path: packages/pieces/framework/src/lib/property/input/property-type.ts, sha256: 0bd34edaf6b9cf66}
+      - {path: packages/pieces/framework/src/lib/property/input/rich-text-property.ts, sha256: 84fa746938640e1e}
+      - {path: packages/pieces/framework/src/lib/property/input/text-property.ts, sha256: 2221de8bf29cf0c5}
+      - {path: packages/pieces/framework/src/lib/property/util.ts, sha256: 498a00787c4f7a4a}
+      - {path: packages/pieces/framework/src/lib/test/index.ts, sha256: 1a65b76de960c177}
+      - {path: packages/pieces/framework/src/lib/trigger/trigger.ts, sha256: 16baa9ca9f08cb94}
+  A2-gmail:
+    task: EB-31
+    target: services/ingestion/connectors/gmail/
+    review: pending
+    files:
+      - {path: packages/pieces/community/gmail/src/i18n/ca.json, sha256: 21345663564a02a3}
+      - {path: packages/pieces/community/gmail/src/i18n/de.json, sha256: b6fe008b4d4cf99b}
+      - {path: packages/pieces/community/gmail/src/i18n/es.json, sha256: 3a3b9bb90ad2dce0}
+      - {path: packages/pieces/community/gmail/src/i18n/fr.json, sha256: 69f4477e1ea9d9f8}
+      - {path: packages/pieces/community/gmail/src/i18n/hi.json, sha256: 21345663564a02a3}
+      - {path: packages/pieces/community/gmail/src/i18n/id.json, sha256: 21345663564a02a3}
+      - {path: packages/pieces/community/gmail/src/i18n/ja.json, sha256: 936279efcbf1f78d}
+      - {path: packages/pieces/community/gmail/src/i18n/nl.json, sha256: 8fe79191f6029fac}
+      - {path: packages/pieces/community/gmail/src/i18n/pt.json, sha256: c2bcf411fb97e33e}
+      - {path: packages/pieces/community/gmail/src/i18n/ru.json, sha256: c37480865c74091f}
+      - {path: packages/pieces/community/gmail/src/i18n/translation.json, sha256: dd85b64675f2d152}
+      - {path: packages/pieces/community/gmail/src/i18n/vi.json, sha256: 21345663564a02a3}
+      - {path: packages/pieces/community/gmail/src/i18n/zh.json, sha256: 16d61e39f780d2d3}
+      - {path: packages/pieces/community/gmail/src/index.ts, sha256: 55f61883d1dffd85}
+      - {path: packages/pieces/community/gmail/src/lib/actions/add-label-to-email-action.ts, sha256: c74fc8969041ad60}
+      - {path: packages/pieces/community/gmail/src/lib/actions/ai-archive-email-action.ts, sha256: 1044dc03c268ed18}
+      - {path: packages/pieces/community/gmail/src/lib/actions/ai-create-label-action.ts, sha256: c39330e90dcd5b48}
+      - {path: packages/pieces/community/gmail/src/lib/actions/ai-get-message-action.ts, sha256: 9174654a6b28fc8d}
+      - {path: packages/pieces/community/gmail/src/lib/actions/ai-reply-to-thread-action.ts, sha256: 34f0bc3aae2812a8}
+      - {path: packages/pieces/community/gmail/src/lib/actions/ai-search-email-action.ts, sha256: 5583248a8541e901}
+      - {path: packages/pieces/community/gmail/src/lib/actions/ai-send-email-action.ts, sha256: 69a47af45578c08b}
+      - {path: packages/pieces/community/gmail/src/lib/actions/archive-email-action.ts, sha256: 27b1467deac7256f}
+      - {path: packages/pieces/community/gmail/src/lib/actions/create-draft-action.ts, sha256: 5eca7bfa50d5042a}
+      - {path: packages/pieces/community/gmail/src/lib/actions/create-draft-reply-action.ts, sha256: fe94b7bbba30443a}
+      - {path: packages/pieces/community/gmail/src/lib/actions/create-label-action.ts, sha256: d17037c35b54b3c7}
+      - {path: packages/pieces/community/gmail/src/lib/actions/delete-draft-action.ts, sha256: ccd5d69aa77e8138}
+      - {path: packages/pieces/community/gmail/src/lib/actions/forward-message-action.ts, sha256: bac2986a3b5433e4}
+      - {path: packages/pieces/community/gmail/src/lib/actions/get-attachment-action.ts, sha256: 3e457024c545e793}
+      - {path: packages/pieces/community/gmail/src/lib/actions/get-draft-action.ts, sha256: e9a7a8f2c6944e66}
+      - {path: packages/pieces/community/gmail/src/lib/actions/get-label-action.ts, sha256: 150ba010a67d9966}
+      - {path: packages/pieces/community/gmail/src/lib/actions/get-mail-action.ts, sha256: 42947d920d74a416}
+      - {path: packages/pieces/community/gmail/src/lib/actions/get-profile-action.ts, sha256: 6d996fe9ba960d65}
+      - {path: packages/pieces/community/gmail/src/lib/actions/get-thread-action.ts, sha256: 4e491c231c3252f4}
+      - {path: packages/pieces/community/gmail/src/lib/actions/list-drafts-action.ts, sha256: 20d8d270133ebdef}
+      - {path: packages/pieces/community/gmail/src/lib/actions/list-history-action.ts, sha256: a3be3a86e2eff8fb}
+      - {path: packages/pieces/community/gmail/src/lib/actions/list-labels-action.ts, sha256: fa3f270fa3e1cca5}
+      - {path: packages/pieces/community/gmail/src/lib/actions/list-threads-action.ts, sha256: 2a1c2fd0cc726f08}
+      - {path: packages/pieces/community/gmail/src/lib/actions/modify-labels-action.ts, sha256: 4d48eba3911bd827}
+      - {path: packages/pieces/community/gmail/src/lib/actions/modify-thread-labels-action.ts, sha256: 7afc29240c3bb4ef}
+      - {path: packages/pieces/community/gmail/src/lib/actions/remove-label-from-email-action.ts, sha256: 164d9923602b38c3}
+      - {path: packages/pieces/community/gmail/src/lib/actions/reply-to-email-action.ts, sha256: b90864a87719f7e6}
+      - {path: packages/pieces/community/gmail/src/lib/actions/request-approval-in-email.ts, sha256: d28319b84d889527}
+      - {path: packages/pieces/community/gmail/src/lib/actions/search-email-action.ts, sha256: fa2c3eeab1a35084}
+      - {path: packages/pieces/community/gmail/src/lib/actions/send-draft-action.ts, sha256: 320fb15058704f72}
+      - {path: packages/pieces/community/gmail/src/lib/actions/send-email-action.ts, sha256: 64919298bb368837}
+      - {path: packages/pieces/community/gmail/src/lib/actions/stop-watch-action.ts, sha256: a063f48855c70e08}
+      - {path: packages/pieces/community/gmail/src/lib/actions/trash-message-action.ts, sha256: 578d3b7a0afe0c0c}
+      - {path: packages/pieces/community/gmail/src/lib/actions/untrash-message-action.ts, sha256: ff092c3892c0e550}
+      - {path: packages/pieces/community/gmail/src/lib/actions/update-draft-action.ts, sha256: e762fdb9fc2f78b8}
+      - {path: packages/pieces/community/gmail/src/lib/actions/update-label-action.ts, sha256: 1fbdb6212d77d427}
+      - {path: packages/pieces/community/gmail/src/lib/auth.ts, sha256: 44a12cc4818cbe7f}
+      - {path: packages/pieces/community/gmail/src/lib/common/data.ts, sha256: 170fa36c3bde33af}
+      - {path: packages/pieces/community/gmail/src/lib/common/mime.ts, sha256: 2c80e28fa7488933}
+      - {path: packages/pieces/community/gmail/src/lib/common/models.ts, sha256: 6a09e67e26e2a42b}
+      - {path: packages/pieces/community/gmail/src/lib/common/props.ts, sha256: 31ac40b3fa802106}
+      - {path: packages/pieces/community/gmail/src/lib/common/validation.ts, sha256: dff7b6e65db6af07}
+      - {path: packages/pieces/community/gmail/src/lib/output-schemas.ts, sha256: e47264bc26fe61b3}
+      - {path: packages/pieces/community/gmail/src/lib/triggers/new-attachment.ts, sha256: 474e511b2d3059e3}
+      - {path: packages/pieces/community/gmail/src/lib/triggers/new-conversation.ts, sha256: 52c8af1ee4debd15}
+      - {path: packages/pieces/community/gmail/src/lib/triggers/new-email.ts, sha256: db62721d8f8a6f55}
+      - {path: packages/pieces/community/gmail/src/lib/triggers/new-label.ts, sha256: 15a6cbab779fb10a}
+      - {path: packages/pieces/community/gmail/src/lib/triggers/new-labeled-email.ts, sha256: 9cf023f9ef9dba3d}
+  A2-sheets:
+    task: EB-33
+    target: services/ingestion/connectors/sheets/
+    review: pending
+    files:
+      - {path: packages/pieces/community/google-sheets/src/i18n/ar.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/bg.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/ca.json, sha256: 2a06d55fcd562bb7}
+      - {path: packages/pieces/community/google-sheets/src/i18n/de.json, sha256: ef817a14c3c62371}
+      - {path: packages/pieces/community/google-sheets/src/i18n/es.json, sha256: d0a6b9f44e87bb96}
+      - {path: packages/pieces/community/google-sheets/src/i18n/fr.json, sha256: 0ba0d75671376a47}
+      - {path: packages/pieces/community/google-sheets/src/i18n/hi.json, sha256: 2a06d55fcd562bb7}
+      - {path: packages/pieces/community/google-sheets/src/i18n/hu.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/hy.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/id.json, sha256: 2a06d55fcd562bb7}
+      - {path: packages/pieces/community/google-sheets/src/i18n/it.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/ja.json, sha256: 57a5c4de83609515}
+      - {path: packages/pieces/community/google-sheets/src/i18n/ko.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/nl.json, sha256: 7e793f8f67f31be2}
+      - {path: packages/pieces/community/google-sheets/src/i18n/pl.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/pt.json, sha256: cfca608cb564a0b5}
+      - {path: packages/pieces/community/google-sheets/src/i18n/ru.json, sha256: 7b91f36b04591ee6}
+      - {path: packages/pieces/community/google-sheets/src/i18n/sv.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/translation.json, sha256: 7ac0515bab7dc64b}
+      - {path: packages/pieces/community/google-sheets/src/i18n/uk.json, sha256: ea72f1c8cde55480}
+      - {path: packages/pieces/community/google-sheets/src/i18n/vi.json, sha256: 2a06d55fcd562bb7}
+      - {path: packages/pieces/community/google-sheets/src/i18n/zh.json, sha256: 4599b91e0be585d6}
+      - {path: packages/pieces/community/google-sheets/src/index.ts, sha256: 7feef140fe9c7c9d}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/clear-rows.ts, sha256: ebb91aea5a82da18}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/clear-sheet.ts, sha256: 2b0a3decad3e7b8c}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/copy-worksheet.ts, sha256: 9aef9a7032a0b7d9}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/create-column.ts, sha256: ae2feaf3a0b209b3}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/create-spreadsheet.ts, sha256: 3e7fddd1505f934f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/create-worksheet.ts, sha256: aff68479d24b3206}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/delete-multiple-rows.ts, sha256: 6340500a87a96b66}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/delete-row.action.ts, sha256: dc99765289cd707e}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/delete-worksheet.ts, sha256: ddddb2d54e7df20c}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/export-sheet.ts, sha256: d70026384cf7d0a1}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/find-or-create-row.ts, sha256: 3132380f1a20bf1b}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/find-or-create-worksheet.ts, sha256: c62eedf49ecc1ee8}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/find-row-by-num.ts, sha256: ade6aad5fd1756b4}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/find-rows.ts, sha256: fc09b3a668da6a4b}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/find-spreadsheets.ts, sha256: 3cf638beeb34b130}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/find-worksheet.ts, sha256: 436a9408d4669760}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/format-spreadsheet-row.ts, sha256: f1b455d4dc4972c1}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/get-many-rows.ts, sha256: 40e34f21657afc53}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/get-rows.ts, sha256: c5b79d5f3d48367f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/insert-multiple-rows.action.ts, sha256: d2c421601611ace9}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/insert-row-at-top.ts, sha256: 993b94601df27bad}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/insert-row.action.ts, sha256: c6fcae920f118b67}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/read-data-range.ts, sha256: 8a53752b2a06123f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/rename-worksheet.ts, sha256: aa8ae4d530a37f98}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-add-column.ts, sha256: 627cdaa4939f4e03}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-add-multiple-rows.ts, sha256: 85367af320cb0ff7}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-add-row-at-top.ts, sha256: 0c4a6dd8e59c2e7f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-add-row.ts, sha256: d27e30f716d08dc5}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-add-worksheet.ts, sha256: 4851c0a39c8ee88a}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-append-dimension.ts, sha256: 03b0dc638103b50a}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-append-values.ts, sha256: 615e9e8013615aef}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-auto-resize-dimensions.ts, sha256: 897ef7bd9519ebb3}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-clear-values.ts, sha256: e329dbf7bdc01f2f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-copy-worksheet.ts, sha256: edd20c1c92ae84c2}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-create-spreadsheet.ts, sha256: 7d532e0f659c57b2}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-delete-dimension.ts, sha256: 7fcb613fdba55b6f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-delete-multiple-rows.ts, sha256: 805aab7fe0d07083}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-delete-row.ts, sha256: c19ee68deaf56879}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-delete-worksheet.ts, sha256: d48f7082bedda6ea}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-export-worksheet.ts, sha256: f3e4297d206b1429}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-find-or-create-row.ts, sha256: 705dbf078cbcd973}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-find-or-create-worksheet.ts, sha256: 857c16030fbe0b0e}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-find-rows.ts, sha256: d977e821a4b92fba}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-find-worksheet.ts, sha256: de3a4c691bb969f6}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-format-cells.ts, sha256: 3de5d073e271e39d}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-get-all-rows.ts, sha256: 22f8c673e543bd9b}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-get-next-rows.ts, sha256: 73e32421189cfc35}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-get-row.ts, sha256: ac61cb360058a172}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-get-spreadsheet.ts, sha256: 0619fb00f822145e}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-get-values.ts, sha256: 9c9bcf786240b058}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-insert-dimension.ts, sha256: 51bd4d543644eb3f}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-rename-worksheet.ts, sha256: 35c9684a6840482d}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-search-spreadsheets.ts, sha256: 5b43d13573db63ae}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-update-dimension-properties.ts, sha256: 6db2e79f7e6d4d12}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-update-multiple-rows.ts, sha256: 61e9133f720626a0}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-update-row.ts, sha256: 5d22cfd633e9bea9}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-update-sheet-properties.ts, sha256: 84497ec124f1ea1d}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/sheets-update-values.ts, sha256: 420cadb1504566ea}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/update-multiple-rows.ts, sha256: 9222021139a602f5}
+      - {path: packages/pieces/community/google-sheets/src/lib/actions/update-row.ts, sha256: 13c0e9486d633b4d}
+      - {path: packages/pieces/community/google-sheets/src/lib/common/common.ts, sha256: 9aacf4e3ed5f3493}
+      - {path: packages/pieces/community/google-sheets/src/lib/common/props.ts, sha256: c4cf83f6cf94f1d9}
+      - {path: packages/pieces/community/google-sheets/src/lib/output-schemas.ts, sha256: 91abc8f1cb0a980a}
+      - {path: packages/pieces/community/google-sheets/src/lib/triggers/helpers.ts, sha256: 29f0ae4059cd4117}
+      - {path: packages/pieces/community/google-sheets/src/lib/triggers/new-or-updated-row.trigger.ts, sha256: 50e5adc9c6270954}
+      - {path: packages/pieces/community/google-sheets/src/lib/triggers/new-row-added-webhook.ts, sha256: c4b87b60646475b6}
+      - {path: packages/pieces/community/google-sheets/src/lib/triggers/new-spreadsheet.ts, sha256: 8598499f8a7e4c53}
+      - {path: packages/pieces/community/google-sheets/src/lib/triggers/new-worksheet.ts, sha256: a2f711d607d03aa9}
+  A2-drive:
+    task: EB-35
+    target: services/ingestion/connectors/drive/
+    review: pending
+    files:
+      - {path: packages/pieces/community/google-drive/src/i18n/ca.json, sha256: 5326de995c18ee7c}
+      - {path: packages/pieces/community/google-drive/src/i18n/de.json, sha256: 51f20183d23b9bdb}
+      - {path: packages/pieces/community/google-drive/src/i18n/es.json, sha256: 9e8e2c9789d14bd0}
+      - {path: packages/pieces/community/google-drive/src/i18n/fr.json, sha256: b3838530dfb4ba1b}
+      - {path: packages/pieces/community/google-drive/src/i18n/hi.json, sha256: 38e013a150c358a6}
+      - {path: packages/pieces/community/google-drive/src/i18n/id.json, sha256: 2b145c6673e7131b}
+      - {path: packages/pieces/community/google-drive/src/i18n/ja.json, sha256: 4c3f1b93e8982c1d}
+      - {path: packages/pieces/community/google-drive/src/i18n/nl.json, sha256: 16cba66d13bfd4f1}
+      - {path: packages/pieces/community/google-drive/src/i18n/pt.json, sha256: 3f832b39334ede2e}
+      - {path: packages/pieces/community/google-drive/src/i18n/ru.json, sha256: 4937fff3a92f76b4}
+      - {path: packages/pieces/community/google-drive/src/i18n/translation.json, sha256: 2c765d05553d6d93}
+      - {path: packages/pieces/community/google-drive/src/i18n/vi.json, sha256: 1df24ae2edb87b89}
+      - {path: packages/pieces/community/google-drive/src/i18n/zh.json, sha256: 8ae038dfc8264fff}
+      - {path: packages/pieces/community/google-drive/src/index.ts, sha256: ba06313c2e8031f6}
+      - {path: packages/pieces/community/google-drive/src/lib/action/add-permission.action.ts, sha256: 2a274345aada9ea0}
+      - {path: packages/pieces/community/google-drive/src/lib/action/create-new-folder.ts, sha256: c80505e444a3b8e2}
+      - {path: packages/pieces/community/google-drive/src/lib/action/create-new-text-file.ts, sha256: 4a0f402c3c4c70d7}
+      - {path: packages/pieces/community/google-drive/src/lib/action/delete-file.ts, sha256: 438eb8547ebcbad2}
+      - {path: packages/pieces/community/google-drive/src/lib/action/delete-permission.action.ts, sha256: e5d50fd5174e1022}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-copy-file.ts, sha256: b055691406122b84}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-create-comment.ts, sha256: 4870384acc03418c}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-create-file-from-text.ts, sha256: c6d05479eb9042ef}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-create-folder.ts, sha256: 356ebc18559f5516}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-create-reply.ts, sha256: 45bce3ae9cbf063e}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-create-shared-drive.ts, sha256: b142d42936212282}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-delete-file.ts, sha256: 6154183ca6fbb9db}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-delete-reply.ts, sha256: 92b76033109ac986}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-delete-shared-drive.ts, sha256: 71618086ae4f7a3a}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-download-file.ts, sha256: 04d204b557ad4e4a}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-empty-trash.ts, sha256: 9c62a47c63c63e65}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-export-folder-as-zip.ts, sha256: 8e3108dae5356380}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-export-workspace-file.ts, sha256: 02979964cad33b39}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-get-about.ts, sha256: 33dc7cbfec8daec4}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-get-file.ts, sha256: 71678a7050abeb14}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-get-reply.ts, sha256: 1f3995e034898f9f}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-get-shared-drive.ts, sha256: 48fd50e17d2aaf0b}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-list-comments.ts, sha256: f2a46ee5b9130865}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-list-files.ts, sha256: 6874e19084122e89}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-list-permissions.ts, sha256: 59559854d104d2fc}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-list-replies.ts, sha256: 7a2f3bec070c2459}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-list-shared-drives.ts, sha256: 15e8c4745b0a492a}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-move-file.ts, sha256: e92b4629aa84e536}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-remove-permission.ts, sha256: b3bde99c7de6ed9e}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-replace-file-content.ts, sha256: b4e2b89e365ece70}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-save-file-as-pdf.ts, sha256: 6beb47faf0e51c35}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-search-files.ts, sha256: 1dd617bb120dd093}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-set-public-access.ts, sha256: f34052ba6d4abfab}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-share-file.ts, sha256: 329a1e6fd98db714}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-trash-file.ts, sha256: 0590a99b115efd57}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-untrash-file.ts, sha256: 75b3df9fa25c4f6d}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-update-file-metadata.ts, sha256: 3d4acb9cc9ab416f}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-update-permission.ts, sha256: 88074673abb46750}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-update-reply.ts, sha256: 6e136159abc8c957}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-update-shared-drive.ts, sha256: 8f26f8833cf3a835}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-upload-file.ts, sha256: 283a4c288d9da86f}
+      - {path: packages/pieces/community/google-drive/src/lib/action/drive-upload-from-url.ts, sha256: b711cba84fca3e6e}
+      - {path: packages/pieces/community/google-drive/src/lib/action/duplicate-file.action.ts, sha256: dfc5548a4b5b311a}
+      - {path: packages/pieces/community/google-drive/src/lib/action/get-file-by-id.ts, sha256: b6a44cdd9f346413}
+      - {path: packages/pieces/community/google-drive/src/lib/action/list-files.action.ts, sha256: 498060ddd3f60d5a}
+      - {path: packages/pieces/community/google-drive/src/lib/action/move-file.ts, sha256: 3773fde6b85df008}
+      - {path: packages/pieces/community/google-drive/src/lib/action/read-file.ts, sha256: a240d171a0d70c04}
+      - {path: packages/pieces/community/google-drive/src/lib/action/save-file-as-pdf.action.ts, sha256: 83c8b61cf9e62456}
+      - {path: packages/pieces/community/google-drive/src/lib/action/search-folder-or-file.action.ts, sha256: fcf8099219fc2065}
+      - {path: packages/pieces/community/google-drive/src/lib/action/send-to-trash.ts, sha256: 7e66c67e4d59351e}
+      - {path: packages/pieces/community/google-drive/src/lib/action/set-public-access.ts, sha256: 41c109ab169bf883}
+      - {path: packages/pieces/community/google-drive/src/lib/action/upload-file.ts, sha256: 17c145e84dc1dbe9}
+      - {path: packages/pieces/community/google-drive/src/lib/auth.ts, sha256: b3f598e2b05acfa3}
+      - {path: packages/pieces/community/google-drive/src/lib/common/get-file-content.ts, sha256: 6a7eec78499bbb41}
+      - {path: packages/pieces/community/google-drive/src/lib/common/index.ts, sha256: c5e1338a657cdf5d}
+      - {path: packages/pieces/community/google-drive/src/lib/common/list-drive-files.ts, sha256: c915da024121e32f}
+      - {path: packages/pieces/community/google-drive/src/lib/common/search-query.ts, sha256: 466730a9e19a13f1}
+      - {path: packages/pieces/community/google-drive/src/lib/output-schemas.ts, sha256: bffd06759e150182}
+      - {path: packages/pieces/community/google-drive/src/lib/triggers/new-file.ts, sha256: da7ebdfd08a08df0}
+      - {path: packages/pieces/community/google-drive/src/lib/triggers/new-folder.ts, sha256: c054e50999bb6554}
+      - {path: packages/pieces/community/google-drive/src/lib/triggers/new-or-updated-file.ts, sha256: 8cf64b8b773a7e7d}
+  A2-whatsapp:
+    task: EB-34
+    target: services/ingestion/connectors/whatsapp_cloud/
+    review: pending
+    files:
+      - {path: packages/pieces/community/whatsapp/src/i18n/ca.json, sha256: ceee81aebb397ad2}
+      - {path: packages/pieces/community/whatsapp/src/i18n/de.json, sha256: 87eb940320a680c0}
+      - {path: packages/pieces/community/whatsapp/src/i18n/es.json, sha256: a94fcc2c6023ff8d}
+      - {path: packages/pieces/community/whatsapp/src/i18n/fr.json, sha256: a48879b15cc568b3}
+      - {path: packages/pieces/community/whatsapp/src/i18n/hi.json, sha256: ceee81aebb397ad2}
+      - {path: packages/pieces/community/whatsapp/src/i18n/id.json, sha256: ceee81aebb397ad2}
+      - {path: packages/pieces/community/whatsapp/src/i18n/ja.json, sha256: 5ff8434a4ae42519}
+      - {path: packages/pieces/community/whatsapp/src/i18n/nl.json, sha256: d20282b025a6914c}
+      - {path: packages/pieces/community/whatsapp/src/i18n/pt.json, sha256: 600302fdc38ad45e}
+      - {path: packages/pieces/community/whatsapp/src/i18n/ru.json, sha256: a7eb03bdced279e9}
+      - {path: packages/pieces/community/whatsapp/src/i18n/translation.json, sha256: 87693ad5b5dfec63}
+      - {path: packages/pieces/community/whatsapp/src/i18n/vi.json, sha256: ceee81aebb397ad2}
+      - {path: packages/pieces/community/whatsapp/src/i18n/zh.json, sha256: 9da60407c762b485}
+      - {path: packages/pieces/community/whatsapp/src/index.ts, sha256: d92c70a57d844311}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/create-message-template.ts, sha256: 790ce42b11a9293a}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/delete-media.ts, sha256: 331fb7fe6f873462}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/delete-message-template.ts, sha256: 5ff226f13875c705}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/download-media.ts, sha256: d4fd8e5eb0816cf5}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/edit-message-template.ts, sha256: 7af768e0eba9052c}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/get-business-profile.ts, sha256: a1395aac873c55f6}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/get-media-url.ts, sha256: de61a07bd1b59d66}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/get-phone-number.ts, sha256: 849f58f121f04a5c}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/list-message-templates.ts, sha256: 999437429a5d79af}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/list-phone-numbers.ts, sha256: 608de4951f3749b7}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/mark-message-as-read.ts, sha256: 6c7071c4f8379fe3}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-contact.ts, sha256: d00cdcda558d60bc}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-from-template.ts, sha256: a3ec5cdd6e50858a}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-interactive-buttons.ts, sha256: dcad20f29c4834f7}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-interactive-cta-url.ts, sha256: a2de860db02bcaf3}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-interactive-list.ts, sha256: 83bea10f623a39b3}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-location.ts, sha256: 3d9b7610041bcc0a}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-media.ts, sha256: 09c3dd0fdbc85dde}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-message.ts, sha256: 0b3e38af2ea7b6e0}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-reaction.ts, sha256: 2dea5bca9e668d8b}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/send-template.ts, sha256: 39932aed5a22b778}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/update-business-profile.ts, sha256: ce2db1605fb1bc7c}
+      - {path: packages/pieces/community/whatsapp/src/lib/actions/upload-media.ts, sha256: 383dcff9a2e7c4df}
+      - {path: packages/pieces/community/whatsapp/src/lib/auth.ts, sha256: 8d7e81b96d7153b5}
+      - {path: packages/pieces/community/whatsapp/src/lib/common/client.ts, sha256: 10399de1d9570f00}
+      - {path: packages/pieces/community/whatsapp/src/lib/common/inputs.ts, sha256: b87581be75113351}
+      - {path: packages/pieces/community/whatsapp/src/lib/common/props.ts, sha256: 27b0f62e38be22f2}
+      - {path: packages/pieces/community/whatsapp/src/lib/common/utils.ts, sha256: d6936a76b85b30aa}
+      - {path: packages/pieces/community/whatsapp/src/lib/common/webhook.ts, sha256: 9646cf6baa37e7ea}
+      - {path: packages/pieces/community/whatsapp/src/lib/output-schemas.ts, sha256: ebadcaf49ec17ad0}
+      - {path: packages/pieces/community/whatsapp/src/lib/triggers/message-status-updated.ts, sha256: aab65e91d16c0cda}
+      - {path: packages/pieces/community/whatsapp/src/lib/triggers/new-incoming-message.ts, sha256: 8c6b7059af896406}
+      - {path: packages/pieces/community/whatsapp/src/lib/triggers/new-message-reaction.ts, sha256: 8c822b52fc49a17f}
+      - {path: packages/pieces/community/whatsapp/src/lib/triggers/template-status-updated.ts, sha256: 5e34b6abe9ccd7f3}
+  A2-http:
+    task: EB-28
+    target: packages/connectors-sdk/ (http action)
+    review: pending
+    files:
+      - {path: packages/pieces/core/http/src/i18n/ca.json, sha256: edcb10eca4466be6}
+      - {path: packages/pieces/core/http/src/i18n/de.json, sha256: 6cb34fa877935dc9}
+      - {path: packages/pieces/core/http/src/i18n/es.json, sha256: b2881720fb538915}
+      - {path: packages/pieces/core/http/src/i18n/fr.json, sha256: 8b75b282e492e943}
+      - {path: packages/pieces/core/http/src/i18n/hi.json, sha256: edcb10eca4466be6}
+      - {path: packages/pieces/core/http/src/i18n/id.json, sha256: edcb10eca4466be6}
+      - {path: packages/pieces/core/http/src/i18n/ja.json, sha256: 070d0aad804d5928}
+      - {path: packages/pieces/core/http/src/i18n/nl.json, sha256: 31010b785f52db69}
+      - {path: packages/pieces/core/http/src/i18n/pt.json, sha256: 7571b2591f9441ca}
+      - {path: packages/pieces/core/http/src/i18n/ru.json, sha256: bf462d259daf0fba}
+      - {path: packages/pieces/core/http/src/i18n/translation.json, sha256: a7e4f22e21b9ec71}
+      - {path: packages/pieces/core/http/src/i18n/vi.json, sha256: ba5a304ad85436b8}
+      - {path: packages/pieces/core/http/src/i18n/zh.json, sha256: 7e01af3499e39a9e}
+      - {path: packages/pieces/core/http/src/index.ts, sha256: 446493a609d1fa6a}
+      - {path: packages/pieces/core/http/src/lib/actions/parse-url.ts, sha256: ee15add1f33bab50}
+      - {path: packages/pieces/core/http/src/lib/actions/send-http-request-action.ts, sha256: e3130963be948cec}
+      - {path: packages/pieces/core/http/src/lib/common/props.ts, sha256: 03c600213a46991b}
+      - {path: packages/pieces/core/http/src/lib/output-schemas.ts, sha256: 32cd70cf5c141ee1}
+  A3:
+    task: EB-28
+    target: packages/connectors-sdk/
+    review: pending
+    files:
+      - {path: packages/pieces/common/src/lib/polling/index.ts, sha256: 3113a3e235159d3a}
+  A4:
+    task: EB-28
+    target: packages/connectors-sdk/
+    review: pending
+    files:
+      - {path: packages/server/api/src/app/trigger/dedupe-service.ts, sha256: dc95419fae5d6422}
+  A5:
+    task: EB-66
+    target: packages/approvals/
+    review: pending
+    files:
+      - {path: packages/pieces/core/approval/src/i18n/de.json, sha256: e32021e3c1adb5d4}
+      - {path: packages/pieces/core/approval/src/i18n/es.json, sha256: 1f628229e0ef3e61}
+      - {path: packages/pieces/core/approval/src/i18n/fr.json, sha256: 0a2b2a27d48de903}
+      - {path: packages/pieces/core/approval/src/i18n/ja.json, sha256: de919b5649393511}
+      - {path: packages/pieces/core/approval/src/i18n/nl.json, sha256: cdda3a9e38da3c18}
+      - {path: packages/pieces/core/approval/src/i18n/pt.json, sha256: ff3c53ab72ead735}
+      - {path: packages/pieces/core/approval/src/i18n/ru.json, sha256: 8648c1c59f554855}
+      - {path: packages/pieces/core/approval/src/i18n/translation.json, sha256: 66c61be060c7f5dd}
+      - {path: packages/pieces/core/approval/src/i18n/vi.json, sha256: 919082671f3ff847}
+      - {path: packages/pieces/core/approval/src/i18n/zh.json, sha256: 026658becd1eafdd}
+      - {path: packages/pieces/core/approval/src/index.ts, sha256: 9b1a0edcea2428c5}
+      - {path: packages/pieces/core/approval/src/lib/actions/create-approval-link.ts, sha256: 5d09dfa54c45e732}
+      - {path: packages/pieces/core/approval/src/lib/actions/wait-for-approval.ts, sha256: b81a0c805e04ce26}
+      - {path: packages/pieces/core/approval/src/lib/output-schemas.ts, sha256: 9b050d6522aa08ee}
+      - {path: packages/server/api/src/app/waitpoints/barrier-queue-factory.ts, sha256: 7c274c1f984b2451}
+      - {path: packages/server/api/src/app/waitpoints/barrier-queue.ts, sha256: 90ce7739a4f5ade9}
+      - {path: packages/server/api/src/app/waitpoints/barrier-service.ts, sha256: 4e42b0dab6640738}
+      - {path: packages/server/api/src/app/waitpoints/resume-controller.ts, sha256: c645f7010bf0ba98}
+      - {path: packages/server/api/src/app/waitpoints/resume-delay-handler.ts, sha256: 59f5aa80641edd39}
+      - {path: packages/server/api/src/app/waitpoints/resume-page-hooks.ts, sha256: c319b0c557b92830}
+      - {path: packages/server/api/src/app/waitpoints/resume-service.ts, sha256: 04db9550b036945c}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-controller.ts, sha256: eb04bff078b2bbc6}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-deadline-sweep.ts, sha256: 371f1ec9eaf19f54}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-entity.ts, sha256: ff9005aa84536379}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-service.ts, sha256: 85f13d66f05eb882}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-signal-entity.ts, sha256: 3579a228f41a4f0a}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-timeout-job.ts, sha256: cfa601aad5817ea5}
+      - {path: packages/server/api/src/app/waitpoints/waitpoint-types.ts, sha256: eb00fb28a325a355}
+      - {path: packages/core/execution/src/lib/flow-run/waitpoint/index.ts, sha256: 36d6b9d5d99aa50a}
+  A7:
+    task: EB-66
+    target: packages/approvals/ (versions)
+    review: pending
+    files:
+      - {path: packages/server/api/src/app/flows/flow/flow.service.ts, sha256: 0b9f3bcb3f629182}
+  A8:
+    task: EB-29
+    target: services/ingestion/workflows/
+    review: pending
+    files:
+      - {path: packages/server/engine/src/lib/helper/error-handling.ts, sha256: e290ec02562cf9f4}
+  A9:
+    task: EB-85
+    target: services/control-plane/ (credential store)
+    review: pending
+    files:
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/app-connection-service.ts, sha256: 5815523f64fa7f7e}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/app-connection.handler.ts, sha256: 9f698399c81c0d2e}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/connection-metadata.ts, sha256: f4545fcea41e262c}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/oauth2/index.ts, sha256: 66ffcdd4e15c76fa}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/oauth2/oauth2-service.ts, sha256: bc5d90ac783a1095}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/oauth2/oauth2-util.ts, sha256: a18afe998bcf088c}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/oauth2/services/cloud-oauth2-service.ts, sha256: e99f07102aececf6}
+      - {path: packages/server/api/src/app/app-connection/app-connection-service/oauth2/services/credentials-oauth2-service.ts, sha256: 82a50d6d424186fd}
+      - {path: packages/server/api/src/app/app-connection/app-connection-worker-controller.ts, sha256: e970a565bdf1bacf}
+      - {path: packages/server/api/src/app/app-connection/app-connection.controller.ts, sha256: a474e1f0f3c49c76}
+      - {path: packages/server/api/src/app/app-connection/app-connection.entity.ts, sha256: 18c53d4a559f4114}
+      - {path: packages/server/api/src/app/app-connection/app-connection.module.ts, sha256: 29c25f6d9ab37917}
+      - {path: packages/server/api/src/app/app-connection/platform-app-connection.controller.ts, sha256: 1be0b9dee1a75bbb}
+      - {path: packages/server/api/src/app/app-connection/platform-app-connection.module.ts, sha256: 2723882ba24a08d2}
+  A10:
+    task: EB-28
+    target: apps/api/ (MCP gateway, next)
+    review: pending
+    files:
+      - {path: packages/server/api/src/app/mcp/activity/mcp-activity-controller.ts, sha256: a56f97071fe5986c}
+      - {path: packages/server/api/src/app/mcp/activity/mcp-activity-entity.ts, sha256: 0af4338c903ee7e9}
+      - {path: packages/server/api/src/app/mcp/activity/mcp-activity-recorder.ts, sha256: 6ab72bff667130ab}
+      - {path: packages/server/api/src/app/mcp/activity/mcp-activity-service.ts, sha256: 0d98daa35209f2f8}
+      - {path: packages/server/api/src/app/mcp/mcp-access.ts, sha256: 59dbc3121e738a92}
+      - {path: packages/server/api/src/app/mcp/mcp-entity.ts, sha256: 41dcc6ccfe4f510c}
+      - {path: packages/server/api/src/app/mcp/mcp-listing-utils.ts, sha256: 75c3d9b37ebecbd3}
+      - {path: packages/server/api/src/app/mcp/mcp-module.ts, sha256: ed186a0ff80430a6}
+      - {path: packages/server/api/src/app/mcp/mcp-permissions.ts, sha256: 6b3714cf31dc21c3}
+      - {path: packages/server/api/src/app/mcp/mcp-platform-controller.ts, sha256: 6d6a7efbd2cbf76f}
+      - {path: packages/server/api/src/app/mcp/mcp-project-selection.ts, sha256: 53185dc6be5d044b}
+      - {path: packages/server/api/src/app/mcp/mcp-server-builder.ts, sha256: 71f7943fc40fc1b7}
+      - {path: packages/server/api/src/app/mcp/mcp-server-controller.ts, sha256: 6779397d264b1ae5}
+      - {path: packages/server/api/src/app/mcp/mcp-service.ts, sha256: c1a0c1dcb8780572}
+      - {path: packages/server/api/src/app/mcp/mcp-tool-input.ts, sha256: 23dd3cd6d9a8c7a3}
+      - {path: packages/server/api/src/app/mcp/mcp-usage-tracker.ts, sha256: 71789bee78859a19}
+      - {path: packages/server/api/src/app/mcp/oauth/client/mcp-oauth-client-auth.ts, sha256: 43d1e180ba3ab52b}
+      - {path: packages/server/api/src/app/mcp/oauth/client/mcp-oauth-client-identity.ts, sha256: a8a8810d343f7905}
+      - {path: packages/server/api/src/app/mcp/oauth/client/mcp-oauth-client.entity.ts, sha256: 0adefdf2f505f559}
+      - {path: packages/server/api/src/app/mcp/oauth/client/mcp-oauth-client.service.ts, sha256: e2b80ff6e35e5b53}
+      - {path: packages/server/api/src/app/mcp/oauth/client/mcp-oauth-register.controller.ts, sha256: 7007ce566bc8af60}
+      - {path: packages/server/api/src/app/mcp/oauth/code/mcp-oauth-approve.controller.ts, sha256: 553e204a4b05a0e6}
+      - {path: packages/server/api/src/app/mcp/oauth/code/mcp-oauth-authorize.controller.ts, sha256: 2f4e1221a97512c0}
+      - {path: packages/server/api/src/app/mcp/oauth/code/mcp-oauth-code.entity.ts, sha256: 59873e7bd5749c82}
+      - {path: packages/server/api/src/app/mcp/oauth/code/mcp-oauth-code.service.ts, sha256: d59ff81e3d9beec6}
+      - {path: packages/server/api/src/app/mcp/oauth/mcp-oauth-scopes.ts, sha256: 3c9f9fd1052d5548}
+      - {path: packages/server/api/src/app/mcp/oauth/mcp-oauth-validation.ts, sha256: 3ddde8ef9bdc6a59}
+      - {path: packages/server/api/src/app/mcp/oauth/mcp-oauth.controller.ts, sha256: 5975edcbfb54ef8a}
+      - {path: packages/server/api/src/app/mcp/oauth/mcp-oauth.module.ts, sha256: 783ce01db59ea02d}
+      - {path: packages/server/api/src/app/mcp/oauth/mcp-oauth.pkce.ts, sha256: 0d5a29c88fea83d4}
+      - {path: packages/server/api/src/app/mcp/oauth/metadata/mcp-oauth-metadata.controller.ts, sha256: 41a11bb57aa6366e}
+      - {path: packages/server/api/src/app/mcp/oauth/metadata/mcp-oauth-metadata.ts, sha256: 0bec723d901ce103}
+      - {path: packages/server/api/src/app/mcp/oauth/oidc/mcp-oauth-oidc.service.ts, sha256: 14dbf6287d6cf8bc}
+      - {path: packages/server/api/src/app/mcp/oauth/oidc/mcp-oauth-userinfo.controller.ts, sha256: 1e6b70706716c1f8}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-grants.controller.ts, sha256: b5c08b3d04820d15}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-revocation-list.ts, sha256: c6fbbe5db1752b91}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-revoke.controller.ts, sha256: c560c70b9c3b2a89}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-token-lifetimes.ts, sha256: be549548f11210bd}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-token.controller.ts, sha256: 1d4426ce07887963}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-token.entity.ts, sha256: 8c40d343b644bc44}
+      - {path: packages/server/api/src/app/mcp/oauth/token/mcp-oauth-token.service.ts, sha256: 56b39626db100183}
+      - {path: packages/server/api/src/app/mcp/tools/ap-add-branch.ts, sha256: 736fff86df348732}
+      - {path: packages/server/api/src/app/mcp/tools/ap-add-step.ts, sha256: d42c938cb899703d}
+      - {path: packages/server/api/src/app/mcp/tools/ap-build-flow.ts, sha256: 6c5bb5aa7b3b05c0}
+      - {path: packages/server/api/src/app/mcp/tools/ap-change-flow-status.ts, sha256: cb4410b69d57f474}
+      - {path: packages/server/api/src/app/mcp/tools/ap-create-flow.ts, sha256: 130ea3a4d9268650}
+      - {path: packages/server/api/src/app/mcp/tools/ap-create-table.ts, sha256: eb3a23fb41d44a12}
+      - {path: packages/server/api/src/app/mcp/tools/ap-delete-branch.ts, sha256: 0c3b7fac60aab627}
+      - {path: packages/server/api/src/app/mcp/tools/ap-delete-flow.ts, sha256: c53815235cf399ff}
+      - {path: packages/server/api/src/app/mcp/tools/ap-delete-records.ts, sha256: 0768d8560dcc6c11}
+      - {path: packages/server/api/src/app/mcp/tools/ap-delete-step.ts, sha256: ba21f870d916c020}
+      - {path: packages/server/api/src/app/mcp/tools/ap-delete-table.ts, sha256: 88f01ecd1e3dea4b}
+      - {path: packages/server/api/src/app/mcp/tools/ap-duplicate-flow.ts, sha256: 744c63a6b02bef90}
+      - {path: packages/server/api/src/app/mcp/tools/ap-find-records.ts, sha256: 42bbcf1d5862b709}
+      - {path: packages/server/api/src/app/mcp/tools/ap-flow-structure.ts, sha256: f1ce4fdb1d884dab}
+      - {path: packages/server/api/src/app/mcp/tools/ap-get-piece-props.ts, sha256: 793b78bb8205262b}
+      - {path: packages/server/api/src/app/mcp/tools/ap-get-run.ts, sha256: b453f937bebd8d4a}
+      - {path: packages/server/api/src/app/mcp/tools/ap-insert-records.ts, sha256: 646868ccef3e4578}
+      - {path: packages/server/api/src/app/mcp/tools/ap-list-ai-models.ts, sha256: 78c3daaa643d3218}
+      - {path: packages/server/api/src/app/mcp/tools/ap-list-connections.ts, sha256: de74fbd60d3423e3}
+      - {path: packages/server/api/src/app/mcp/tools/ap-list-flows.ts, sha256: 1012d229b46c6c35}
+      - {path: packages/server/api/src/app/mcp/tools/ap-list-runs.ts, sha256: 6a6fd76eabf782ff}
+      - {path: packages/server/api/src/app/mcp/tools/ap-list-tables.ts, sha256: 6366b8b23e435ef8}
+      - {path: packages/server/api/src/app/mcp/tools/ap-lock-and-publish.ts, sha256: d155cfba60cbab16}
+      - {path: packages/server/api/src/app/mcp/tools/ap-manage-fields.ts, sha256: 5b6238a2cf8d3539}
+      - {path: packages/server/api/src/app/mcp/tools/ap-manage-notes.ts, sha256: 2ed84dd4f9f040d8}
+      - {path: packages/server/api/src/app/mcp/tools/ap-read-step-code.ts, sha256: f1d243a9838b5c9e}
+      - {path: packages/server/api/src/app/mcp/tools/ap-read-step-settings.ts, sha256: 7393263923d6a228}
+      - {path: packages/server/api/src/app/mcp/tools/ap-rename-flow.ts, sha256: e049a7a5ca162101}
+      - {path: packages/server/api/src/app/mcp/tools/ap-research-pieces.ts, sha256: 9d5cd8be198715a3}
+      - {path: packages/server/api/src/app/mcp/tools/ap-resolve-property-chain.ts, sha256: 98454c538f11e06e}
+      - {path: packages/server/api/src/app/mcp/tools/ap-resolve-property-options.ts, sha256: 5a3b2411d02b3a9b}
+      - {path: packages/server/api/src/app/mcp/tools/ap-retry-run.ts, sha256: 619fc28fd46ee5e9}
+      - {path: packages/server/api/src/app/mcp/tools/ap-run-action.ts, sha256: 0164d9eaf5d307de}
+      - {path: packages/server/api/src/app/mcp/tools/ap-search-actions.ts, sha256: 3cf1cc48db861564}
+      - {path: packages/server/api/src/app/mcp/tools/ap-search-triggers.ts, sha256: 60696b703475f307}
+      - {path: packages/server/api/src/app/mcp/tools/ap-set-project-context.ts, sha256: 270ce7f4fbd51e02}
+      - {path: packages/server/api/src/app/mcp/tools/ap-setup-guide.ts, sha256: a7bb436562379d77}
+      - {path: packages/server/api/src/app/mcp/tools/ap-test-flow.ts, sha256: 90bc3bf6f189af1c}
+      - {path: packages/server/api/src/app/mcp/tools/ap-test-step.ts, sha256: 879d4ebf9d661e13}
+      - {path: packages/server/api/src/app/mcp/tools/ap-update-branch.ts, sha256: 9aac0fa16cefcb20}
+      - {path: packages/server/api/src/app/mcp/tools/ap-update-record.ts, sha256: e7d7e8b403e73ee1}
+      - {path: packages/server/api/src/app/mcp/tools/ap-update-step.ts, sha256: df493727d41767bb}
+      - {path: packages/server/api/src/app/mcp/tools/ap-update-trigger.ts, sha256: aee99f7e781068ff}
+      - {path: packages/server/api/src/app/mcp/tools/ap-validate-flow.ts, sha256: 52a0823143f764e8}
+      - {path: packages/server/api/src/app/mcp/tools/ap-validate-step-config.ts, sha256: d802f3c9e365b3cc}
+      - {path: packages/server/api/src/app/mcp/tools/flow-run-utils.ts, sha256: 347d923b40e39887}
+      - {path: packages/server/api/src/app/mcp/tools/index.ts, sha256: 2594bb30923158fd}
+      - {path: packages/server/api/src/app/mcp/tools/mcp-utils.ts, sha256: 656d74167cd60d51}
+      - {path: packages/server/api/src/app/mcp/tools/piece-expertise.ts, sha256: a2d435b9d9b0455a}
+      - {path: packages/server/api/src/app/mcp/tools/table-utils.ts, sha256: d1c3124fb8f6b32c}
+refused: []

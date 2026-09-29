@@ -1,0 +1,4 @@
+# prompt
+
+> Owner task: EB-63 Meeting Agent  
+> Status: scaffold placeholder — not implemented

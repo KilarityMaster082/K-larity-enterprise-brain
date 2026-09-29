@@ -1,0 +1,1 @@
+Follow CLAUDE.md and AGENTS.md. Map every implementation to the Notion Task's exact Repo path. Preserve tenant isolation, permission-before-retrieval, evidence-backed answers, typed contracts, licence gates, and AEC pack isolation.
