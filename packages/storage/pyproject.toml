@@ -1,5 +1,6 @@
 # Owner task: EB-85 Tenant registry and control plane
-# Stdlib only at runtime; backend client libraries (S3 etc.) need licence review first (CLAUDE.md rule 7).
+# Runtime: cryptography (Apache-2.0 OR BSD-3-Clause; deps cffi MIT-0, pycparser BSD-3-Clause) approved
+# 30 Sep 2026 for envelope encryption (Risk R-12). Other clients (S3 etc.) need licence review (rule 7).
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
@@ -9,7 +10,7 @@ name = "klarity-storage"
 version = "0.1.0"
 description = "K!larity tenant-scoped store wrappers"
 requires-python = ">=3.11"
-dependencies = ["klarity-tenant-context"]
+dependencies = ["klarity-tenant-context", "cryptography>=50.0.1,<51"]
 
 [tool.setuptools]
 packages = ["storage"]

@@ -430,7 +430,7 @@ features:
   A9:
     task: EB-85
     target: services/control-plane/ (credential store)
-    review: in-review
+    review: adapted
     files:
       - {path: packages/server/api/src/app/app-connection/app-connection-service/app-connection-service.ts, sha256: 5815523f64fa7f7e}
       - {path: packages/server/api/src/app/app-connection/app-connection-service/app-connection.handler.ts, sha256: 9f698399c81c0d2e}

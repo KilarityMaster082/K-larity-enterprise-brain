@@ -17,6 +17,6 @@ vendor:  ## re-vendor approved upstream features from pinned clones in $(UPSTREA
 	python3 ops/ci/vendor_upstream.py $(UPSTREAM)
 	python3 ops/ci/borrow_map.py
 
-test:  ## unit tests (stdlib + pytest only)
+test:  ## unit tests (needs pytest + cryptography; see .github/workflows/ci.yml for pinned versions)
 	PYTHONPATH=$(PYTHONPATH_DEV) $(PYTHON) -m pytest -q -p no:cacheprovider packages/connectors-sdk/tests services/ingestion/connectors/file_drop/tests \
 		packages/tenant-context/tests packages/storage/tests services/control-plane/tests

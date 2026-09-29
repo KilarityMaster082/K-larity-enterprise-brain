@@ -22,6 +22,17 @@ commercial licences and are refused by `ops/ci/vendor_upstream.py` and `ops/ci/c
 - `backend/onyx/utils/encryption.py` (Onyx) is MIT-licensed but is **not** copied, because it stores connector credentials as plaintext (Risk R-12).
 - Runtime dependencies (Docling, ezdxf, Langfuse, OpenFGA, Temporal) are installed as packages, not copied. Their notices are produced by the dependency licence scan in CI.
 
+## Python packages approved under CLAUDE.md rule 7
+
+Installed as packages, not copied. Pinned in `.github/workflows/ci.yml`.
+
+| Package | Version | Licence | Use | Approved |
+|---|---|---|---|---|
+| cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause | Runtime: AES-256-GCM envelope encryption of tenant secrets (`packages/storage`, Risk R-12) | 30 Sep 2026 |
+| cffi | (dependency of cryptography) | MIT-0 | Runtime, transitive | 30 Sep 2026 |
+| pycparser | (dependency of cffi) | BSD-3-Clause | Runtime, transitive | 30 Sep 2026 |
+| pytest | 8.3.3 | MIT | Development and CI only | Pending sign-off (EB-28) |
+
 ## MIT licence text (applies to both projects above, outside their `ee` directories)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

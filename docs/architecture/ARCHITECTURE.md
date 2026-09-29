@@ -89,11 +89,38 @@ Every store wrapper subclasses `TenantScopedStore`. Each public method then:
 Postgres rows are also protected by RLS with `FORCE`, using `SET LOCAL app.tenant_id` inside each
 transaction (EB-20).
 
-## 6. Not built yet
+## 6. Connector credentials (Risk R-12)
+
+`packages/storage/storage/credential_store.py` keeps connector secrets (OAuth tokens, API keys).
+
+**How a secret is stored**
+- Each secret is encrypted with AES-256-GCM using its own fresh 256-bit data key.
+- That data key is wrapped by the tenant's own key, `placement.kms_key_ref`.
+- The tenant id and credential id are bound into both the key wrap and the ciphertext. A row copied to
+  another tenant or another credential fails to open.
+- Tampering with any stored byte is detected.
+- Only the sealed envelope is stored (`db/migrations/0003_connector_credentials.sql`, `FORCE` RLS).
+
+**How a secret is handled once decrypted**
+- It comes back as a `Secret`, which prints as redacted and cannot be pickled or turned into JSON. It
+  cannot end up in logs or Temporal payloads.
+- Pass credential ids between processes, never secrets.
+
+**Refresh**
+- A token is refreshed 15 minutes before it expires.
+- Only one worker refreshes a given credential at a time.
+- If the token endpoint rejects the credential, it is marked `needs_reauth` and nothing retries it
+  until the tenant re-authorises.
+
+**Offboarding:** destroying the tenant's key makes all of its credentials unreadable, including copies
+in backups (crypto-shredding). Other tenants are unaffected.
+
+## 7. Not built yet
 
 - The Postgres registry: the control database is not deployed yet, so dev and tests use the JSON-file
   registry.
 - The `ProvisionTenant` and `OffboardTenant` workflows.
 - The S3 object backend.
-- The per-tenant envelope-encrypted credential store (Risk R-12), which waits on the crypto dependency
-  decision.
+- The Postgres credential backend.
+- The AWS KMS key provider. It needs `boto3`, which requires licence review. `DevKeyring` stands in
+  for dev and tests only.
