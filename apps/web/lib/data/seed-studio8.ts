@@ -32,6 +32,9 @@ function ev(
   return { id, sourceType, title, excerpt, highlight: { start, end: start + quote.length }, ...extra };
 }
 
+/** Timestamp `minutes` ago. Source freshness and member activity are relative to now so they never read as future. */
+const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+
 const inr = (n: number) => "₹" + new Intl.NumberFormat("en-IN").format(n);
 
 // ---------------------------------------------------------------- people
@@ -419,19 +422,19 @@ const approvals: Approval[] = [
 ];
 
 const sources: Source[] = [
-  { sourceId: "src-gmail-partners", connectorType: "gmail", displayName: "Partners mailbox", account: "partners@studio8.example", health: "ok", lastSyncAt: "2026-09-30T11:57:00+05:30", itemsSeen: 18240, errorRate: 0.002, lagMinutes: 3, connectedAt: "2026-09-20T10:00:00+05:30" },
-  { sourceId: "src-gmail-accounts", connectorType: "gmail", displayName: "Accounts mailbox", account: "accounts@studio8.example", health: "auth_error", lastSyncAt: "2026-09-28T09:10:00+05:30", itemsSeen: 6120, errorRate: 1, lastError: "Google revoked the refresh token. The mailbox owner must reconnect.", connectedAt: "2026-09-20T10:05:00+05:30" },
-  { sourceId: "src-drive", connectorType: "drive", displayName: "Projects shared drive", account: "Studio 8 Projects", health: "ok", lastSyncAt: "2026-09-30T11:50:00+05:30", itemsSeen: 4310, errorRate: 0.004, lagMinutes: 10, connectedAt: "2026-09-20T10:10:00+05:30" },
-  { sourceId: "src-sheets", connectorType: "sheets", displayName: "Finance workbook", account: "Budget & billing 2026", health: "ok", lastSyncAt: "2026-09-30T11:45:00+05:30", itemsSeen: 2210, errorRate: 0, lagMinutes: 15, connectedAt: "2026-09-20T10:12:00+05:30" },
-  { sourceId: "src-whatsapp", connectorType: "whatsapp", displayName: "Phoenix client group (export)", account: "WhatsApp export", health: "degraded", lastSyncAt: "2026-09-30T08:00:00+05:30", itemsSeen: 3875, errorRate: 0.031, lagMinutes: 240, lastError: "2 media files could not be read (unsupported format).", connectedAt: "2026-09-21T09:00:00+05:30" },
+  { sourceId: "src-gmail-partners", connectorType: "gmail", displayName: "Partners mailbox", account: "partners@studio8.example", health: "ok", lastSyncAt: ago(3), itemsSeen: 18240, errorRate: 0.002, lagMinutes: 3, connectedAt: "2026-09-20T10:00:00+05:30" },
+  { sourceId: "src-gmail-accounts", connectorType: "gmail", displayName: "Accounts mailbox", account: "accounts@studio8.example", health: "auth_error", lastSyncAt: ago(2 * 24 * 60 + 170), itemsSeen: 6120, errorRate: 1, lastError: "Google revoked the refresh token. The mailbox owner must reconnect.", connectedAt: "2026-09-20T10:05:00+05:30" },
+  { sourceId: "src-drive", connectorType: "drive", displayName: "Projects shared drive", account: "Studio 8 Projects", health: "ok", lastSyncAt: ago(10), itemsSeen: 4310, errorRate: 0.004, lagMinutes: 10, connectedAt: "2026-09-20T10:10:00+05:30" },
+  { sourceId: "src-sheets", connectorType: "sheets", displayName: "Finance workbook", account: "Budget & billing 2026", health: "ok", lastSyncAt: ago(15), itemsSeen: 2210, errorRate: 0, lagMinutes: 15, connectedAt: "2026-09-20T10:12:00+05:30" },
+  { sourceId: "src-whatsapp", connectorType: "whatsapp", displayName: "Phoenix client group (export)", account: "WhatsApp export", health: "degraded", lastSyncAt: ago(240), itemsSeen: 3875, errorRate: 0.031, lagMinutes: 240, lastError: "2 media files could not be read (unsupported format).", connectedAt: "2026-09-21T09:00:00+05:30" },
 ];
 
 const members: Member[] = [
-  { userId: "dev-user", name: "Demo user", email: "demo.user@example.com", role: "admin", status: "active", lastActiveAt: "2026-09-30T11:58:00+05:30" },
-  { userId: "u-principal", name: "Principal architect", email: "principal@studio8.example", role: "owner", status: "active", lastActiveAt: "2026-09-30T09:12:00+05:30" },
-  { userId: "u-lead-phx", name: "Project lead (Phoenix)", email: "phoenix.lead@studio8.example", role: "member", status: "active", lastActiveAt: "2026-09-29T18:40:00+05:30" },
-  { userId: "u-accounts", name: "Accounts", email: "accounts@studio8.example", role: "member", status: "active", lastActiveAt: "2026-09-30T10:02:00+05:30" },
-  { userId: "u-site", name: "Site engineer", email: "site@studio8.example", role: "viewer", status: "active", lastActiveAt: "2026-09-28T19:20:00+05:30" },
+  { userId: "dev-user", name: "Demo user", email: "demo.user@example.com", role: "admin", status: "active", lastActiveAt: ago(2) },
+  { userId: "u-principal", name: "Principal architect", email: "principal@studio8.example", role: "owner", status: "active", lastActiveAt: ago(170) },
+  { userId: "u-lead-phx", name: "Project lead (Phoenix)", email: "phoenix.lead@studio8.example", role: "member", status: "active", lastActiveAt: ago(17 * 60) },
+  { userId: "u-accounts", name: "Accounts", email: "accounts@studio8.example", role: "member", status: "active", lastActiveAt: ago(110) },
+  { userId: "u-site", name: "Site engineer", email: "site@studio8.example", role: "viewer", status: "active", lastActiveAt: ago(40 * 60) },
   { userId: "u-consultant", name: "Structural consultant", email: "consultant@vertex.example", role: "guest", status: "invited" },
 ];
 

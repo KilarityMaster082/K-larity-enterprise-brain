@@ -59,15 +59,26 @@ def section(title: str) -> None:
 def shot(page: Page, name: str) -> None:
     if SHOTS:
         SHOTS.mkdir(parents=True, exist_ok=True)
+        page.wait_for_load_state("networkidle")  # screenshots touch the DOM; do it only after hydration
         page.add_style_tag(content=HIDE_DEV_BADGE)
-        page.screenshot(path=str(SHOTS / f"{name}.png"))
+        page.screenshot(path=str(SHOTS / f"{name}.png"), caret="initial")
+
+
+EXPECTED_404 = ("/projects/nonexistent", "/projects/phoenix")  # visited on purpose: another tenant's / unknown ids
 
 
 def new_page(browser, width=1440, height=900, scheme="light") -> Page:
     ctx = browser.new_context(viewport={"width": width, "height": height}, color_scheme=scheme)
     page = ctx.new_page()
     page.set_default_timeout(20000)
-    page.on("console", lambda m: console_errors.append(f"{page.url}: {m.text[:160]}") if m.type == "error" else None)
+    def on_console(m) -> None:
+        if m.type != "error":
+            return
+        if "status of 404" in m.text and page.url.endswith(EXPECTED_404):
+            return
+        console_errors.append(f"{page.url}: {m.text[:160]}")
+
+    page.on("console", on_console)
     page.on("pageerror", lambda e: console_errors.append(f"{page.url}: pageerror {str(e)[:160]}"))
     return page
 
@@ -474,7 +485,10 @@ def _run() -> None:
         ad.click("button:has-text('View tenant data')")
         ad.fill("dialog.modal textarea[name=reason]", "short")
         ad.locator("dialog.modal").get_by_role("button", name="Start viewing", exact=True).click()
-        expect("impersonation with a too-short reason is refused", lambda: ad.wait_for_selector(".toasts .toast-danger"))
+        ad.wait_for_timeout(800)
+        check(ad.locator(".banner-impersonate").count() == 0 and ad.locator("dialog.modal[open]").count() == 1, "impersonation with a too-short reason is not started (form validation keeps the dialog open)")
+        r = ad.request.post(ADMIN + "/api/retrieval", data={"q": "facade", "as": "all"})
+        check(r.status == 403, "…and the server-side rule holds too: no impersonation, no retrieval")
         ad.fill("dialog.modal textarea[name=reason]", "Ticket 4821: check why VO-07 is not found")
         ad.locator("dialog.modal").get_by_role("button", name="Start viewing", exact=True).click()
         ad.wait_for_selector(".banner-impersonate")

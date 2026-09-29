@@ -112,3 +112,12 @@ test("cancelled ledger rows are ignored everywhere", () => {
   assert.deepEqual(projectFinance(cloned, "phoenix"), before);
   assert.equal(openReceivables(cloned).length, openReceivables(ds).length);
 });
+
+test("no demo timestamp reads as future: freshness, activity, events and documents are all in the past", () => {
+  const now = Date.now();
+  const past = (iso: string | undefined, what: string) => iso === undefined || assert.ok(new Date(iso).getTime() <= now, `${what} is in the future: ${iso}`);
+  for (const s of ds.sources) past(s.lastSyncAt, `source ${s.sourceId}`);
+  for (const m of ds.members) past(m.lastActiveAt, `member ${m.userId}`);
+  for (const e of ds.events) past(e.occurredAt, `event ${e.eventId}`);
+  for (const d of ds.documents) past(d.updatedAt, `document ${d.documentId}`);
+});

@@ -197,17 +197,24 @@
   letter-spacing: 0.06em;
 }
 
+/* minmax(0, 1fr): a wide child (a table) scrolls inside its own frame instead of stretching the page */
 .stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
 }
 .stack-sm {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-2);
 }
 .stack-lg {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-6);
+}
+.card {
+  min-width: 0;
 }
 .row {
   display: flex;

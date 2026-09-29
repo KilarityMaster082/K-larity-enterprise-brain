@@ -106,6 +106,9 @@ export function placementFor(tenantId: string, tier: Tier): Placement {
   };
 }
 
+/** Timestamp `minutes` ago, so demo freshness never reads as future. */
+const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+
 const SEED: AdminTenant[] = [
   {
     tenantId: "0fdc5142-8c25-41c5-aab4-0a88db52a5bf",
@@ -119,11 +122,11 @@ const SEED: AdminTenant[] = [
     placement: { ...placementFor("0fdc5142-8c25-41c5-aab4-0a88db52a5bf", "pool"), keycloakOrgId: "kc-org-studio8" },
     usage: { questionsMonth: 412, llmTokensMonth: 3_860_000, storageGb: 18.4, vectors: 212_000, costMonthINR: 14_850 },
     sources: [
-      { sourceId: "src-gmail-partners", name: "Partners mailbox", type: "gmail", health: "ok", lastSyncAt: "2026-09-30T11:57:00+05:30", lagMinutes: 3, itemsPerDay: 184, errorRate: 0.002, deadLetters: 0 },
-      { sourceId: "src-gmail-accounts", name: "Accounts mailbox", type: "gmail", health: "auth_error", lastSyncAt: "2026-09-28T09:10:00+05:30", lagMinutes: 2 * 24 * 60 + 170, itemsPerDay: 0, errorRate: 1, deadLetters: 14 },
-      { sourceId: "src-drive", name: "Projects shared drive", type: "drive", health: "ok", lastSyncAt: "2026-09-30T11:50:00+05:30", lagMinutes: 10, itemsPerDay: 36, errorRate: 0.004, deadLetters: 0 },
-      { sourceId: "src-sheets", name: "Finance workbook", type: "sheets", health: "ok", lastSyncAt: "2026-09-30T11:45:00+05:30", lagMinutes: 15, itemsPerDay: 22, errorRate: 0, deadLetters: 0 },
-      { sourceId: "src-whatsapp", name: "Phoenix client group (export)", type: "whatsapp", health: "degraded", lastSyncAt: "2026-09-30T08:00:00+05:30", lagMinutes: 240, itemsPerDay: 95, errorRate: 0.031, deadLetters: 2 },
+      { sourceId: "src-gmail-partners", name: "Partners mailbox", type: "gmail", health: "ok", lastSyncAt: ago(3), lagMinutes: 3, itemsPerDay: 184, errorRate: 0.002, deadLetters: 0 },
+      { sourceId: "src-gmail-accounts", name: "Accounts mailbox", type: "gmail", health: "auth_error", lastSyncAt: ago(2 * 24 * 60 + 170), lagMinutes: 2 * 24 * 60 + 170, itemsPerDay: 0, errorRate: 1, deadLetters: 14 },
+      { sourceId: "src-drive", name: "Projects shared drive", type: "drive", health: "ok", lastSyncAt: ago(10), lagMinutes: 10, itemsPerDay: 36, errorRate: 0.004, deadLetters: 0 },
+      { sourceId: "src-sheets", name: "Finance workbook", type: "sheets", health: "ok", lastSyncAt: ago(15), lagMinutes: 15, itemsPerDay: 22, errorRate: 0, deadLetters: 0 },
+      { sourceId: "src-whatsapp", name: "Phoenix client group (export)", type: "whatsapp", health: "degraded", lastSyncAt: ago(240), lagMinutes: 240, itemsPerDay: 95, errorRate: 0.031, deadLetters: 2 },
     ],
   },
   {
