@@ -24,7 +24,7 @@ REPO = Path(__file__).resolve().parents[2]
 ROOT_FILES = {
     ".cursorrules", ".dockerignore", ".env.example", ".gitignore", "AGENTS.md", "CLAUDE.md",
     "DECISIONS.md", "GEMINI.md", "LICENSE", "LICENSES.md", "Makefile", "README.md", "SECURITY.md",
-    "THIRD_PARTY_NOTICES.md", "package.json", "pnpm-workspace.yaml", "pyproject.toml", "turbo.json",
+    "THIRD_PARTY_NOTICES.md", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "pyproject.toml", "turbo.json",
 }
 # top-level dir -> allowed children (None = any)
 LAYOUT: dict[str, set[str] | None] = {

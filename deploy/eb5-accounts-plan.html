@@ -1,0 +1,64 @@
+<!-- Owner task: EB-5 Pre-requisite: accounts, keys and environments -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Accounts & Environments Plan</title><style>:root{--bg:#f7f6f2;--card:#fff;--fg:#1d2320;--mu:#5d6661;--ln:#dcdcd3;--ac:#0f6b5c;--acs:#e2f0ec;--wa:#a15c00;--was:#fcefd9;--cd:#eeede7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141816;--card:#1c211f;--fg:#e7ebe8;--mu:#9aa49f;--ln:#2f3633;--ac:#5cc5ae;--acs:#18302b;--wa:#f0b25c;--was:#35291a;--cd:#252b28;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141816;--card:#1c211f;--fg:#e7ebe8;--mu:#9aa49f;--ln:#2f3633;--ac:#5cc5ae;--acs:#18302b;--wa:#f0b25c;--was:#35291a;--cd:#252b28;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}header{border-bottom:2px solid var(--fg);padding-bottom:14px;margin-bottom:20px}
+.ey{font:600 12px/1 ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ac)}h1{font-size:28px;margin:8px 0 6px;text-wrap:balance}
+h2{font-size:19px;margin:30px 0 10px}h3{font-size:15px;margin:18px 0 6px}p,li{max-width:80ch}.mu{color:var(--mu);font-size:13px}
+.box{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin:14px 0}
+.b{border:1px solid var(--ln);border-radius:6px;padding:12px 14px;background:var(--card)}.b h3{margin-top:0}.ok{border-left:4px solid var(--ac)}.todo{border-left:4px solid var(--wa)}
+.dec{background:var(--acs);border-left:3px solid var(--ac);padding:10px 14px;border-radius:0 6px 6px 0;margin:12px 0}
+.t{overflow-x:auto;border:1px solid var(--ln);border-radius:6px;background:var(--card);margin:8px 0}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--ln)}th{font:600 11.5px/1.3 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.04em;color:var(--mu);background:var(--bg)}
+tr:last-child td{border-bottom:0}code,pre{font-family:ui-monospace,monospace;font-size:12.5px}code{background:var(--cd);padding:1px 4px;border-radius:3px}
+pre{background:var(--cd);padding:12px;border-radius:6px;overflow-x:auto}.u{color:var(--wa);font-size:12px;font-weight:600}footer{margin-top:36px;color:var(--mu);font-size:12.5px;border-top:1px solid var(--ln);padding-top:10px}a{color:var(--ac)}</style></head><body><div class="w"><header><div class="ey">EB-5 · Pre-requisite · Platform &amp; DevOps</div><h1>Accounts &amp; Environments Plan</h1><p class="mu">K!larity Enterprise Brain · 29 Sep 2026 · Owner: Sanjay</p></header><div class="box"><div class="b ok"><h3>Done</h3><ul><li>Provider chosen for every account (below), with region, secret location, 2FA and spend cap</li><li><code>.env.example</code> written (variable names only, grouped by service)</li><li>ADR-017 added: AWS Hyderabad, SSM Parameter Store for runtime secrets, password manager for people</li></ul></div><div class="b todo"><h3>Needs you / Studio 8</h3><ul><li>Create the accounts in the order below — only you can sign up, verify identity and add payment</li><li>Apply for AWS Activate Founders credits (up to $5,000) once the AWS account is on a paid plan</li><li>Tick each subtask as its account goes live</li></ul></div></div><div class="dec"><b>Decision.</b> AWS <b>ap-south-2 (Hyderabad)</b> as the primary region — closest to Studio 8 and cheapest for managed Postgres — with ap-south-1 (Mumbai) as the fallback for any missing service. Runtime secrets in <b>SSM Parameter Store</b>; dev and CI secrets in <b>Doppler (free)</b>; human logins and recovery codes in <b>Bitwarden or 1Password</b>. Passkeys or hardware keys on every root account; no SMS 2FA.</div><h2>1. Accounts to create (in this order)</h2><div class="t"><table><thead><tr><th>#</th><th>Account</th><th>Purpose</th><th>Choice</th><th>Region</th><th>Secret lives in</th><th>2FA</th><th>Spend control</th><th>Est. ₹/month</th></tr></thead><tbody><tr><td>1</td><td>Password manager</td><td>Your logins, recovery codes</td><td>Bitwarden or 1Password</td><td>—</td><td>Master password + offline emergency kit</td><td>Hardware key</td><td>—</td><td>0–800</td></tr><tr><td>2</td><td>Domain + DNS</td><td>K!larity domain, DNS, TLS</td><td>Any registrar + Cloudflare DNS (free)</td><td>—</td><td>Password manager; scoped Cloudflare API token in secret store</td><td>Passkey</td><td>Renewal reminder</td><td>100–200</td></tr><tr><td>3</td><td>Company email</td><td>Mail, sender domain (SPF/DKIM/DMARC)</td><td>Google Workspace (gives you a test Workspace for EB-7) or Zoho Mail free</td><td>—</td><td>Password manager</td><td>Passkey</td><td>Invoice alert</td><td>0–700 <span class="u">[U]</span></td></tr><tr><td>4</td><td>GitHub org</td><td>Code, CI, private repo</td><td>GitHub Team ($4/user) — Free lacks branch protection on private repos</td><td>—</td><td>Deploy keys in secret store</td><td>Passkey</td><td>Actions spending limit</td><td>~350</td></tr><tr><td>5</td><td>AWS</td><td>Hosting, Postgres, S3, secrets</td><td>AWS, root locked away; daily work via IAM Identity Center user</td><td>ap-south-2</td><td>Root in password manager; runtime in SSM</td><td>Passkey + hardware key</td><td>AWS Budget alerts 50/80/100%</td><td>9,000–15,000</td></tr><tr><td>6</td><td>Secret store (dev/CI)</td><td>.env values for laptop + GitHub Actions</td><td>Doppler Developer (free) or Infisical Cloud free (MIT core, no ee/)</td><td>—</td><td>—</td><td>Passkey</td><td>—</td><td>0</td></tr><tr><td>7</td><td>LLM: Google AI Studio</td><td>Gemini models</td><td>Paid tier (not used for training)</td><td>—</td><td>Secret store → LiteLLM only</td><td>Passkey</td><td>Project spend cap (approx., ~10 min lag)</td><td>pay per use</td></tr><tr><td>8</td><td>LLM: OpenAI</td><td>Fallback models, embeddings</td><td>Separate project per environment</td><td>—</td><td>Secret store → LiteLLM only</td><td>Passkey</td><td>Project hard spend limit</td><td>pay per use</td></tr><tr><td>9</td><td>LLM: Anthropic</td><td>Escalation + eval judge</td><td>Named Workspace (limits cannot be set on the default one)</td><td>—</td><td>Secret store → LiteLLM only</td><td>Passkey</td><td>Workspace monthly limit</td><td>pay per use</td></tr><tr><td>10</td><td>Google Cloud project</td><td>OAuth client, Pub/Sub for Gmail push</td><td>Our GCP project (sandbox); tenant projects per EB-7</td><td>global</td><td>Client secret in secret store</td><td>Passkey</td><td>Budget alert (alerts only)</td><td>0–200</td></tr><tr><td>11</td><td>Meta Business + app</td><td>WhatsApp Cloud API as Tech Provider (EB-6)</td><td>Meta Business Manager + Meta app</td><td>—</td><td>App secret in secret store; tenant tokens encrypted per tenant</td><td>2FA on Meta account</td><td>Payment method on file</td><td>~70–130 per tenant</td></tr></tbody></table></div><p class="mu">Total before LLM spend ≈ <b>₹9,000–15,000 / month</b> (VM for the Compose stack ~₹5.5–6.5K, managed Postgres ~₹1.2–5K, storage/backups/DNS ~₹1–2K) <span class="u">[U]</span>. LLM spend is budgeted separately in EB-10 (~₹6.7K / month).</p><h2>2. Guardrails from day one</h2><ul><li>Never use AWS root day-to-day; create one admin user in IAM Identity Center.</li><li>Provider spend caps sit <i>below</i> the LiteLLM per-tenant budgets, which alert at 70% and 90%.</li><li>No secret in code or in Notion. <code>gitleaks</code> in CI (free) catches accidental commits.</li><li>Rotate API keys every 90 days; recovery codes printed and stored offline.</li><li>Two FIDO2 keys (one kept off-site) for Google, AWS, GitHub, registrar and Cloudflare.</li></ul><h2>3. <code>.env.example</code> (names only)</h2><pre># K!larity Enterprise Brain — environment variables (names only; values live in Doppler/Infisical for dev+CI, SSM Parameter Store in prod)
+# Core
+APP_ENV=
+APP_BASE_URL=
+LOG_LEVEL=
+# Database (Postgres 16, RLS; app role is NOBYPASSRLS)
+DATABASE_URL=
+DATABASE_APP_ROLE_URL=
+DATABASE_MIGRATION_URL=
+# Object storage (S3 / SeaweedFS)
+S3_BUCKET=
+S3_REGION=
+S3_ENDPOINT=
+# Identity and authorisation
+KEYCLOAK_URL=
+KEYCLOAK_CLIENT_ID=
+KEYCLOAK_CLIENT_SECRET=
+OPENFGA_API_URL=
+OPENFGA_STORE_ID=
+# Search, vectors, workflows, cache
+QDRANT_URL=
+QDRANT_API_KEY=
+OPENSEARCH_URL=
+TEMPORAL_ADDRESS=
+VALKEY_URL=
+# LLM gateway (provider keys only inside LiteLLM)
+LITELLM_URL=
+LITELLM_MASTER_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
+# Google connectors (per-tenant client secrets and refresh tokens are stored encrypted per tenant, not here)
+GOOGLE_OAUTH_CLIENT_ID=
+GOOGLE_OAUTH_CLIENT_SECRET=
+GOOGLE_OAUTH_REDIRECT_URI=
+GOOGLE_PUBSUB_TOPIC=
+GOOGLE_PUBSUB_SUBSCRIPTION=
+# WhatsApp Cloud API (Tech Provider app; per-tenant business tokens stored encrypted per tenant)
+META_APP_ID=
+META_APP_SECRET=
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=
+WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID=
+# Observability
+LANGFUSE_HOST=
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_SECRET_KEY=
+OTEL_EXPORTER_OTLP_ENDPOINT=
+# Encryption
+TENANT_KEK_ID=
+</pre><footer><b>Sources</b><ul><li><a href="https://aws.amazon.com/startups/credits/">AWS Activate credits</a></li><li><a href="https://aws.amazon.com/secrets-manager/pricing/">AWS Secrets Manager pricing</a></li><li><a href="https://www.doppler.com/pricing">Doppler pricing</a></li><li><a href="https://github.com/Infisical/infisical">Infisical repository (MIT + ee/)</a></li><li><a href="https://github.com/pricing">GitHub pricing</a></li><li><a href="https://help.openai.com/en/articles/9186755-managing-your-work-in-the-api-platform-with-projects">OpenAI projects and spend limits</a></li><li><a href="https://platform.claude.com/docs/en/api/rate-limits">Anthropic spend limits</a></li><li><a href="https://ai.google.dev/gemini-api/docs/billing">Gemini API billing and spend caps</a></li><li><a href="https://cloudprice.net/aws/rds/instances/db.t4g.micro">RDS db.t4g.micro pricing (third-party)</a></li></ul>Items marked <span class="u">[U]</span> were not confirmed on a primary page — re-check before relying on them. Not legal or tax advice.</footer></div></body></html>
