@@ -1,7 +1,7 @@
 # Owner task: EB-16 Repo scaffold with docs pack, CLAUDE.md and AGENTS.md
 UPSTREAM ?= ../.upstream
 PYTHON ?= python3
-PYTHONPATH_DEV = packages/connectors-sdk:packages/tenant-context:packages/storage:services/ingestion:services/control-plane:packages/ontology:packages/permissions:apps/api
+PYTHONPATH_DEV = packages/connectors-sdk:packages/tenant-context:packages/storage:services/ingestion:services/control-plane:packages/ontology:packages/permissions:apps/api:services/llm-gateway
 
 .PHONY: governance borrow-map vendor test
 
@@ -19,4 +19,4 @@ vendor:  ## re-vendor approved upstream features from pinned clones in $(UPSTREA
 
 test:  ## unit tests (needs pytest + cryptography; see .github/workflows/ci.yml for pinned versions)
 	PYTHONPATH=$(PYTHONPATH_DEV) $(PYTHON) -m pytest -q -p no:cacheprovider packages/connectors-sdk/tests services/ingestion/connectors/file_drop/tests \
-		packages/tenant-context/tests packages/storage/tests services/control-plane/tests packages/ontology/tests packages/permissions/tests apps/api/tests
+		packages/tenant-context/tests packages/storage/tests services/control-plane/tests packages/ontology/tests packages/permissions/tests apps/api/tests services/llm-gateway/tests

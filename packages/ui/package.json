@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/index.css",
-    "./brand/*": "./brand/*"
+    "./brand/*": "./brand/*",
+    "./format": "./src/data/format.ts"
   },
   "scripts": {
     "test": "node --test \"tests/*.test.ts\"",

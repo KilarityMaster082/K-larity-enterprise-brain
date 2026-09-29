@@ -4,7 +4,7 @@
 //   - figures come only from the ledger derivations (rule 3); the query result itself is a citable source;
 //   - every claim cites evidence from this tenant (rule 4); anything unexplained goes to "couldn't confirm";
 //   - finance answers need the finance permission (rule 2); nothing is sent, actions become approval drafts.
-import { formatINR, formatINRShort, formatPercent } from "@klarity/ui";
+import { formatINR, formatINRShort, formatPercent } from "@klarity/ui/format";
 
 import { ANSWER_CONTRACT_VERSION, type AnswerContract, type Claim, type Evidence, type Risk, type Segment, type SuggestedAction } from "../contracts";
 import { DEMO_NOW, leakageFlags, openReceivables, projectFinance } from "../data/derive";

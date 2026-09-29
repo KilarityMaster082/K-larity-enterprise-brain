@@ -1,2 +1,87 @@
 # Owner task: EB-26 LiteLLM gateway
-# Status: scaffold placeholder — not implemented
+# LiteLLM Proxy configuration: model aliases, fallbacks, per-tenant budgets and Langfuse tracing.
+
+model_list:
+  # Fast Tier (classification, routing, lightweight summaries)
+  - model_name: fast
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 1000
+      timeout: 10
+
+  - model_name: fast-fallback
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      rpm: 1000
+      timeout: 10
+
+  # Reason Tier (complex architectural synthesis, document analysis, QA)
+  - model_name: reason
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-20250219
+      api_key: os.environ/ANTHROPIC_API_KEY
+      rpm: 500
+      timeout: 30
+
+  - model_name: reason-fallback
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      api_key: os.environ/GEMINI_API_KEY
+      rpm: 500
+      timeout: 30
+
+  # Embedding Tier (dense vector representation)
+  - model_name: embed
+    litellm_params:
+      model: text-embedding-3-large
+      api_key: os.environ/OPENAI_API_KEY
+      dimensions: 1536
+      rpm: 2000
+
+  - model_name: embed-fallback
+    litellm_params:
+      model: voyage/voyage-3
+      api_key: os.environ/VOYAGE_API_KEY
+      rpm: 1000
+
+  # Rerank Tier (cross-encoder relevance scoring)
+  - model_name: rerank
+    litellm_params:
+      model: cohere/rerank-v3.5
+      api_key: os.environ/COHERE_API_KEY
+      rpm: 500
+
+  - model_name: rerank-fallback
+    litellm_params:
+      model: jina/jina-reranker-v2-base-multilingual
+      api_key: os.environ/JINA_API_KEY
+      rpm: 500
+
+router_settings:
+  model_group_alias:
+    fast: "fast"
+    reason: "reason"
+    embed: "embed"
+    rerank: "rerank"
+  routing_strategy: "latency-based-routing"
+  fallbacks:
+    - fast: ["fast-fallback"]
+    - reason: ["reason-fallback"]
+    - embed: ["embed-fallback"]
+    - rerank: ["rerank-fallback"]
+  allowed_fails: 2
+  cooldown_time: 30
+
+litellm_settings:
+  # Langfuse callback for observability, trace citation, and cost calculation
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  telemetry: false
+
+general_settings:
+  # Default monthly budget limit in USD per tenant team
+  default_monthly_budget: 500.0
+  max_budget_alert_threshold: 0.85
+  enforce_tenant_keys: true

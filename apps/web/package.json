@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"tests/*.test.ts\""
+    "test": "node --import ./tests/register.mjs --test \"tests/*.test.ts\""
   },
   "dependencies": {
     "next": "16.3.6",
