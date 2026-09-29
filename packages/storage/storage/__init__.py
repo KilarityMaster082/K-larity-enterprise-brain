@@ -26,6 +26,7 @@ from .envelope import (
     KmsKeyProvider,
 )
 from .database_session import bind_session_tenant
+from .fga_store import FgaBackend, FgaStore, LocalFgaBackend, TupleKey
 from .object_store import LocalObjectBackend, ObjectBackend, ObjectStore, S3ObjectBackend, check_key
 from .search_store import LocalSearchBackend, SearchBackend, SearchStore
 from .vector_store import LocalVectorBackend, VectorBackend, VectorPoint, VectorStore
@@ -33,8 +34,9 @@ from .vector_store import LocalVectorBackend, VectorBackend, VectorPoint, Vector
 __all__ = [
     "ConcurrentUpdateError", "CredentialBackend", "CredentialError", "CredentialMeta",
     "CredentialNeedsReauthError", "CredentialNotFoundError", "CredentialStatus", "CredentialStore",
-    "DecryptionError", "DevKeyring", "Envelope", "EnvelopeError", "FileCredentialBackend", "KeyProvider",
-    "KeyUnavailableError", "KmsKeyProvider", "LocalObjectBackend", "LocalSearchBackend", "LocalVectorBackend",
-    "ObjectBackend", "ObjectStore", "PostgresCredentialBackend", "S3ObjectBackend", "SearchBackend", "SearchStore",
-    "Secret", "VectorBackend", "VectorPoint", "VectorStore", "bind_session_tenant", "check_key",
+    "DecryptionError", "DevKeyring", "Envelope", "EnvelopeError", "FgaBackend", "FgaStore", "FileCredentialBackend",
+    "KeyProvider", "KeyUnavailableError", "KmsKeyProvider", "LocalFgaBackend", "LocalObjectBackend",
+    "LocalSearchBackend", "LocalVectorBackend", "ObjectBackend", "ObjectStore", "PostgresCredentialBackend",
+    "S3ObjectBackend", "SearchBackend", "SearchStore", "Secret", "TupleKey", "VectorBackend", "VectorPoint",
+    "VectorStore", "bind_session_tenant", "check_key",
 ]

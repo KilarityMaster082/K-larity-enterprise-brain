@@ -1,0 +1,105 @@
+# Owner task: EB-22 OpenFGA authorization model and tuple sync
+name: K!larity Enterprise Brain Authorization Model Tests
+model_file: ./model.fga
+tuples:
+  # Tenant setup
+  - user: user:alice
+    relation: admin
+    object: tenant:studio8
+  - user: user:bob
+    relation: finance_viewer
+    object: tenant:studio8
+  - user: user:charlie
+    relation: member
+    object: tenant:studio8
+  - user: user:david
+    relation: member
+    object: tenant:studio8
+
+  # Project setup
+  - user: tenant:studio8
+    relation: parent
+    object: project:metro-tower
+  - user: user:charlie
+    relation: lead
+    object: project:metro-tower
+  - user: user:david
+    relation: member
+    object: project:metro-tower
+
+  # Unrelated Project
+  - user: tenant:studio8
+    relation: parent
+    object: project:seaside-resort
+  - user: user:charlie
+    relation: lead
+    object: project:seaside-resort
+
+  # Resources under metro-tower
+  - user: project:metro-tower
+    relation: parent
+    object: document:architectural-spec
+  - user: project:metro-tower
+    relation: parent
+    object: financial_record:q3-budget-audit
+  - user: project:metro-tower
+    relation: parent
+    object: decision:facade-change-order
+
+tests:
+  - name: Staff project isolation
+    check:
+      - user: user:david
+        object: project:metro-tower
+        assertions:
+          viewer: true
+          editor: false
+      - user: user:david
+        object: project:seaside-resort
+        assertions:
+          viewer: false
+      - user: user:alice
+        object: project:metro-tower
+        assertions:
+          viewer: true
+          editor: true
+      - user: user:alice
+        object: project:seaside-resort
+        assertions:
+          viewer: true
+          editor: true
+
+  - name: Financial records protection
+    check:
+      - user: user:david
+        object: financial_record:q3-budget-audit
+        assertions:
+          viewer: false
+          editor: false
+      - user: user:bob
+        object: financial_record:q3-budget-audit
+        assertions:
+          viewer: true
+          editor: false
+      - user: user:alice
+        object: financial_record:q3-budget-audit
+        assertions:
+          viewer: true
+          editor: true
+      - user: user:charlie
+        object: financial_record:q3-budget-audit
+        assertions:
+          editor: true
+
+  - name: Document and decision review
+    check:
+      - user: user:charlie
+        object: decision:facade-change-order
+        assertions:
+          viewer: true
+          reviewer: true
+      - user: user:david
+        object: decision:facade-change-order
+        assertions:
+          viewer: true
+          reviewer: false

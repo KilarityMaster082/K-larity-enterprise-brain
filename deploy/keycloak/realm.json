@@ -1,1 +1,425 @@
-{}
+{
+  "id": "klarity-realm-v1",
+  "realm": "klarity",
+  "displayName": "K!larity Enterprise Brain",
+  "displayNameHtml": "<b>K!larity</b> Enterprise Brain",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "organizationsEnabled": true,
+  "defaultSignatureAlgorithm": "RS256",
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 28800,
+  "ssoSessionMaxLifespan": 86400,
+  "offlineSessionIdleTimeout": 2592000,
+  "clientSessionIdleTimeout": 3600,
+  "clientSessionMaxLifespan": 28800,
+  "roles": {
+    "realm": [
+      {
+        "id": "role-owner",
+        "name": "owner",
+        "description": "Tenant owner with full administrative, financial, and membership privileges",
+        "composite": true,
+        "composites": {
+          "realm": ["admin", "finance_viewer"]
+        }
+      },
+      {
+        "id": "role-admin",
+        "name": "admin",
+        "description": "Partner (admin) with executive, project management, and governance oversight",
+        "composite": false
+      },
+      {
+        "id": "role-member",
+        "name": "member",
+        "description": "Tenant team member: Project Lead, Architect, or Engineering Staff",
+        "composite": false
+      },
+      {
+        "id": "role-finance-viewer",
+        "name": "finance_viewer",
+        "description": "Privileged viewer with access to financial ledger, invoices, and budgets",
+        "composite": false
+      },
+      {
+        "id": "role-viewer",
+        "name": "viewer",
+        "description": "Read-only access to assigned projects and non-sensitive documents",
+        "composite": false
+      },
+      {
+        "id": "role-guest",
+        "name": "guest",
+        "description": "External client or consultant scoped strictly to explicitly shared documents",
+        "composite": false
+      }
+    ]
+  },
+  "groups": [
+    {
+      "id": "group-owners",
+      "name": "Owners",
+      "path": "/Owners",
+      "realmRoles": ["owner", "admin", "finance_viewer"]
+    },
+    {
+      "id": "group-partners",
+      "name": "Partners",
+      "path": "/Partners",
+      "realmRoles": ["admin", "finance_viewer"]
+    },
+    {
+      "id": "group-leads",
+      "name": "Project Leads",
+      "path": "/Project Leads",
+      "realmRoles": ["member"]
+    },
+    {
+      "id": "group-staff",
+      "name": "Staff",
+      "path": "/Staff",
+      "realmRoles": ["member"]
+    },
+    {
+      "id": "group-finance",
+      "name": "Finance",
+      "path": "/Finance",
+      "realmRoles": ["member", "finance_viewer"]
+    },
+    {
+      "id": "group-viewers",
+      "name": "Viewers",
+      "path": "/Viewers",
+      "realmRoles": ["viewer"]
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google Workspace SSO",
+      "providerId": "google",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "off",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${env.GOOGLE_CLIENT_ID:mock-google-client-id}",
+        "clientSecret": "${env.GOOGLE_CLIENT_SECRET:mock-google-client-secret}",
+        "defaultScope": "openid profile email",
+        "hostedDomain": "",
+        "userIp": "true",
+        "offlineAccess": "false",
+        "guiOrder": "1"
+      }
+    },
+    {
+      "alias": "microsoft",
+      "displayName": "Microsoft Entra ID SSO",
+      "providerId": "oidc",
+      "enabled": true,
+      "updateProfileFirstLoginMode": "off",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${env.MICROSOFT_CLIENT_ID:mock-microsoft-client-id}",
+        "clientSecret": "${env.MICROSOFT_CLIENT_SECRET:mock-microsoft-client-secret}",
+        "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+        "tokenUrl": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        "jwksUrl": "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+        "defaultScope": "openid profile email",
+        "guiOrder": "2"
+      }
+    }
+  ],
+  "organizations": [
+    {
+      "id": "org-studio8",
+      "name": "Studio 8 Hats",
+      "alias": "studio8",
+      "enabled": true,
+      "description": "Primary architecture and engineering pilot tenant",
+      "domains": [
+        {
+          "name": "studio8.in"
+        }
+      ],
+      "attributes": {
+        "tenant_id": ["0fdc5142-8c25-41c5-aab4-0a88db52a5bf"],
+        "tier": ["pool"],
+        "plan": ["pilot"]
+      },
+      "identityProviders": [
+        {
+          "alias": "google",
+          "hideOnLoginPage": false
+        }
+      ]
+    },
+    {
+      "id": "org-synthetic-canary",
+      "name": "Synthetic Canary",
+      "alias": "synthetic-canary",
+      "enabled": true,
+      "description": "Synthetic canary tenant for continuous multi-tenant boundary validation",
+      "domains": [
+        {
+          "name": "canary.internal"
+        }
+      ],
+      "attributes": {
+        "tenant_id": ["1bae9ff8-abf9-44bf-9b17-a5cb2c83d71b"],
+        "tier": ["pool"],
+        "plan": ["pilot"]
+      },
+      "identityProviders": [
+        {
+          "alias": "google",
+          "hideOnLoginPage": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "id": "client-klarity-web",
+      "clientId": "klarity-web",
+      "name": "K!larity Web App",
+      "description": "Next.js UI client using standard Authorization Code Flow with PKCE",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${env.KEYCLOAK_WEB_CLIENT_SECRET:development-web-client-secret}",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "rootUrl": "${env.APP_URL:http://localhost:3000}",
+      "baseUrl": "/",
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "${env.APP_URL:http://localhost:3000}/*"
+      ],
+      "webOrigins": [
+        "+",
+        "http://localhost:3000"
+      ],
+      "protocolMappers": [
+        {
+          "id": "mapper-web-tenant-id",
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "id": "mapper-web-organization",
+          "name": "organization",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-organization-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "organization",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "id": "mapper-web-roles",
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "true"
+          }
+        }
+      ]
+    },
+    {
+      "id": "client-klarity-api",
+      "clientId": "klarity-api",
+      "name": "K!larity Backend API",
+      "description": "FastAPI/ASGI backend resource server verifying bearer tokens",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "bearerOnly": true,
+      "publicClient": false,
+      "protocolMappers": [
+        {
+          "id": "mapper-api-tenant-id",
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "id": "mapper-api-organization",
+          "name": "organization",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-organization-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "organization",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "id": "mapper-api-roles",
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "authenticationFlows": [
+    {
+      "id": "flow-browser-mfa",
+      "alias": "browser with admin mfa",
+      "description": "Standard browser authentication flow enforcing OTP for admin/owner roles",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-cookie",
+          "requirement": "ALTERNATIVE",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false
+        },
+        {
+          "authenticator": "identity-provider-redirector",
+          "requirement": "ALTERNATIVE",
+          "priority": 20,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "ALTERNATIVE",
+          "priority": 30,
+          "flowAlias": "forms-subflow"
+        }
+      ]
+    },
+    {
+      "id": "flow-forms-subflow",
+      "alias": "forms-subflow",
+      "description": "Username and password followed by conditional OTP",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "auth-username-password-form",
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false
+        },
+        {
+          "authenticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 20,
+          "flowAlias": "conditional-admin-otp"
+        }
+      ]
+    },
+    {
+      "id": "flow-conditional-admin-otp",
+      "alias": "conditional-admin-otp",
+      "description": "Execute OTP requirement if user has admin or owner role",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-role",
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false,
+          "autheticatorFlow": false,
+          "authenticatorConfig": "config-admin-role-condition"
+        },
+        {
+          "authenticator": "auth-otp-form",
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": true,
+          "autheticatorFlow": false
+        }
+      ]
+    }
+  ],
+  "authenticatorConfig": [
+    {
+      "id": "config-admin-role-condition",
+      "alias": "require-mfa-for-admin-roles",
+      "config": {
+        "apply_to_roles": "admin,owner",
+        "condUserRole": "admin"
+      }
+    }
+  ],
+  "browserFlow": "browser with admin mfa"
+}

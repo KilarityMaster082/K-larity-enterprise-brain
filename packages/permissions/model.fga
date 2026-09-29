@@ -1,2 +1,51 @@
-# Owner task: EB-22 OpenFGA model and tuple sync
-# Status: scaffold placeholder — not implemented
+# Owner task: EB-22 OpenFGA authorization model and tuple sync
+model
+  schema 1.1
+
+type user
+
+type tenant
+  relations
+    define admin: [user]
+    define member: [user] or admin
+    define finance_viewer: [user] or admin
+    define viewer: [user] or member
+
+type project
+  relations
+    define parent: [tenant]
+    define lead: [user]
+    define member: [user] or lead
+    define viewer: member or admin from parent
+    define editor: lead or admin from parent
+    define finance_viewer: finance_viewer from parent
+
+type document
+  relations
+    define parent: [project]
+    define viewer: [user] or viewer from parent
+    define editor: [user] or editor from parent
+
+type drawing
+  relations
+    define parent: [project]
+    define viewer: [user] or viewer from parent
+    define editor: [user] or editor from parent
+
+type financial_record
+  relations
+    define parent: [project]
+    define viewer: finance_viewer from parent
+    define editor: lead from parent or admin from parent
+
+type thread
+  relations
+    define parent: [project]
+    define viewer: viewer from parent
+    define editor: member from parent
+
+type decision
+  relations
+    define parent: [project]
+    define viewer: viewer from parent
+    define reviewer: lead from parent or admin from parent
