@@ -21,8 +21,8 @@ RAW_CLIENTS = frozenset({
     "aioboto3", "asyncpg", "boto3", "botocore", "minio", "openfga_sdk", "opensearchpy", "psycopg",
     "psycopg2", "psycopg_pool", "qdrant_client", "redis", "sqlalchemy", "valkey",
 })
-# Store wrappers, plus the control plane (its own database holds no tenant data).
-ALLOWED_DIRS = ("packages/storage/", "services/control-plane/control_plane/")
+# Store wrappers, control plane, and declarative ontology models.
+ALLOWED_DIRS = ("packages/storage/", "services/control-plane/control_plane/", "packages/ontology/")
 STORE_PACKAGE = "packages/storage/"
 GUARD_BASE = "TenantScopedStore"
 

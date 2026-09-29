@@ -34,5 +34,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pytest==8.3.3 cryptography==50.0.1
+      - run: pip install pytest==8.3.3 cryptography==50.0.1 boto3==1.35.30 sqlalchemy==2.0.34
       - run: make test

@@ -1,0 +1,14 @@
+# Owner task: EB-19 Database schema v1
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "klarity-ontology"
+version = "0.1.0"
+description = "K!larity ontology, entity graph, and data models"
+requires-python = ">=3.11"
+dependencies = ["sqlalchemy>=2.0.34"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

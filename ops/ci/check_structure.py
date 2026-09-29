@@ -36,7 +36,7 @@ LAYOUT: dict[str, set[str] | None] = {
     "docs": None,
     "ops": None,
     "packages": {"ai-core", "approvals", "connectors-sdk", "observability", "ontology", "permissions",
-                 "schemas", "storage", "tenant-context"},
+                 "schemas", "storage", "tenant-context", "ui"},
     "packs": {"aec"},
     "services": {"context-engine", "control-plane", "entity-resolution", "evaluation", "ingestion",
                  "knowledge-graph", "llm-gateway", "memory", "metering", "normalization", "signals"},

@@ -34,6 +34,7 @@ Installed as packages, not copied. Pinned in `.github/workflows/ci.yml`.
 | pytest | 8.3.3 | MIT | Development and CI only | 30 Sep 2026 (EB-28 sign-off) |
 | boto3 | 1.35.30 | Apache-2.0 | Runtime: S3 object store backend & AWS KMS key provider (`packages/storage`, EB-85) | 30 Sep 2026 |
 | botocore | (dependency of boto3) | Apache-2.0 | Runtime, transitive | 30 Sep 2026 |
+| sqlalchemy | 2.0.34 | MIT | Runtime: ORM schema definitions and ontology data model (`packages/ontology`, EB-19) | 30 Sep 2026 |
 
 ## MIT licence text (applies to both projects above, outside their `ee` directories)
 
