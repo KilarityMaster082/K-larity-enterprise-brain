@@ -8,7 +8,7 @@ features:
   O1:
     task: EB-28
     target: packages/connectors-sdk/
-    review: pending
+    review: adapted
     files:
       - {path: backend/onyx/connectors/interfaces.py, sha256: 59833c772c4848c5}
       - {path: backend/onyx/connectors/models.py, sha256: 431b08dcd3dd8cbe}
@@ -18,13 +18,13 @@ features:
   O2:
     task: EB-28
     target: packages/connectors-sdk/
-    review: pending
+    review: adapted
     files:
       - {path: backend/onyx/background/indexing/checkpointing_utils.py, sha256: 6525d663e3b8cbff}
   O3:
     task: EB-28
     target: packages/connectors-sdk/
-    review: pending
+    review: in-review
     files:
       - {path: backend/onyx/connectors/cross_connector_utils/__init__.py, sha256: e3b0c44298fc1c14}
       - {path: backend/onyx/connectors/cross_connector_utils/download.py, sha256: b8d419f269441f06}
@@ -63,7 +63,7 @@ features:
   O4-file:
     task: EB-35
     target: services/ingestion/connectors/file_drop/
-    review: pending
+    review: in-review
     files:
       - {path: backend/onyx/connectors/file/__init__.py, sha256: e3b0c44298fc1c14}
       - {path: backend/onyx/connectors/file/config.py, sha256: 7fc2db2556d84d61}

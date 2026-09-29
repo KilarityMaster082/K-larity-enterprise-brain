@@ -1,5 +1,5 @@
 # Owner task: EB-17 CI: lint, tests, licence scan and secret scan
-# Status: governance gate live; lint/test/licence/secret scan jobs land with EB-17.
+# Status: governance + unit-test jobs live; lint, licence and secret scan jobs land with EB-17.
 name: ci
 
 on:
@@ -23,3 +23,14 @@ jobs:
         run: python ops/ci/check_structure.py
       - name: Borrow map is up to date with the register snapshot
         run: python ops/ci/borrow_map.py --check
+
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest==8.3.3
+      - run: make test

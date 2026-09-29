@@ -11,6 +11,7 @@ Usage: python ops/ci/vendor_upstream.py <upstream_root> [tool ...]
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
 import subprocess
 import sys
@@ -96,6 +97,20 @@ def refused(rel: str) -> str | None:
     return None
 
 
+REVIEW_STATES = ("pending", "in-review", "adapted", "dropped")
+
+
+def read_review_states(manifest: Path) -> dict[str, str]:
+    """feature id -> review state from an existing UPSTREAM.yaml (pending | in-review | adapted | dropped)."""
+    if not manifest.exists():
+        return {}
+    states = dict(re.findall(r"^  ([\w-]+):\n(?:    .*\n)*?    review: (\S+)", manifest.read_text(), re.M))
+    bad = {f: s for f, s in states.items() if s not in REVIEW_STATES}
+    if bad:
+        sys.exit(f"{manifest}: unknown review state(s) {bad}; use one of {REVIEW_STATES}")
+    return states
+
+
 def iter_files(src_root: Path, rel: str):
     p = src_root / rel
     if p.is_file():
@@ -113,6 +128,7 @@ def vendor(tool: str, upstream_root: Path) -> None:
     if head != m["commit"]:
         sys.exit(f"{tool}: upstream is at {head}, pinned commit is {m['commit']}")
     dest = THIRD_PARTY / tool
+    reviews = read_review_states(dest / "UPSTREAM.yaml")  # review progress survives re-vendoring
     if dest.exists():
         shutil.rmtree(dest)
     (dest / "src").mkdir(parents=True)
@@ -129,8 +145,8 @@ def vendor(tool: str, upstream_root: Path) -> None:
     ]
     refusals = []
     for fid, (paths, target, task) in m["features"].items():
-        lines += [f"  {fid}:", f"    task: EB-{task}", f"    target: {target}", "    review: pending",
-                  "    files:"]
+        lines += [f"  {fid}:", f"    task: EB-{task}", f"    target: {target}",
+                  f"    review: {reviews.get(fid, 'pending')}", "    files:"]
         for rel in paths:
             for f in iter_files(src, rel):
                 why = refused(f)

@@ -372,13 +372,13 @@ features:
   A3:
     task: EB-28
     target: packages/connectors-sdk/
-    review: pending
+    review: adapted
     files:
       - {path: packages/pieces/common/src/lib/polling/index.ts, sha256: 3113a3e235159d3a}
   A4:
     task: EB-28
     target: packages/connectors-sdk/
-    review: pending
+    review: adapted
     files:
       - {path: packages/server/api/src/app/trigger/dedupe-service.ts, sha256: dc95419fae5d6422}
   A5:

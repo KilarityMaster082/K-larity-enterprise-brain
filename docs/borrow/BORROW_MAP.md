@@ -26,8 +26,8 @@ Caveat: Community edition is single-tenant; RBAC, SSO, audit, API keys, secret m
 | A2-drive | EB-35 | `services/ingestion/connectors/drive/` | 75 | vendored, review pending |
 | A2-whatsapp | EB-34 | `services/ingestion/connectors/whatsapp_cloud/` | 48 | vendored, review pending |
 | A2-http | EB-28 | `packages/connectors-sdk/ (http action)` | 18 | vendored, review pending |
-| A3 | EB-28 | `packages/connectors-sdk/` | 1 | vendored, review pending |
-| A4 | EB-28 | `packages/connectors-sdk/` | 1 | vendored, review pending |
+| A3 | EB-28 | `packages/connectors-sdk/` | 1 | adapted into target |
+| A4 | EB-28 | `packages/connectors-sdk/` | 1 | adapted into target |
 | A5 | EB-66 | `packages/approvals/` | 29 | vendored, review pending |
 | A7 | EB-66 | `packages/approvals/ (versions)` | 1 | vendored, review pending |
 | A8 | EB-29 | `services/ingestion/workflows/` | 1 | vendored, review pending |
@@ -40,12 +40,12 @@ Caveat: MIT utils/encryption.py stores credentials as PLAINTEXT - never copy. Pe
 
 | Feature | Task | Target path | Files | Review state |
 |---|---|---|---:|---|
-| O1 | EB-28 | `packages/connectors-sdk/` | 5 | vendored, review pending |
-| O2 | EB-28 | `packages/connectors-sdk/` | 1 | vendored, review pending |
-| O3 | EB-28 | `packages/connectors-sdk/` | 7 | vendored, review pending |
+| O1 | EB-28 | `packages/connectors-sdk/` | 5 | adapted into target |
+| O2 | EB-28 | `packages/connectors-sdk/` | 1 | adapted into target |
+| O3 | EB-28 | `packages/connectors-sdk/` | 7 | in review |
 | O4-gmail | EB-31 | `services/ingestion/connectors/gmail/` | 9 | vendored, review pending |
 | O4-drive | EB-33 | `services/ingestion/connectors/drive/ + sheets/` | 8 | vendored, review pending |
-| O4-file | EB-35 | `services/ingestion/connectors/file_drop/` | 3 | vendored, review pending |
+| O4-file | EB-35 | `services/ingestion/connectors/file_drop/` | 3 | in review |
 | O4-imap | EB-31 | `services/ingestion/connectors/ (next)` | 4 | vendored, review pending |
 | O4-web | EB-28 | `services/ingestion/connectors/ (next)` | 3 | vendored, review pending |
 | O4-microsoft | EB-28 | `services/ingestion/connectors/ (next 30 days)` | 47 | vendored, review pending |

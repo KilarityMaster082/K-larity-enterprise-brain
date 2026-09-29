@@ -1,0 +1,18 @@
+# Owner task: EB-28 Connector SDK and source registry
+# Stdlib only at runtime — no new dependency to licence-review (CLAUDE.md rule 7).
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "klarity-connectors-sdk"
+version = "0.1.0"
+description = "K!larity connector interface, normalized record schema, source state and sync runner"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = ["connectors_sdk"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
