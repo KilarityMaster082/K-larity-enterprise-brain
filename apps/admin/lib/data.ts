@@ -176,6 +176,13 @@ const state: State = (g.__klarityAdmin ??= {
   seq: 2,
 });
 
+/** Development/testing only: back to the seed. */
+export function resetAdminData(): void {
+  state.tenants = structuredClone(SEED);
+  state.audit = [{ id: "oa-1", at: "2026-09-20T10:00:00+05:30", operator: "Platform", action: "tenant.provision", tenant: "studio8", detail: "Registered from control-plane seed" }];
+  state.seq = 2;
+}
+
 function settle(now = Date.now()): void {
   for (const t of state.tenants) {
     if (t.status === "provisioning" && t.provisioning) {

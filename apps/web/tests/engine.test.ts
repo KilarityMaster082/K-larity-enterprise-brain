@@ -103,3 +103,15 @@ test("a scoped question stays inside its project", () => {
   assert.ok(scoped.evidence.every((e) => !e.project || e.project === "Marigold Clinic"));
   assert.ok(a.evidence.length >= scoped.evidence.length);
 });
+
+test("a draft confirmed in review is attributed to the reviewer, not to an invented decider", async () => {
+  const { resetStore, reviewDecision, tenantView } = await import("@/lib/data/store");
+  resetStore();
+  const S8 = ["0fdc5142-8c25-41c5-aab4-0a88db52a5bf", "studio8"] as const;
+  reviewDecision(...S8, "Project lead", "dec-mc-pvc", "confirm");
+  const a = answerQuestion("What was decided about the Marigold OT flooring PVC?", tenantView(...S8).data, opts);
+  const text = a.answer.map((s) => s.text).join("");
+  assert.match(text, /Confirmed by Project lead: Seamless coved PVC/);
+  assert.equal(a.confidence.level, "high");
+  resetStore();
+});

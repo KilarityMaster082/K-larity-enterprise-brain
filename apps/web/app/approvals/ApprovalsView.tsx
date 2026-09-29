@@ -43,7 +43,7 @@ export function ApprovalsView({ rows, canDecide, focus }: { rows: ApprovalRow[];
   }
 
   const card = (r: ApprovalRow) => {
-    const isEditing = editing[r.approvalId] !== undefined;
+    const isEditing = r.status === "pending" && editing[r.approvalId] !== undefined; // decided drafts show as text
     return (
       <article key={r.approvalId} id={`apr-${r.approvalId}`} className="card review-card" data-focus={r.approvalId === focus}>
         <div className="row-between">

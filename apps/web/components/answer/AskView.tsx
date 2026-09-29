@@ -69,7 +69,8 @@ export function AskView({
       autoAsked.current = true;
       void ask(initialQuestion);
     }
-    return () => ctl.current?.abort();
+    // No abort on cleanup: React's development double-mount would cancel the auto-asked stream and show it as
+    // "Stopped". Only the Stop button (or a new question) aborts a stream.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

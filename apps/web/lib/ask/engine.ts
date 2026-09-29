@@ -258,7 +258,8 @@ function decisionsAnswer(ds: TenantDataset, question: string, p?: Project): Body
   const top = match[0]!;
   const segments: Segment[] = [];
   if (top.status === "decided") {
-    segments.push({ text: `${top.decidedBy ? `${top.decidedBy} decided` : "It was decided"}: ${top.title}.`, evidenceIds: top.evidenceIds });
+    const who = top.decidedBy ? `${top.decidedBy} decided` : top.reviewedBy ? `Confirmed by ${top.reviewedBy}` : "It was decided";
+    segments.push({ text: `${who}: ${top.title}.`, evidenceIds: top.evidenceIds });
     if (top.description) segments.push({ text: ` ${top.description}`, evidenceIds: top.evidenceIds });
   } else {
     segments.push({ text: `There is no confirmed decision yet. A draft says: ${top.title}.`, evidenceIds: top.evidenceIds });

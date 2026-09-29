@@ -129,7 +129,6 @@ export function reviewDecision(
     }
     d.status = "decided";
     d.decidedAt = d.decidedAt ?? new Date().toISOString();
-    d.decidedBy = d.decidedBy ?? "Confirmed in review";
     d.reviewNote = input.note?.trim() || undefined;
   }
   d.reviewedBy = actor;
