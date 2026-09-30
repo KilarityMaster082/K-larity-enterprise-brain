@@ -11,6 +11,7 @@ Enforces:
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from html import escape
 import json
 import logging
 from typing import Any, Callable, Sequence
@@ -77,15 +78,20 @@ SCHEMA REQUIREMENTS:
 
 
 def format_evidence_blocks(candidates: Sequence[EvidenceCandidate]) -> str:
-    """Formats retrieved evidence candidates as passive XML data blocks."""
+    """Formats retrieved evidence candidates as passive XML data blocks.
+
+    Everything that originates in a source document (text, title, author) is XML-escaped, so retrieved
+    content can never close its own block, open a forged ``<evidence id=...>`` block, or break out of an
+    attribute (prompt-injection defence, EB-67).
+    """
     blocks = []
     for cand in candidates:
-        source_type = cand.metadata.get("source_type", "document")
-        title = cand.metadata.get("title", cand.document_id)
-        author = cand.metadata.get("author", "")
+        source_type = escape(str(cand.metadata.get("source_type", "document")), quote=True)
+        title = escape(str(cand.metadata.get("title", cand.document_id)), quote=True)
+        author = escape(str(cand.metadata.get("author", "")), quote=True)
         blocks.append(
-            f'<evidence id="{cand.evidence_id}" sourceType="{source_type}" title="{title}" author="{author}">\n'
-            f"  {cand.text.strip()}\n"
+            f'<evidence id="{escape(cand.evidence_id, quote=True)}" sourceType="{source_type}" title="{title}" author="{author}">\n'
+            f"  {escape(cand.text.strip(), quote=False)}\n"
             f"</evidence>"
         )
     return "\n\n".join(blocks)

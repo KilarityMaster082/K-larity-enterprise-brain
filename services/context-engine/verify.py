@@ -27,6 +27,7 @@ from packages.schemas.answer_contract.schema import (
     Evidence,
     Risk,
     Segment,
+    SourceType,
 )
 try:
     from router import LlmRouter, ModelAlias
@@ -262,6 +263,19 @@ class EvidenceVerifier:
                 )
                 claim_results.append(res)
                 new_unknowns.append(f"Unverified: '{claim.text}' (no evidence passage found)")
+                continue
+
+            # Rule 3: a figure claimed as SQL-origin must be backed by SQL evidence, never by prose a model
+            # (or an injected document) wrote.
+            if claim.figure is not None and claim.figure.origin == "sql" and not any(
+                evidence_map[eid].source_type == SourceType.SQL for eid in claim.evidence_ids if eid in evidence_map
+            ):
+                claim_results.append(VerificationResult(
+                    claim_id=claim.id, text=claim.text, verdict=EntailmentVerdict.NEUTRAL, confidence=0.0,
+                    reason="SQL-origin figure without SQL evidence", numbers_matched=False, dates_matched=False,
+                    evidence_ids=claim.evidence_ids,
+                ))
+                new_unknowns.append(f"Unverified: '{claim.text}' (SQL-origin figure without SQL evidence)")
                 continue
 
             # Check numbers and dates
