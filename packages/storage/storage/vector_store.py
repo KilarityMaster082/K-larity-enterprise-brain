@@ -112,8 +112,10 @@ class VectorStore(TenantScopedStore):
         # Combine caller filters with tenant filter
         combined_filter: dict[str, Any] = {"must": [tenant_cond]}
         if filter_spec:
-            if "must" in filter_spec:
-                combined_filter["must"].extend(filter_spec["must"])
+            if "must" in filter_spec or "should" in filter_spec:
+                combined_filter["must"].extend(filter_spec.get("must", []))
+                if "should" in filter_spec:
+                    combined_filter["should"] = list(filter_spec["should"])
             else:
                 combined_filter["must"].append(filter_spec)
 
@@ -140,8 +142,10 @@ class VectorStore(TenantScopedStore):
         tenant_cond = self._tenant_filter()
         combined_filter: dict[str, Any] = {"must": [tenant_cond]}
         if filter_spec:
-            if "must" in filter_spec:
-                combined_filter["must"].extend(filter_spec["must"])
+            if "must" in filter_spec or "should" in filter_spec:
+                combined_filter["must"].extend(filter_spec.get("must", []))
+                if "should" in filter_spec:
+                    combined_filter["should"] = list(filter_spec["should"])
             else:
                 combined_filter["must"].append(filter_spec)
 
@@ -176,14 +180,19 @@ class LocalVectorBackend:
             shard[pt.id] = pt
 
     def _match_filter(self, payload: dict[str, Any], filter_spec: dict[str, Any]) -> bool:
-        must_list = filter_spec.get("must", [])
-        for cond in must_list:
+        def holds(cond: dict[str, Any]) -> bool:
             key = cond.get("key")
             match_spec = cond.get("match", {})
-            expected = match_spec.get("value")
-            if key not in payload or payload[key] != expected:
+            if key not in payload:
                 return False
-        return True
+            if "any" in match_spec:
+                return payload[key] in match_spec["any"]
+            return payload[key] == match_spec.get("value")
+
+        if not all(holds(c) for c in filter_spec.get("must", [])):
+            return False
+        should = filter_spec.get("should", [])
+        return not should or any(holds(c) for c in should)
 
     def search(
         self,

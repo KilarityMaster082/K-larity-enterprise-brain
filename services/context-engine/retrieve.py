@@ -64,6 +64,29 @@ class RetrievalCandidate:
         )
 
 
+def _opensearch_filters(filter_spec: dict[str, Any]) -> list[dict[str, Any]]:
+    """Translate a retrieval filter_spec into OpenSearch filter clauses.
+
+    Flat keys become ``term`` clauses; a Qdrant-style ``must`` list (as built by the permission
+    filter, EB-42) maps ``match.value`` to ``term`` and ``match.any`` to ``terms``.
+    """
+    clauses: list[dict[str, Any]] = []
+    for key, value in filter_spec.items():
+        if key == "should":
+            should = [_opensearch_filters({"must": [c]})[0] for c in value]
+            clauses.append({"bool": {"should": should, "minimum_should_match": 1}})
+        elif key == "must":
+            for cond in value:
+                match = cond.get("match", {})
+                if "any" in match:
+                    clauses.append({"terms": {cond["key"]: list(match["any"])}})
+                else:
+                    clauses.append({"term": {cond["key"]: match.get("value")}})
+        else:
+            clauses.append({"term": {key: value}})
+    return clauses
+
+
 class SparseSearchBackend(Protocol):
     """Protocol for sparse keyword/lexical or SPLADE search."""
 
@@ -234,7 +257,7 @@ class HybridRetriever:
                 "query": {
                     "bool": {
                         "must": [{"match": {"text": query}}],
-                        "filter": [{"term": {k: v}} for k, v in filter_spec.items()],
+                        "filter": _opensearch_filters(filter_spec),
                     }
                 },
             }
