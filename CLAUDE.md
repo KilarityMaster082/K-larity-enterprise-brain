@@ -37,3 +37,7 @@ EB4 / Phase 4 -> packages/ontology, services/memory, apps/web/app/projects, apps
 8. Prefer existing packages/services over duplicate helpers.
 9. Keep interfaces typed and versioned.
 10. Do not add automation side effects without an approval model.
+
+## Branching
+- Develop in `dev`: commit and push there directly. Do not create separate feature branches (including `claude/...` ones).
+- Never push to `main`. `main` only changes through a PR from `dev`, opened after review, and is merged only when the owner says so.
