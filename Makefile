@@ -19,7 +19,7 @@ vendor:  ## re-vendor approved upstream features from pinned clones in $(UPSTREA
 
 test:  ## unit tests (needs pytest + cryptography; see .github/workflows/ci.yml for pinned versions)
 	PYTHONPATH=$(PYTHONPATH_DEV) $(PYTHON) -m pytest -q -p no:cacheprovider --import-mode=importlib packages/connectors-sdk/tests packages/schemas/tests services/ingestion/connectors/file_drop/tests \
-		packages/tenant-context/tests packages/storage/tests services/control-plane/tests packages/ontology/tests packages/permissions/tests apps/api/tests services/llm-gateway/tests services/ingestion/workflows/tests services/normalization/tests services/ingestion/connectors/gmail/tests services/ingestion/connectors/whatsapp_export/tests services/context-engine/tests services/evaluation/leakage/tests services/evaluation/security/tests
+		packages/tenant-context/tests packages/storage/tests services/control-plane/tests packages/ontology/tests packages/permissions/tests packages/approvals/tests apps/api/tests services/llm-gateway/tests services/ingestion/workflows/tests services/normalization/tests services/ingestion/connectors/gmail/tests services/ingestion/connectors/whatsapp_export/tests services/context-engine/tests services/evaluation/leakage/tests services/evaluation/security/tests
 
 .PHONY: test-web
 test-web:  ## web apps: unit tests (no dependencies beyond Node 24), typecheck, production builds, client-bundle leak check
