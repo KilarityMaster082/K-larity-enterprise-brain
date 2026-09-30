@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#1b1b1b;font-family:'Google Sans',system-ui,sans-serif;color:#1b1b1b}
+a{color:#1b1b1b}a:hover{color:#000}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.14);opacity:.8}}
+@keyframes ring{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.9);opacity:0}}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{50%{opacity:.2}}
+@keyframes wave{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes wedge{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,-10px)}}
+@keyframes type{from{width:0}to{width:100%}}
+</style>
+</helmet>
+<div style="display:flex;gap:24px;padding:24px;min-height:100vh;box-sizing:border-box;align-items:flex-start">
+  <aside style="width:264px;flex:none;position:sticky;top:24px;height:calc(100vh - 48px);max-height:940px;overflow:auto;color:#eee;padding-right:6px">
+    <div style="display:flex;align-items:center;gap:10px;padding:4px 6px 14px"><img src="packages/ui/brand/logo-on-dark.png" style="height:26px" alt="K!larity"><span style="font-size:11px;color:#9a9aa4">Enterprise Brain · 54 screens</span></div>
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="8">
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#77777f;padding:6px 8px;font-weight:700">{{ g.label }}</div>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <div onClick="{{ it.go }}" style="display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:12px;cursor:pointer;font-size:12.5px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }}"><span style="font:500 10px 'JetBrains Mono',monospace;opacity:.6;width:18px">{{ it.n }}</span>{{ it.title }}</div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </aside>
+
+  <div style="flex:1;min-width:760px;max-width:1360px;height:calc(100vh - 48px);max-height:940px;border-radius:34px;background:linear-gradient(135deg,#e8e2f0 0%,#e3e9f4 42%,#f3e6e4 100%);position:relative;overflow:hidden;display:flex;box-shadow:0 30px 80px rgba(0,0,0,.5)">
+    <nav style="width:74px;flex:none;display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 0">
+      <img src="packages/ui/brand/mark.png" style="width:30px;margin-bottom:18px" alt="">
+      <sc-for list="{{ rail }}" as="r" hint-placeholder-count="8">
+        <div onClick="{{ r.go }}" title="{{ r.label }}" style="width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:{{ r.bg }};color:{{ r.fg }};transition:.2s"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><sc-for list="{{ r.paths }}" as="p" hint-placeholder-count="2"><path d="{{ p }}"></path></sc-for></svg></div>
+      </sc-for>
+      <div style="margin-top:auto;width:34px;height:34px;border-radius:50%;background:#d2ff1f;display:grid;place-items:center;font-size:11px;font-weight:700">MK</div>
+    </nav>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="display:flex;align-items:center;padding:18px 26px 8px 8px;gap:14px;white-space:nowrap;flex:none">
+        <div style="font-size:12px;color:#5d5b66;display:flex;gap:8px;align-items:center"><span style="font:500 11px 'JetBrains Mono',monospace;background:#fff;border-radius:99px;padding:4px 10px">{{ cur.route }}</span></div>
+        <div style="flex:1;display:flex;justify-content:center"><div style="display:flex;gap:6px;font-size:11px;align-items:center"><span style="padding:7px 14px;border-radius:99px;color:#444">Today</span><span style="padding:7px 14px;border-radius:99px;color:#444">This Week</span><span style="padding:7px 16px;border-radius:99px;background:#0e0e0e;color:#fff;font-weight:600">This Month</span><span style="padding:7px 14px;border-radius:99px;color:#444">Reports</span></div></div>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.15);border-radius:99px;padding:7px 14px;font-size:11px;background:rgba(255,255,255,.4)">Studio 8 Hats <span>▾</span></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#0e0e0e;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:600">⌘K</div>
+      </header>
+      <main style="flex:1;overflow:auto;padding:8px 26px 30px 8px;zoom:.74">
+        <div style="display:flex;gap:8px;align-items:center;margin:0 0 12px;font-size:11px;white-space:nowrap;flex-wrap:wrap"><span style="background:#0e0e0e;color:#fff;border-radius:99px;padding:4px 10px;font-weight:600">{{ cur.n }} / 54</span><span style="color:#5d5b66">{{ cur.title }} · {{ cur.role }}</span><span style="border-radius:99px;padding:4px 10px;background:#d2ff1f;font-weight:600">{{ cur.status }}</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 10px;animation:fadeUp .4s both">
+          <sc-for list="{{ brief.m }}" as="m" hint-placeholder-count="4"><div style="border-radius:14px;background:{{ m.bg }};padding:9px 12px;display:flex;align-items:center;gap:10px"><div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.l }}</div><div style="font-size:17px;font-weight:600;letter-spacing:-.02em">{{ m.v }}</div><div style="font-size:9.5px;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.n }}</div></div><svg width="54" height="26" viewBox="0 0 54 26"><path d="{{ m.sp }}" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="120" stroke-dashoffset="120"><animate attributeName="stroke-dashoffset" from="120" to="0" dur="1.4s" fill="freeze"></animate></path></svg></div></sc-for>
+          <div style="border-radius:14px;background:#0e0e0e;color:#fff;padding:9px 12px;display:flex;align-items:center;gap:10px"><div style="display:flex"><span style="width:24px;height:24px;border-radius:50%;background:#d2ff1f;color:#111;display:grid;place-items:center;font-size:9px;font-weight:700;border:2px solid #0e0e0e">MK</span><span style="width:24px;height:24px;border-radius:50%;background:#c5effd;color:#111;display:grid;place-items:center;font-size:9px;font-weight:700;border:2px solid #0e0e0e;margin-left:-8px">PL</span><span style="width:24px;height:24px;border-radius:50%;background:#ffc9c9;color:#111;display:grid;place-items:center;font-size:9px;font-weight:700;border:2px solid #0e0e0e;margin-left:-8px">AC</span></div><div style="font-size:10px;line-height:1.35"><b style="color:#d2ff1f">Live</b><br>3 teammates here</div><span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#d2ff1f;animation:pulse 1.6s infinite"></span></div>
+        </div>
+        <sc-if value="{{ show.core }}" hint-placeholder-val="{{ true }}"><dc-import name="EBCore" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.comms }}" hint-placeholder-val="{{ false }}"><dc-import name="EBComms" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.work }}" hint-placeholder-val="{{ false }}"><dc-import name="EBWork" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.meet }}" hint-placeholder-val="{{ false }}"><dc-import name="EBMeet" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.agents }}" hint-placeholder-val="{{ false }}"><dc-import name="EBAgents" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.viewers }}" hint-placeholder-val="{{ false }}"><dc-import name="EBViewers" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.apps }}" hint-placeholder-val="{{ false }}"><dc-import name="EBApps" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+        <sc-if value="{{ show.admin }}" hint-placeholder-val="{{ false }}"><dc-import name="EBAdmin" screen="{{ screen }}" hint-size="100%,760px"></dc-import></sc-if>
+      </main>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 1 };
+  componentDidMount() { try { const v = +localStorage.getItem('eb_screen'); if (v >= 1 && v <= 54) this.setState({ screen: v }); } catch (e) {} }
+  go(n) { this.setState({ screen: n }); try { localStorage.setItem('eb_screen', n); } catch (e) {} }
+  renderVals() {
+    const S = [
+      ['Core Brain', 'core', [[1,'Ask Brain Home & Thread','/ask','Everyone','Built & Live'],[2,'Evidence & Source Side-Sheet','/ask?source=','Everyone','Built & Live'],[3,'SSO Sign-In & Tenant Switcher','/login','Public','Built & Live'],[4,'Onboarding Wizard','/onboarding','Admin / Owner','Next to Build'],[40,'Session History & Chat Archive','/history','Everyone','To Adapt'],[41,'Suggested Topics & Trends','/explore','Everyone','To Adapt'],[42,'Global Command Palette','⌘K','Everyone','To Adapt']]],
+      ['Communications & Knowledge', 'comms', [[5,'Communications & Email Feed','/communications','Everyone','To Adapt'],[6,'Email Thread & AI Extraction','/communications/[id]','Everyone','To Adapt'],[7,'Email Composer & Reply','Drawer','Everyone','To Adapt'],[8,'Knowledge Hub','/knowledge','Everyone','To Adapt'],[9,'Knowledge File Vault','/knowledge/files','Everyone','To Adapt'],[10,'Structured Bases','/knowledge/bases','Everyone','To Adapt'],[11,'Visual Knowledge Graph','/knowledge/graph','Everyone','To Adapt']]],
+      ['Projects, Finance & Decisions', 'work', [[12,'Projects Fleet Overview','/projects','Everyone','Design Active'],[13,'Project Detail Hub','/projects/[id]','Everyone','Design Active'],[14,'Decisions Queue & Log','/decisions','Everyone','Built & Live'],[15,'Document & Drawing Vault','/documents','Everyone','Built & Live'],[16,'Finance & Cash Control','/finance','Owner / Partner','Built & Live'],[17,'Executive Briefing Cockpit','/executive','Owner / Partner','Built & Live'],[18,'Action Approvals Queue','/approvals','Role gated','Built & Live']]],
+      ['Meetings & Todos', 'meet', [[19,'Meetings & Calendar Hub','/meetings','Everyone','To Adapt'],[20,'Meeting Dossier & Prep Brief','/meetings/[id]/prep','Everyone','To Adapt'],[21,'Live Notes & Transcription','/meetings/live','Everyone','To Adapt'],[22,'Video / Audio Call View','/meetings/call','Everyone','To Adapt'],[23,'Action Todos & Commitments','/todos','Everyone','To Adapt']]],
+      ['Agents, Spaces & Activity', 'agents', [[24,'Background Agents Monitor','/tasks','Owner / Partner','To Adapt'],[25,'Agent Run Inspector','Drawer','Owner / Partner','To Adapt'],[26,'Spaces & Channels Hub','/spaces','Everyone','To Adapt'],[27,'Space Discussion Feed','/spaces/[id]','Everyone','To Adapt'],[28,'Space Pinned Files','/spaces/[id]/files','Everyone','To Adapt'],[29,'Team Activity Stream','/activity','Everyone','To Adapt']]],
+      ['File Viewers', 'viewers', [[30,'Spreadsheet & BOQ Viewer','Modal','Everyone','To Adapt'],[31,'PDF Document Viewer','Modal','Everyone','To Adapt'],[32,'Word Document Viewer','Modal','Everyone','To Adapt'],[33,'Slide Deck Viewer','Modal','Everyone','To Adapt'],[34,'Site Photo Viewer','Modal','Everyone','To Adapt'],[35,'Video Inspection Player','Modal','Everyone','To Adapt'],[36,'Voice Note Player','Modal','Everyone','To Adapt'],[37,'Code & Diff Inspector','Modal','Technical / Admin','To Adapt']]],
+      ['Apps & Settings', 'apps', [[38,'App Store & Tool Catalog','/apps','Owner / Partner','To Adapt'],[39,'App Detail & Connection','/apps/[id]','Owner / Partner','To Adapt'],[43,'Settings · Connected Sources','/settings/sources','Owner / Partner','Design Active'],[44,'Settings · Members & Roles','/settings/members','Owner','Design Active'],[45,'Settings · Retention & Security','/settings/security','Owner','Design Active']]],
+      ['Operator Admin Console', 'admin', [[46,'Operator Login & Impersonation','admin/login','Operator','Built & Live'],[47,'Tenant Registry Fleet','admin/tenants','Operator','Built & Live'],[48,'Tenant Placement Inspector','admin/tenants/[id]','Operator','Built & Live'],[49,'Ingestion Pipeline Health','admin/sources-health','Operator','Built & Live'],[50,'Dead-Letter Queue Inspector','admin/dead-letter','Operator','Backend Live'],[51,'Audited Retrieval Console','admin/retrieval','Operator','Built & Live'],[52,'LLM Gateway & Budget','admin/gateway','Operator','Backend Live'],[53,'System Audit Trail','admin/audit','Operator','Backend Live'],[54,'Cell & Cluster Health','admin/infra','Operator','Next to Build']]]
+    ];
+    const cur = this.state.screen; let meta = {}, grp = 'core';
+    const groups = S.map(([label, key, items]) => ({ label, items: items.map(([n, title, route, role, status]) => {
+      if (n === cur) { meta = { n, title, route, role, status }; grp = key; }
+      return { n, title, go: () => this.go(n), bg: n === cur ? '#d2ff1f' : 'transparent', fg: n === cur ? '#111' : '#cfcfd6', fw: n === cur ? 700 : 500 };
+    }) }));
+    const P = { ask:["M12 3l1.8 4.6L18 9.4l-4.2 1.8L12 16l-1.8-4.8L6 9.4l4.2-1.8z","M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"], projects:["M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"], finance:["M7 5h10","M7 9.5h10","M7 5c4 0 6 1.5 6 4.5S11 14 7 14l7 6"], decisions:["M9 12l2 2 4-4","M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"], documents:["M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z","M14 3v5h5","M9 13h6","M9 17h6"], executive:["M4 19h16","M7 16v-5","M12 16V6","M17 16v-8"], approvals:["M4 13l2.5-7h11L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z","M4 13h4l1.5 2.5h5L16 13h4"], settings:["M4 7h16","M4 12h16","M4 17h16"] };
+    const R = [['ask',1,'Ask Brain'],['projects',12,'Projects'],['finance',16,'Finance'],['decisions',14,'Decisions'],['documents',15,'Documents'],['executive',17,'Executive'],['approvals',18,'Approvals'],['settings',43,'Settings']];
+    const rail = R.map(([k, n, label]) => { const on = cur === n; return { paths: P[k], label, go: () => this.go(n), bg: on ? '#0e0e0e' : 'transparent', fg: on ? '#fff' : '#333' }; });
+    const show = {}; ['core','comms','work','meet','agents','viewers','apps','admin'].forEach(k => show[k] = k === grp);
+    const M = (l, v, n, bg) => ({ l, v, n, bg });
+    const B = {
+      core: { h: 'Phoenix is the project to watch this month.', b: 'The Brain reads email, drawings, ledger and chat, then answers with sources. Steel and a facade variation explain most of the overrun.', m: [M('Questions answered','312','+86 vs last month','#d2ff1f'),M('Answers cited','94%','2.6 sources per answer','#c5effd'),M('Sources connected','5','Gmail, Drive, WhatsApp, Calendar, Ledger','#dcd3f8')] },
+      comms: { h: '4,120 threads, 18,440 messages, one searchable memory.', b: 'Every email and chat is tagged to a project, and the Brain pulls out decisions, deadlines and quantified variations.', m: [M('New today','42','threads synced 09:30','#c5effd'),M('Decisions found','7','3 waiting for review','#d2ff1f'),M('Deadlines','5','2 fall this week','#ffc9c9')] },
+      work: { h: 'Two of four projects need a decision this week.', b: 'Phoenix forecasts ₹18.4 lakh over budget, Banyan has ₹38.6 lakh overdue, and 3 approvals are waiting on a partner.', m: [M('Portfolio budget','₹4.6 cr','4 active projects','#c6e4c1'),M('Overdue receivables','₹38.6 L','61 days at worst','#ffc9c9'),M('Approvals pending','3','oldest 2 days','#fff4d6')] },
+      meet: { h: 'Tuesday 10:30 is the meeting that matters.', b: 'Phoenix site coordination has a brief ready: open commitments, new drawing revisions and two approvals to clear before it starts.', m: [M('Meetings this week','9','5 with vendors','#c5effd'),M('Commitments open','26','18 done this week','#d2ff1f'),M('Overdue','3','chase before Fri','#ffc9c9')] },
+      agents: { h: 'Agents ran 38 jobs today and one needs a nudge.', b: 'Background agents keep the graph fresh and audit budgets hourly. WhatsApp media fetch is rate-limited and retrying.', m: [M('Running now','4','of 12 scheduled','#d2ff1f'),M('Tokens today','1.2 M','43% of cap','#dcd3f8'),M('Failed, retrying','1','WhatsApp media','#ffc9c9')] },
+      viewers: { h: 'Open any cited file without leaving the answer.', b: 'Sheets, PDFs, drawings, photos, video and voice notes open in place, with the cited passage highlighted.', m: [M('Files indexed','1,300','Drive','#c5effd'),M('Highlights','5','on this document','#d2ff1f'),M('Last revision','Rev D','FA-201, 24 Sep','#dcd3f8')] },
+      apps: { h: 'Five sources feed the Brain and all are healthy but one.', b: 'Connections are permission-aware: the Brain searches only what each role can open. WhatsApp sync is lagging by an hour.', m: [M('Connected','5','of 8 available','#c6e4c1'),M('Members','14','2 partners, 1 guest','#dcd3f8'),M('Retention','3 yrs','KMS key active','#fff4d6')] },
+      admin: { h: 'One live tenant, one canary, 7 items in the dead-letter queue.', b: 'Operator view of ingestion health, spend against cap and cluster status. Every session is audited.', m: [M('Spend vs cap','$214','43% of $500','#d2ff1f'),M('Dead-letter','7','2 ready to replay','#ffc9c9'),M('Workers','8/8','online','#c6e4c1')] }
+    };
+    const sp=['M0 20 L9 16 L18 18 L27 10 L36 12 L45 5 L54 3','M0 6 L9 10 L18 8 L27 14 L36 12 L45 18 L54 20','M0 14 L9 8 L18 15 L27 6 L36 13 L45 9 L54 4','M0 18 L9 17 L18 12 L27 14 L36 8 L45 6 L54 2'];const br=B[grp];br.m=br.m.map((m,i)=>Object.assign({sp:sp[i%4]},m)).concat([]);return { groups, rail, cur: meta, screen: cur, show, brief: br };
+  }
+}
+</script>
+</body>
+</html>

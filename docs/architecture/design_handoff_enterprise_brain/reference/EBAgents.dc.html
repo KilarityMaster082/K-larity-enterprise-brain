@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="animation:fadeUp .5s both">
+<sc-if value="{{ is.s24 }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+  <div style="border-radius:20px;background:#d2ff1f;padding:13px;min-height:37px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:13px">Running now</b><span style="font-size:24px;font-weight:600">4</span></div>
+  <div style="border-radius:20px;background:#0e0e0e;color:#fff;padding:13px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:13px">Runs today</b><span style="font-size:24px;font-weight:600">38</span></div>
+  <div style="border-radius:20px;background:#ffc9c9;padding:13px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:13px">Failed, retrying</b><span style="font-size:24px;font-weight:600">1</span></div>
+  <div style="grid-column:span 3;border-radius:20px;background:rgba(255,255,255,.65);padding:13px"><sc-for list="{{ jobs }}" as="j" hint-placeholder-count="5"><div style="display:flex;gap:10px;align-items:center;padding:14px 0;border-top:1px solid rgba(0,0,0,.08);font-size:13px"><span style="width:12px;height:12px;border-radius:50%;background:{{ j.c }};animation:{{ j.a }}"></span><b style="width:230px">{{ j.n }}</b><span style="flex:1;color:#666">{{ j.d }}</span><span style="font:500 11px 'JetBrains Mono',monospace;color:#777;width:110px">{{ j.s }}</span><span style="font:500 11px 'JetBrains Mono',monospace;width:60px">{{ j.t }}</span><span style="border-radius:99px;padding:4px 12px;font-size:11px;background:{{ j.b }}">{{ j.st }}</span></div></sc-for></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.s25 }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:1fr 340px;gap:10px">
+  <div style="border-radius:20px;background:#0e0e0e;padding:13px;font:400 12px/1.9 'JetBrains Mono',monospace;color:#d8d8d8"><div style="color:#d2ff1f;font-weight:500;margin-bottom:8px">budget_audit · run 8a41 · running</div>
+    <sc-for list="{{ log }}" as="l" hint-placeholder-count="9"><div style="display:flex;gap:14px"><span style="color:#666">{{ l.t }}</span><span style="color:{{ l.c }};width:90px">{{ l.k }}</span><span>{{ l.m }}</span></div></sc-for><div style="color:#d2ff1f;animation:blink 1s infinite">▍</div></div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="border-radius:20px;background:#d2ff1f;padding:13px"><b style="font-size:13px">Tokens consumed</b><div style="font-size:22px;font-weight:600;margin-top:10px">48,210</div></div><div style="border-radius:20px;background:#c5effd;padding:13px"><b style="font-size:13px">Duration</b><div style="font-size:22px;font-weight:600;margin-top:10px">02:14</div></div><div style="border-radius:20px;background:#fff4d6;padding:13px;flex:1"><b style="font-size:13px">Retries</b><div style="font-size:12px;margin-top:10px;line-height:1.6">1 retry on tool call finance.forecast_variance (timeout, recovered).</div></div></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.s26 }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+  <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="6"><div style="border-radius:20px;background:{{ s.bg }};padding:13px;min-height:45px;display:flex;flex-direction:column;justify-content:space-between"><div style="font-size:18px;font-weight:600"># {{ s.n }}</div><div style="font-size:12px;color:#333">{{ s.d }}</div><div style="display:flex;gap:6px;font-size:11px"><span style="background:#fff;border-radius:99px;padding:4px 10px">{{ s.a }} threads</span><span style="background:#fff;border-radius:99px;padding:4px 10px">{{ s.b }} files</span></div></div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.s27 }}" hint-placeholder-val="{{ false }}">
+<div style="border-radius:20px;background:rgba(255,255,255,.65);padding:13px;display:flex;flex-direction:column;gap:14px;min-height:620px">
+  <div style="font-size:16px;font-weight:600"># phoenix-structural</div>
+  <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="4"><div style="display:flex;gap:12px"><span style="width:34px;height:34px;border-radius:50%;background:{{ m.c }};display:grid;place-items:center;font-size:11px;font-weight:700;flex:none">{{ m.i }}</span><div><div style="font-size:12px"><b>{{ m.n }}</b> <span style="color:#888">{{ m.t }}</span></div><div style="font-size:13px;line-height:1.5;margin-top:3px">{{ m.x }}</div><div style="display:flex;gap:6px;margin-top:6px"><span style="border:1px solid rgba(0,0,0,.15);border-radius:99px;padding:2px 9px;font-size:11px">{{ m.r }}</span></div></div></div></sc-for>
+  <div style="margin-top:auto;background:#fff;border-radius:99px;padding:12px 18px;font-size:13px;color:#888;display:flex">Message #phoenix-structural, @mention or attach a document<span style="margin-left:auto;background:#0e0e0e;color:#fff;border-radius:50%;width:26px;height:26px;display:grid;place-items:center">→</span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.s28 }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+  <div style="grid-column:span 3;display:flex;gap:8px"><span style="background:#fff;border-radius:99px;padding:8px 16px;font-size:12px">Discussion</span><span style="background:#0e0e0e;color:#fff;border-radius:99px;padding:8px 16px;font-size:12px;font-weight:600">Pinned files</span><span style="background:#fff;border-radius:99px;padding:8px 16px;font-size:12px">Agent runs</span></div>
+  <sc-for list="{{ files }}" as="f" hint-placeholder-count="6"><div style="border-radius:16px;background:{{ f.bg }};padding:11px;min-height:59px;display:flex;flex-direction:column;justify-content:space-between"><div style="display:flex;justify-content:space-between"><span style="font:500 10px 'JetBrains Mono',monospace;background:#fff;border-radius:6px;padding:3px 7px">{{ f.e }}</span><span style="font-size:12px">📌</span></div><b style="font-size:14px">{{ f.n }}</b></div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.s29 }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:1fr 320px;gap:10px">
+  <div style="border-radius:20px;background:rgba(255,255,255,.65);padding:14px"><sc-for list="{{ acts }}" as="a" hint-placeholder-count="7"><div style="display:flex;gap:10px;padding:0 0 22px;position:relative"><span style="width:14px;height:14px;border-radius:50%;background:{{ a.c }};border:2px solid #111;flex:none;margin-top:3px"></span><div style="flex:1"><div style="font:500 11px 'JetBrains Mono',monospace;color:#777">{{ a.t }}</div><div style="font-size:14px;font-weight:600;margin-top:2px">{{ a.x }}</div><div style="font-size:12px;color:#666">{{ a.d }}</div></div></div></sc-for></div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div style="border-radius:20px;background:#d2ff1f;padding:13px"><b style="font-size:13px">Events today</b><div style="font-size:24px;font-weight:600;margin-top:10px">126</div></div><div style="border-radius:20px;background:#0e0e0e;padding:13px;flex:1;display:flex;flex-direction:column;gap:8px"><b style="font-size:13px;color:#fff">By type</b><div style="display:flex;gap:6px;flex-wrap:wrap"><span style="background:#dcd3f8;border-radius:99px;padding:5px 12px;font-size:11px">Uploads</span><span style="background:#c6e4c1;border-radius:99px;padding:5px 12px;font-size:11px">Decisions</span><span style="background:#ffc9c9;border-radius:99px;padding:5px 12px;font-size:11px">Approvals</span><span style="background:#c5effd;border-radius:99px;padding:5px 12px;font-size:11px">Syncs</span></div></div></div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;screen&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:24,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const s = +this.props.screen || 24, is = {}; [24,25,26,27,28,29].forEach(n => is['s' + n] = s === n);
+    return { is,
+      jobs: [{c:'#2b8a3e',a:'pulse 1.6s infinite',n:'Nightly knowledge gardening',d:'Dedupe entities, refresh graph',s:'Every night 02:00',t:'14m',st:'Running',b:'#d2ff1f'},{c:'#2b8a3e',a:'pulse 1.6s .3s infinite',n:'Gmail connector sync',d:'Threads, attachments',s:'Every 5 min',t:'0:42',st:'Running',b:'#d2ff1f'},{c:'#2b8a3e',a:'pulse 1.6s .6s infinite',n:'Budget audit',d:'Variance across packages',s:'Hourly',t:'2:14',st:'Running',b:'#d2ff1f'},{c:'#888',a:'none',n:'Document re-indexing',d:'FA-201 Rev D',s:'On change',t:'3:08',st:'Done',b:'#c6e4c1'},{c:'#b42318',a:'blink 1s infinite',n:'WhatsApp media fetch',d:'Rate limited, retry 2 of 5',s:'Every 5 min',t:'0:10',st:'Retrying',b:'#ffc9c9'}],
+      log: [{t:'10:41:02',k:'PLAN',c:'#c5effd',m:'Audit budget vs committed for 4 projects'},{t:'10:41:03',k:'TOOL',c:'#d2ff1f',m:'finance.package_variance(project=phoenix)'},{t:'10:41:04',k:'RESULT',c:'#c6e4c1',m:'steel: committed 22.4L, budget 18.0L'},{t:'10:41:05',k:'TOOL',c:'#d2ff1f',m:'finance.forecast_variance(project=phoenix)'},{t:'10:41:35',k:'ERROR',c:'#ffc9c9',m:'timeout after 30s'},{t:'10:41:36',k:'RETRY',c:'#fff4d6',m:'attempt 2 of 3'},{t:'10:41:38',k:'RESULT',c:'#c6e4c1',m:'forecast overrun 18.4L (12.0%)'},{t:'10:41:39',k:'DRAFT',c:'#dcd3f8',m:'payment hold suggestion → Approvals'}],
+      spaces: [{bg:'#c5effd',n:'phoenix-structural',d:'Steel, beams, RFIs',a:24,b:12},{bg:'#c6e4c1',n:'mep-coordination',d:'Services clashes and layouts',a:11,b:8},{bg:'#ffc9c9',n:'facade-review',d:'Skyline Facades quotes and drawings',a:17,b:9},{bg:'#dcd3f8',n:'clinic-handover',d:'Marigold Clinic snags',a:9,b:5},{bg:'#fff4d6',n:'vendor-payments',d:'Milestones and invoices',a:14,b:21},{bg:'#d2ff1f',n:'lotus-interiors',d:'Joinery and finishes',a:6,b:7}],
+      msgs: [{i:'VS',c:'#c5effd',n:'Structural consultant',t:'10:12',x:'Uploaded the calc for ISMB 450. @Project lead please confirm the C–D bay.',r:'👍 2'},{i:'PL',c:'#d2ff1f',n:'Project lead',t:'10:20',x:'Confirmed. See RFI-27 reply in Approvals.',r:'↳ 3 replies'},{i:'SE',c:'#ffc9c9',n:'Site engineer',t:'10:31',x:'Level 3 photos attached, column line C is ready.',r:'📎 12 photos'},{i:'AI',c:'#0e0e0e',n:'Brain',t:'10:33',x:'Steel is committed ₹4.4 lakh above budget. Source: ledger.',r:'2 citations'}],
+      files: [{bg:'#c5effd',e:'PDF',n:'Steel contract draft'},{bg:'#dcd3f8',e:'XLSX',n:'Phoenix BOQ v7'},{bg:'#c6e4c1',e:'DWG',n:'ST-114 Rev C'},{bg:'#ffc9c9',e:'PDF',n:'ISMB 450 calc'},{bg:'#fff4d6',e:'PDF',n:'RFI-27'},{bg:'#d2ff1f',e:'DWG',n:'FA-201 Rev D'}],
+      acts: [{c:'#d2ff1f',t:'10:42',x:'Approved: RFI-27 reply',d:'Project lead'},{c:'#dcd3f8',t:'10:20',x:'Uploaded FA-201 Rev D',d:'Facade vendor'},{c:'#c6e4c1',t:'09:58',x:'Decision confirmed: ISMB 450 beams',d:'Project lead'},{c:'#c5effd',t:'09:30',x:'Gmail sync completed, 42 new threads',d:'Ingestion'},{c:'#ffc9c9',t:'09:05',x:'Rejected: payment reminder draft',d:'Principal architect'},{c:'#d2ff1f',t:'08:40',x:'Budget audit finished',d:'Agent'},{c:'#dcd3f8',t:'08:10',x:'Uploaded BOQ v7',d:'Accounts'}]
+    };
+  }
+}
+</script>
+</body>
+</html>
