@@ -1,0 +1,26 @@
+{
+  "version": "1.1.0",
+  "question": "What is the colour of the moon?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "I couldn't find enough in your connected sources to answer this reliably, so I won't guess.",
+  "conflicts": [],
+  "status": "insufficient_evidence",
+  "answer": [
+    {
+      "text": "I couldn't find enough in your connected sources to answer this reliably, so I won't guess."
+    }
+  ],
+  "facts": [],
+  "causes": [],
+  "risks": [],
+  "unknowns": [
+    "Try naming the project, person or document.",
+    "Ask about budgets, payments, decisions, drawings or what changed recently."
+  ],
+  "confidence": {
+    "level": "low",
+    "reason": "No supporting evidence found."
+  },
+  "actions": [],
+  "evidence": []
+}

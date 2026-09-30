@@ -1,14 +1,15 @@
 "use client";
-// Owner task: EB-101 Command palette and global search — ⌘K / Ctrl+K. WAI-ARIA combobox + listbox; results
-// come from /api/search, which applies the caller's role before returning anything.
-import { Icon, type IconName } from "@klarity/ui";
+// Owner task: EB-101 Command palette and global search — ⌘K / Ctrl+K (screen 42). WAI-ARIA combobox + listbox; results
+// come from /api/search, which applies the caller's role and tenant before returning anything. Quick-switch to
+// any screen the role may open, fuzzy-matched; typing a question offers to ask it.
+import { Icon, type IconName, type LauncherGroup } from "@klarity/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import type { NavItem } from "@/lib/nav";
+import { fuzzyScore } from "@/lib/fuzzy";
 
 export interface SearchHit {
-  group: "Projects" | "Documents" | "Decisions";
+  group: "Projects" | "Documents" | "Decisions" | "Email threads" | "Meetings" | "Todos" | "Spaces" | "Apps";
   label: string;
   sub?: string;
   href: string;
@@ -17,9 +18,11 @@ export interface SearchHit {
 
 type Item = { id: string; group: string; label: string; sub?: string; icon: IconName; run: () => void };
 
-export function CommandPalette({ open, onClose, nav }: { open: boolean; onClose: () => void; nav: NavItem[] }) {
-  const ref = useRef<HTMLDialogElement>(null);
+const GROUP_ORDER = ["Ask Brain", "Documents", "Email threads", "Decisions", "Projects", "Meetings", "Todos", "Spaces", "Apps", "Go to"];
+
+export function CommandPalette({ open, onClose, launcher }: { open: boolean; onClose: () => void; launcher: LauncherGroup[] }) {
   const input = useRef<HTMLInputElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const router = useRouter();
   const listId = useId();
   const [q, setQ] = useState("");
@@ -27,14 +30,14 @@ export function CommandPalette({ open, onClose, nav }: { open: boolean; onClose:
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    const d = ref.current;
-    if (!d) return;
-    if (open && !d.open) {
-      d.showModal();
+    if (open) {
+      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setQ("");
       setActive(0);
       requestAnimationFrame(() => input.current?.focus());
-    } else if (!open && d.open) d.close();
+    } else {
+      opener.current?.focus();
+    }
   }, [open]);
 
   useEffect(() => {
@@ -62,18 +65,35 @@ export function CommandPalette({ open, onClose, nav }: { open: boolean; onClose:
       onClose();
       router.push(href);
     };
-    const term = q.trim().toLowerCase();
-    const pages = nav
-      .filter((n) => !term || n.label.toLowerCase().includes(term))
-      .map((n) => ({ id: `nav-${n.href}`, group: "Go to", label: n.label, icon: n.icon, run: go(n.href) }));
+    const term = q.trim();
+    const pages = launcher
+      .flatMap((g) => g.items)
+      .map((n) => ({ n, score: fuzzyScore(term, n.title) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, term ? 8 : 12)
+      .map(({ n }) => ({ id: `nav-${n.href}-${n.title}`, group: "Go to", label: n.title, sub: n.href, icon: "chevronRight" as IconName, run: go(n.href) }));
     const found = hits.map((h, i) => ({ id: `hit-${i}`, group: h.group, label: h.label, sub: h.sub, icon: h.icon, run: go(h.href) }));
-    const ask: Item[] = term
-      ? [{ id: "ask", group: "Ask Brain", label: `Ask: “${q.trim()}”`, icon: "ask", run: go(`/ask?q=${encodeURIComponent(q.trim())}`) }]
-      : [];
-    return [...ask, ...found, ...pages];
-  }, [nav, hits, q, router, onClose]);
+    const ask: Item[] = term ? [{ id: "ask", group: "Ask Brain", label: `Ask: “${term}”`, icon: "ask", run: go(`/ask?q=${encodeURIComponent(term)}`) }] : [];
+    const all = [...ask, ...found, ...pages];
+    return all.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group));
+  }, [launcher, hits, q, router, onClose]);
 
   useEffect(() => setActive(0), [items.length]);
+  useEffect(() => {
+    document.getElementById(`${listId}-${items[active]?.id}`)?.scrollIntoView({ block: "nearest" });
+  }, [active, items, listId]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [open, onClose]);
+
+  if (!open) return null;
 
   function onKey(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") {
@@ -90,66 +110,57 @@ export function CommandPalette({ open, onClose, nav }: { open: boolean; onClose:
 
   let lastGroup = "";
   return (
-    <dialog
-      ref={ref}
-      className="palette"
-      aria-label="Search and jump"
-      onClose={onClose}
-      onClick={(e) => {
-        if (e.target === ref.current) ref.current?.close();
+    <div
+      className="eb-overlay"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
       }}
     >
-      <input
-        ref={input}
-        className="palette-input"
-        role="combobox"
-        aria-expanded="true"
-        aria-controls={listId}
-        aria-activedescendant={items[active] ? `${listId}-${items[active]!.id}` : undefined}
-        aria-autocomplete="list"
-        aria-label="Search projects, documents and decisions, or ask a question"
-        placeholder="Search projects, documents, decisions — or ask a question"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        onKeyDown={onKey}
-      />
-      <ul id={listId} className="palette-list" role="listbox" aria-label="Results">
-        {items.length === 0 ? (
-          <li className="palette-group" role="presentation">
-            No matches
-          </li>
-        ) : null}
-        {items.map((it, i) => {
-          const head = it.group !== lastGroup ? it.group : null;
-          lastGroup = it.group;
-          return (
-            <li key={it.id} role="presentation">
-              {head ? (
-                <div className="palette-group" role="presentation">
-                  {head}
-                </div>
-              ) : null}
-              <div
-                id={`${listId}-${it.id}`}
-                role="option"
-                aria-selected={i === active}
-                className="palette-item"
-                onMouseEnter={() => setActive(i)}
-                onClick={it.run}
-              >
-                <Icon name={it.icon} size={16} />
-                <span>{it.label}</span>
-                {it.sub ? <span className="palette-sub">{it.sub}</span> : null}
-              </div>
+      <div className="eb-palette" role="dialog" aria-modal="true" aria-label="Search and jump">
+        <input
+          ref={input}
+          role="combobox"
+          aria-expanded="true"
+          aria-controls={listId}
+          aria-activedescendant={items[active] ? `${listId}-${items[active]!.id}` : undefined}
+          aria-autocomplete="list"
+          aria-label="Search projects, documents, email threads and decisions, or ask a question"
+          placeholder="Search projects, documents, threads, decisions — or ask a question"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={onKey}
+        />
+        <ul id={listId} className="eb-palette-list" role="listbox" aria-label="Results" style={{ listStyle: "none", margin: 0 }}>
+          {items.length === 0 ? (
+            <li className="eb-menu-label" role="presentation">
+              No matches
             </li>
-          );
-        })}
-      </ul>
-      <div className="palette-foot" aria-hidden="true">
-        <span>↑↓ move</span>
-        <span>↵ open</span>
-        <span>Esc close</span>
+          ) : null}
+          {items.map((it, i) => {
+            const head = it.group !== lastGroup ? it.group : null;
+            lastGroup = it.group;
+            return (
+              <li key={it.id} role="presentation">
+                {head ? (
+                  <div className="eb-menu-label" role="presentation">
+                    {head}
+                  </div>
+                ) : null}
+                <div id={`${listId}-${it.id}`} role="option" aria-selected={i === active} tabIndex={-1} className="eb-palette-item" onMouseEnter={() => setActive(i)} onClick={it.run}>
+                  <Icon name={it.icon} size={14} />
+                  <span className="eb-grow eb-trunc">{it.label}</span>
+                  {it.sub ? <span className="eb-dim" style={{ fontSize: "var(--eb-t-xs)", fontWeight: 400 }}>{it.sub}</span> : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="eb-palette-foot" aria-hidden="true">
+          <span>↑↓ move</span>
+          <span>↵ open</span>
+          <span>esc close</span>
+        </div>
       </div>
-    </dialog>
+    </div>
   );
 }

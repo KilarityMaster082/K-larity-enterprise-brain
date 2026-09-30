@@ -16,6 +16,7 @@ import {
   reconnectSource,
   reviewDecision,
   setMemberRole,
+  testSource,
   StoreError,
   tenantView,
 } from "./store";
@@ -121,7 +122,7 @@ export async function inviteMemberAction(email: string, role: string): Promise<A
 }
 
 // ---------------------------------------------------------------- sources
-const CONNECTORS: Source["connectorType"][] = ["gmail", "drive", "sheets", "whatsapp", "file_drop"];
+const CONNECTORS: Source["connectorType"][] = ["gmail", "drive", "sheets", "whatsapp", "file_drop", "calendar"];
 
 export async function connectSourceAction(type: string, account: string): Promise<ActionResult> {
   return run(async () => {
@@ -146,6 +147,17 @@ export async function reconnectSourceAction(sourceId: string): Promise<ActionRes
     const s = reconnectSource(a.tenantId, a.slug, a.name, sourceId);
     return `${s.displayName} reconnected.`;
   }, ["/settings", "/executive"]);
+}
+
+export async function testConnectionAction(sourceId: string): Promise<ActionResult> {
+  try {
+    const a = await actor("sources.manage");
+    const r = testSource(a.tenantId, a.slug, a.name, sourceId);
+    return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
+  } catch (e) {
+    if (e instanceof StoreError) return { ok: false, error: e.message };
+    throw e;
+  }
 }
 
 export async function markAskedAction(): Promise<void> {

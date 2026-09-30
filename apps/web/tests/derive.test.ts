@@ -82,7 +82,7 @@ test("every ledger row has evidence that quotes its own amount", () => {
   for (const t of ds.txns) {
     const e = byId.get(t.evidenceId);
     assert.ok(e, `${t.txnId} has evidence`);
-    const quoted = e.excerpt.slice(e.highlight.start, e.highlight.end);
+    const quoted = e.excerpt.slice(e.highlight!.start, e.highlight!.end);
     assert.ok(quoted.includes(new Intl.NumberFormat("en-IN").format(t.amount)), `${t.txnId}: “${quoted}” shows the amount`);
   }
 });

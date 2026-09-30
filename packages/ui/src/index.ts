@@ -10,9 +10,53 @@ export {
   formatDate,
   formatDateTime,
   formatINR,
+  formatINRCompact,
   formatINRShort,
   formatNumber,
   formatPercent,
   formatRelative,
   initials,
 } from "./data/format";
+
+// Enterprise Brain kit (54-screen handoff)
+export {
+  Avatar,
+  AvatarStack,
+  Bento,
+  BentoHead,
+  Dot,
+  Grid,
+  Highlighted,
+  LiveCard,
+  Metric,
+  Mono,
+  OriginTag,
+  Pill,
+  PillButton,
+  PillLink,
+  Row,
+  ScreenCrumb,
+  Stack,
+  type BentoProps,
+  type BentoTone,
+  type PillTone,
+} from "./eb/kit";
+export {
+  BarRow,
+  Columns,
+  LineChart,
+  ProgressTrack,
+  Sparkline,
+  StripedPlaceholder,
+  Waveform,
+  WedgeChart,
+  linePath,
+  sectorPath,
+  sparkPath,
+  wedgeGeometry,
+  type ColumnDatum,
+  type FillTone,
+  type Wedge,
+} from "./eb/charts";
+export { NodeGraph, type GraphNode } from "./eb/graph";
+export { EbShell, type LauncherGroup, type PeriodOption, type RailItem } from "./eb/EbShell";

@@ -32,9 +32,9 @@ test("the figures in the answer sum to the total (no invented numbers)", () => {
 
 test("the ledger query result is itself a citable source", () => {
   const a = ask("Why is Project Phoenix over budget?");
-  const ledger = a.evidence.find((e) => e.sourceType === "ledger")!;
+  const ledger = a.evidence.find((e) => e.sourceType === "sql")!;
   assert.ok(ledger.excerpt.includes("18,40,000"));
-  assert.equal(ledger.excerpt.slice(ledger.highlight.start, ledger.highlight.end), "Over budget ₹18,40,000 (12%)");
+  assert.equal(ledger.excerpt.slice(ledger.highlight!.start, ledger.highlight!.end), "Over budget ₹18,40,000 (12%)");
 });
 
 test("overdue payments are listed with days late and a reminder draft per invoice", () => {

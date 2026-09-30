@@ -11,4 +11,5 @@ export const SOURCE_META: Record<SourceType, { icon: IconName; label: string }> 
   drawing: { icon: "drawing", label: "Drawing" },
   meeting: { icon: "chat", label: "Meeting" },
   ledger: { icon: "database", label: "Ledger query" },
+  sql: { icon: "database", label: "SQL view" },
 };

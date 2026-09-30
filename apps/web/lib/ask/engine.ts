@@ -18,12 +18,14 @@ export const SUGGESTED_QUESTIONS = [
   "What is the latest structural drawing for Phoenix?",
 ];
 
-type Body = Omit<AnswerContract, "question" | "generatedAt" | "version">;
+type Body = Omit<AnswerContract, "question" | "generatedAt" | "version" | "summary" | "conflicts"> & { summary?: string; conflicts?: string[] };
 
 export interface AskOptions {
   projectId?: string;
   canSeeFinance: boolean;
   hasSyncedSource: boolean;
+  /** Clock override so tests and fixtures are deterministic. */
+  now?: Date;
 }
 
 const STOP = new Set(["what", "which", "why", "the", "is", "are", "was", "did", "we", "about", "for", "on", "of", "a", "an", "to", "our", "and", "in", "with", "how", "much", "has", "have", "latest", "recently", "project", "this", "week"]);
@@ -70,7 +72,7 @@ function ledgerEvidence(id: string, title: string, lines: string[], highlightLin
   const excerpt = lines.join(" · ");
   const quote = lines[highlightLine]!;
   const start = excerpt.indexOf(quote);
-  return { id, sourceType: "ledger", title, excerpt, highlight: { start, end: start + quote.length }, project, author: "Finance ledger (SQL)", occurredAt: DEMO_NOW.toISOString() };
+  return { id, sourceType: "sql", title, excerpt, highlight: { start, end: start + quote.length }, project, author: "Finance ledger (SQL)", occurredAt: DEMO_NOW.toISOString() };
 }
 
 // ---------------------------------------------------------------- intents
@@ -194,7 +196,20 @@ function budgetAnswer(ds: TenantDataset, p: Project): Body {
 
 function receivablesAnswer(ds: TenantDataset, p?: Project): Body {
   const open = openReceivables(ds).filter((r) => r.daysOverdue > 0 && (!p || r.projectId === p.projectId));
-  if (!open.length) return empty(p ? `Nothing is overdue from ${p.client}.` : "No client payments are overdue.", [], "Checked every open invoice in the ledger.", "answered");
+  if (!open.length) {
+    const none = ledgerEvidence("q-overdue", "finance.open_receivables — overdue", ["Overdue total ₹0", "No open invoice is past its due date"], 0, p?.name);
+    return {
+      status: "answered",
+      answer: [{ text: p ? `Nothing is overdue from ${p.client}.` : "No client payments are overdue.", evidenceIds: ["q-overdue"] }],
+      facts: [{ id: "f-total", text: "Overdue total", evidenceIds: ["q-overdue"], figure: { amount: 0, currency: "INR", origin: "sql", query: "finance.open_receivables" } }],
+      causes: [],
+      risks: [],
+      unknowns: ["Payments received today may not be in the ledger until the next sync."],
+      confidence: { level: "high", reason: "Checked every open invoice in the ledger." },
+      actions: [],
+      evidence: [none],
+    };
+  }
   const total = open.reduce((a, r) => a + r.amount, 0);
   const name = (id: string) => ds.projects.find((x) => x.projectId === id)?.name ?? id;
   const ledgerId = "q-overdue";
@@ -270,7 +285,7 @@ function decisionsAnswer(ds: TenantDataset, question: string, p?: Project): Body
   return {
     status: "answered",
     answer: segments,
-    facts: [],
+    facts: [{ id: "f-decision", text: top.status === "decided" ? `Decision: ${top.title}` : `Draft decision: ${top.title}`, evidenceIds: top.evidenceIds }],
     causes: top.rationale ? [{ id: "c-why", text: top.rationale, evidenceIds: top.evidenceIds }] : [],
     risks: [],
     unknowns: top.status === "proposed" ? ["This is a draft extracted from a message; a project lead has not confirmed it."] : [],
@@ -286,7 +301,7 @@ function changesAnswer(ds: TenantDataset, p?: Project): Body {
     .filter((e) => (!p || e.projectId === p.projectId) && new Date(e.occurredAt).getTime() >= since)
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt))
     .slice(0, 6);
-  if (!recent.length) return empty(`Nothing new${p ? ` on ${p.name}` : ""} in the last three weeks.`, [], "No events in the period.", "answered");
+  if (!recent.length) return empty(`Nothing new${p ? ` on ${p.name}` : ""} in the last three weeks.`, ["Only connected sources are searched, so a call or site visit nobody wrote down will not appear."], "No events in the period.");
   const name = (id: string) => ds.projects.find((x) => x.projectId === id)?.name ?? id;
   const segments: Segment[] = [{ text: `In the last three weeks${p ? ` on ${p.name}` : ""}:` }];
   for (const e of recent) {
@@ -296,7 +311,7 @@ function changesAnswer(ds: TenantDataset, p?: Project): Body {
   return {
     status: "answered",
     answer: segments,
-    facts: [],
+    facts: recent.filter((e) => e.evidenceId).map((e) => ({ id: `f-${e.eventId}`, text: e.title, evidenceIds: [e.evidenceId!] })),
     causes: [],
     risks: [],
     unknowns: ["Only connected sources are included; phone calls and site visits are not recorded unless someone writes them down."],
@@ -319,7 +334,7 @@ function drawingAnswer(ds: TenantDataset, question: string, p?: Project): Body {
   return {
     status: "answered",
     answer: segments,
-    facts: [],
+    facts: hits.map((d) => ({ id: `f-${d.documentId}`, text: `${d.series} is at Rev ${d.revision}`, evidenceIds: [d.evidenceId] })),
     causes: [],
     risks: [],
     unknowns: match.length ? [] : ["No drawing matched every word, so these are the latest drawings for the project."],
@@ -329,21 +344,42 @@ function drawingAnswer(ds: TenantDataset, question: string, p?: Project): Body {
   };
 }
 
+// ---------------------------------------------------------------- classification
+/** The label shown next to a question in Session History: its project, else the kind of question. */
+export function topicOf(question: string, ds: TenantDataset, scopeId?: string): string {
+  const p = findProject(ds, question, scopeId);
+  if (p) return p.name;
+  const q = question.toLowerCase();
+  if (/(budget|overrun|cost|variance|overdue|owe|outstanding|receivable|unpaid|payment|collect)/.test(q)) return "Finance";
+  if (/(decide|decided|decision|agreed|chose|choose|approved)/.test(q)) return "Decisions";
+  if (/(drawing|revision|\brev\b|sheet|plan|elevation|layout)/.test(q)) return "Drawings";
+  return "All";
+}
+
 // ---------------------------------------------------------------- entry point
+/** First sentence of the answer, or "" when there is none: the contract's executive summary. */
+function summaryOf(body: Body): string {
+  const text = body.answer.map((s) => s.text).join("").trim();
+  const end = text.search(/[.!?](\s|$)/);
+  return end < 0 ? text : text.slice(0, end + 1);
+}
+
+function finish(meta: Pick<AnswerContract, "version" | "question" | "generatedAt">, body: Body): AnswerContract {
+  const { summary, conflicts, ...rest } = body;
+  return { ...meta, summary: summary ?? summaryOf(body), conflicts: conflicts ?? [], ...rest };
+}
+
 export function answerQuestion(question: string, ds: TenantDataset, opts: AskOptions): AnswerContract {
-  const meta = { version: ANSWER_CONTRACT_VERSION, question, generatedAt: new Date().toISOString() };
+  const meta = { version: ANSWER_CONTRACT_VERSION, question, generatedAt: (opts.now ?? new Date()).toISOString() };
   if (!opts.hasSyncedSource) {
-    return { ...meta, ...empty("This workspace has no synced sources yet, so there is nothing to answer from.", ["Connect Gmail, Google Drive, Sheets or a WhatsApp export in Settings → Sources."], "No sources connected.") };
+    return finish(meta, empty("This workspace has no synced sources yet, so there is nothing to answer from.", ["Connect Gmail, Google Drive, Sheets or a WhatsApp export in Settings → Sources."], "No sources connected."));
   }
   const q = question.toLowerCase();
   const p = findProject(ds, question, opts.projectId);
   const finance = /(budget|over ?spend|overrun|cost|variance|expensive|money)/.test(q);
   const receivable = /(overdue|owe|outstanding|receivable|unpaid|payment|collect)/.test(q);
   if ((finance || receivable) && !opts.canSeeFinance) {
-    return {
-      ...meta,
-      ...empty("Budgets and billing are visible to partners and owners, so I can't answer this for your role.", ["Ask a partner, or ask an owner to change your role."], "Restricted by role.", "no_access"),
-    };
+    return finish(meta, empty("Budgets and billing are visible to partners and owners, so I can't answer this for your role.", ["Ask a partner, or ask an owner to change your role."], "Restricted by role.", "no_access"));
   }
   let body: Body;
   if (receivable) body = receivablesAnswer(ds, p);
@@ -358,5 +394,5 @@ export function answerQuestion(question: string, ds: TenantDataset, opts: AskOpt
       ["Try naming the project, person or document.", "Ask about budgets, payments, decisions, drawings or what changed recently."],
       "No supporting evidence found.",
     );
-  return { ...meta, ...body };
+  return finish(meta, body);
 }

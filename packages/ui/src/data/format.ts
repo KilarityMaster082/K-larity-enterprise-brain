@@ -16,6 +16,15 @@ export function formatINRShort(amount: number): string {
   return sign + inr.format(abs);
 }
 
+/** Compact form for tight cards and bar rows: 1840000 → "₹18.4 L"; 15300000 → "₹1.53 Cr"; below 1 lakh → "₹92,500". */
+export function formatINRCompact(amount: number): string {
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "−" : "";
+  if (abs >= 1e7) return `${sign}₹${trim(abs / 1e7)} Cr`;
+  if (abs >= 1e5) return `${sign}₹${trim(abs / 1e5, 1)} L`;
+  return sign + inr.format(abs);
+}
+
 /** Exact value with Indian digit grouping: 1840000 → "₹18,40,000". */
 export function formatINR(amount: number): string {
   return (amount < 0 ? "−" : "") + inr.format(Math.abs(amount));

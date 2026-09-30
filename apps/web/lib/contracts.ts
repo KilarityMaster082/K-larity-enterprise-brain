@@ -1,12 +1,39 @@
-// Owner task: EB-50 Ask Brain UI — TypeScript view of the answer contract.
+// Owner task: EB-50 Ask Brain UI — TypeScript view of the canonical answer contract.
 //
-// PROVISIONAL: the canonical schema is EB-47 (packages/schemas/answer_contract), still a stub. This file
-// is the UI's proposal; when EB-47 lands, generate these types from it and delete the hand-written ones.
+// The canonical schema is packages/schemas/answer_contract/schema.py (EB-47, pydantic). This file mirrors it field
+// for field (camelCase aliases on the wire). Drift is caught from both sides: tests/contract-fixtures.test.ts
+// writes the contracts this app produces to packages/schemas/answer_contract/fixtures, and
+// packages/schemas/tests validates every fixture with the pydantic model and pins the JSON Schema.
 // CLAUDE.md rules reflected here: answers carry evidence (rule 4); figures carry their SQL origin (rule 3).
 
-export const ANSWER_CONTRACT_VERSION = "0.1-ui-draft";
+export const ANSWER_CONTRACT_VERSION = "1.1.0";
 
-export type SourceType = "email" | "whatsapp" | "sheet" | "document" | "drawing" | "meeting" | "ledger";
+export type SourceType = "email" | "whatsapp" | "sheet" | "document" | "drawing" | "meeting" | "ledger" | "sql";
+
+/** Box on a page, normalised 0..1 of page width/height, origin top-left. */
+export interface EvidenceBBox {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+/** The table and cell range the evidence was read from, as recognised by Docling TableFormer. */
+export interface EvidenceTableRef {
+  tableId: string;
+  caption?: string;
+  rowStart: number;
+  rowEnd: number;
+  colStart?: number;
+  colEnd?: number;
+}
+
+export interface EvidenceLocator {
+  page?: number; // 1-indexed
+  bbox?: EvidenceBBox;
+  table?: EvidenceTableRef;
+  parser?: "docling" | "tika" | "ocr" | "native";
+}
 export type ConfidenceLevel = "high" | "medium" | "low";
 export type AnswerStatus = "answered" | "partial" | "insufficient_evidence" | "no_access";
 
@@ -18,13 +45,14 @@ export interface Evidence {
   occurredAt?: string; // ISO 8601
   project?: string;
   excerpt: string; // the source passage shown in the source panel
-  highlight: { start: number; end: number }; // span inside `excerpt` that supports the claim
+  highlight?: { start: number; end: number }; // span inside `excerpt` that supports the claim
   openUrl?: string; // deep link to the source system, when the user may open it
+  locator?: EvidenceLocator; // page / bounding box / table range in the original file
 }
 
 export interface Figure {
   amount: number;
-  currency: "INR";
+  currency: "INR" | "USD";
   origin: "sql"; // numbers only ever come from SQL, never from the model
   query?: string; // named, reviewed query that produced the number
 }
@@ -42,8 +70,12 @@ export interface Claim {
   figure?: Figure;
 }
 
-export interface Risk extends Claim {
+export interface Risk {
+  id: string;
+  text: string;
+  evidenceIds: string[];
   severity: "high" | "medium" | "low";
+  figure?: Figure;
 }
 
 export interface SuggestedAction {
@@ -59,11 +91,13 @@ export interface AnswerContract {
   version: string;
   question: string;
   status: AnswerStatus;
+  summary: string;
   answer: Segment[];
   facts: Claim[];
   causes: Claim[];
   risks: Risk[];
   unknowns: string[];
+  conflicts: string[];
   confidence: { level: ConfidenceLevel; reason: string };
   actions: SuggestedAction[];
   evidence: Evidence[];

@@ -1,31 +1,43 @@
 "use client";
-// Owner task: EB-23 Web UI shell — the Brain's frame: logo, workspace switcher, role-filtered navigation,
-// search (⌘K), theme and account menu. Built on @klarity/ui ShellFrame.
-import { Badge, Icon, Kbd, Logo, ShellFrame, ToastProvider, initials } from "@klarity/ui";
+// Owner task: EB-23 Web UI shell — the Brain's frame (screens 1–45): icon rail, top bar with workspace switcher and
+// ⌘K, the screen launcher, account menu (with development-only role preview) and the overlay host that opens
+// the Evidence Side-Sheet, file viewers, agent run inspector and email composer over whatever page is showing.
+import { EbShell, Icon, ToastProvider, initials, type LauncherGroup, type RailItem } from "@klarity/ui";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 
-import { signOut, switchTenant } from "@/lib/auth-actions";
+import { previewRole, signOut, switchTenant } from "@/lib/auth-actions";
 import type { Membership } from "@/lib/auth/session";
-import { titleFor, type NavItem } from "@/lib/nav";
-import { ROLE_LABEL } from "@/lib/permissions";
+import { PERIODS, PERIOD_ROUTES, parsePeriod } from "@/lib/period";
+import { ROLES, ROLE_LABEL } from "@/lib/permissions";
+import type { Role } from "@/lib/data/types";
 
+import { OverlayHost } from "../overlays/OverlayHost";
+import { TenantProvider } from "./TenantContext";
 import { CommandPalette } from "./CommandPalette";
-import { ThemeToggle } from "./ThemeToggle";
 
 interface Props {
   user: { name: string; email: string };
   active: Membership;
   memberships: Membership[];
-  nav: NavItem[];
-  counts: Partial<Record<string, number>>;
+  rail: RailItem[];
+  launcher: LauncherGroup[];
   devMode: boolean;
   children: ReactNode;
 }
 
-export function AppShell({ user, active, memberships, nav, counts, devMode, children }: Props) {
+type ShellLink = (p: { href: string; className?: string; children: ReactNode; "aria-current"?: "page"; "aria-label"?: string; title?: string }) => ReactNode;
+
+const ShellLinkImpl: ShellLink = ({ href, className, children, ...rest }) => (
+  <Link href={href} className={className} {...rest}>
+    {children}
+  </Link>
+);
+
+export function AppShell({ user, active, memberships, rail, launcher, devMode, children }: Props) {
   const pathname = usePathname();
+  const search = useSearchParams();
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
@@ -39,114 +51,96 @@ export function AppShell({ user, active, memberships, nav, counts, devMode, chil
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const sections: { key: NavItem["section"]; label: string }[] = [
-    { key: "brain", label: "Brain" },
-    { key: "workspace", label: "Workspace" },
-  ];
+  const usesPeriod = PERIOD_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
+  const current = parsePeriod(search.get("period") ?? undefined);
+  const periodOptions = PERIODS.map((p) => {
+    const q = new URLSearchParams(search.toString());
+    q.set("period", p.key);
+    return { key: p.key, label: p.label, href: `${pathname}?${q.toString()}` };
+  });
 
-  const sidebar = (
-    <>
-      <Link href="/ask" className="logo-link" aria-label="K!larity Enterprise Brain — Ask Brain">
-        <Logo width={128} caption="Enterprise Brain" />
-      </Link>
-
-      <details className="menu">
-        <summary className="tenant-btn" aria-label={`Workspace: ${active.name}. Switch workspace`}>
-          <span className="tenant-avatar">{initials(active.name)}</span>
-          <span className="tenant-name">{active.name}</span>
-          <Icon name="chevronDown" size={16} />
-        </summary>
-        <div className="menu-panel" role="menu">
-          <div className="menu-label">Switch workspace</div>
-          {memberships.map((m) => (
-            <form key={m.tenantId} action={switchTenant}>
-              <input type="hidden" name="tenantId" value={m.tenantId} />
-              <button type="submit" className="menu-item" role="menuitemradio" aria-checked={m.tenantId === active.tenantId}>
-                <span className="tenant-avatar">{initials(m.name)}</span>
-                <span className="tenant-name">{m.name}</span>
-                {m.tenantId === active.tenantId ? <Icon name="check" size={16} /> : null}
-              </button>
-            </form>
-          ))}
-        </div>
-      </details>
-
-      <nav className="nav" aria-label="Main">
-        {sections.map((s) => {
-          const items = nav.filter((i) => i.section === s.key);
-          if (!items.length) return null;
-          return (
-            <div key={s.key} className="nav">
-              <div className="nav-section">{s.label}</div>
-              {items.map((i) => {
-                const current = pathname === i.href || pathname.startsWith(i.href + "/");
-                const count = counts[i.href];
-                return (
-                  <Link key={i.href} href={i.href} className="nav-link" aria-current={current ? "page" : undefined}>
-                    <Icon name={i.icon} />
-                    {i.label}
-                    {count ? (
-                      <span className="nav-count" aria-label={`${count} waiting`}>
-                        {count}
-                      </span>
-                    ) : null}
-                  </Link>
-                );
-              })}
-            </div>
-          );
-        })}
-      </nav>
-
-      <div className="sidebar-foot">
-        <Badge tone="info" icon="shield" title="Answers use only sources you can access">
-          Permission-aware answers
-        </Badge>
-        {devMode ? <Badge tone="warn">Development sign-in</Badge> : null}
+  const tenant = (
+    <details className="eb-menu">
+      <summary className="eb-tenant" aria-label={`Workspace: ${active.name}. Switch workspace`}>
+        <span className="nm">{active.name}</span>
+        {active.isSynthetic ? <span className="eb-pill" data-tone="cream" data-size="sm">Synthetic</span> : null}
+        <Icon name="chevronDown" size={12} />
+      </summary>
+      <div className="eb-menu-pop" role="menu">
+        <div className="eb-menu-label">Switch workspace</div>
+        {memberships.map((m) => (
+          <form key={m.tenantId} action={switchTenant}>
+            <input type="hidden" name="tenantId" value={m.tenantId} />
+            <button type="submit" className="eb-menu-item" role="menuitemradio" aria-checked={m.tenantId === active.tenantId} aria-current={m.tenantId === active.tenantId ? "page" : undefined}>
+              <span className="eb-avatar eb-avatar-sm" style={{ background: m.isSynthetic ? "#e3e3e3" : "var(--eb-black)", color: m.isSynthetic ? "var(--eb-black)" : "#fff" }}>
+                {initials(m.name)}
+              </span>
+              <span className="eb-grow">{m.name}</span>
+              {m.isSynthetic ? <span className="eb-pill" data-tone="cream" data-size="sm">Synthetic tenant</span> : null}
+              {m.tenantId === active.tenantId ? <Icon name="check" size={14} /> : null}
+            </button>
+          </form>
+        ))}
       </div>
-    </>
+    </details>
+  );
+
+  const account = (
+    <details className="eb-menu">
+      <summary className="eb-avatar" aria-label={`Account: ${user.name}`} style={{ listStyle: "none", cursor: "pointer" }}>
+        {initials(user.name)}
+      </summary>
+      <div className="eb-menu-pop left" style={{ position: "fixed", left: 66, bottom: 24, top: "auto" }} role="menu">
+        <div className="eb-menu-label">
+          {user.name}
+          <br />
+          {user.email}
+          <br />
+          {ROLE_LABEL[active.role]} · {active.name}
+        </div>
+        {devMode ? (
+          <form action={previewRole} aria-label="Preview another role (development only)">
+            <div className="eb-menu-label">Preview role (development)</div>
+            {ROLES.map((r: Role) => (
+              <button key={r} type="submit" name="role" value={r} className="eb-menu-item" role="menuitemradio" aria-checked={r === active.role}>
+                <span className="eb-grow">{ROLE_LABEL[r]}</span>
+                {r === active.role ? <Icon name="check" size={14} /> : null}
+              </button>
+            ))}
+          </form>
+        ) : null}
+        <form action={signOut}>
+          <button type="submit" className="eb-menu-item" role="menuitem">
+            <Icon name="logout" size={14} /> Sign out
+          </button>
+        </form>
+      </div>
+    </details>
   );
 
   return (
     <ToastProvider>
-      <ShellFrame
-        routeKey={pathname}
-        sidebar={sidebar}
-        title={titleFor(pathname)}
-        topbarExtra={active.isSynthetic ? <Badge tone="warn">Synthetic test tenant</Badge> : null}
-        topbarRight={
-          <>
-            <button type="button" className="search-trigger" onClick={() => setPaletteOpen(true)} aria-label="Search and jump (Ctrl K)">
-              <Icon name="search" size={16} />
-              <span className="search-label">Search or jump to…</span>
-              <Kbd>⌘K</Kbd>
-            </button>
-            <ThemeToggle />
-            <details className="menu">
-              <summary className="btn btn-ghost btn-icon" aria-label={`Account: ${user.name}`}>
-                <span className="avatar">{initials(user.name)}</span>
-              </summary>
-              <div className="menu-panel right" role="menu">
-                <div className="menu-label">
-                  {user.name}
-                  <br />
-                  {user.email}
-                  <br />
-                  {ROLE_LABEL[active.role]} · {active.name}
-                </div>
-                <form action={signOut}>
-                  <button type="submit" className="menu-item" role="menuitem">
-                    <Icon name="logout" size={16} /> Sign out
-                  </button>
-                </form>
-              </div>
-            </details>
-          </>
-        }
+      <TenantProvider tenantId={active.tenantId}>
+      <EbShell
+        pathname={pathname}
+        brandHref="/ask"
+        routeLabel={pathname}
+        rail={rail}
+        launcher={launcher}
+        period={usesPeriod ? { options: periodOptions, current } : undefined}
+        tenant={tenant}
+        account={account}
+        onOpenPalette={() => setPaletteOpen(true)}
+        Link={ShellLinkImpl}
+        banner={devMode ? <div className="eb-dev-banner" role="note">Development sign-in: data is demo data and resets when the server restarts.</div> : undefined}
       >
         {children}
-      </ShellFrame>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} nav={nav} />
+      </EbShell>
+      <Suspense fallback={null}>
+        <OverlayHost tenantId={active.tenantId} />
+      </Suspense>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} launcher={launcher} />
+      </TenantProvider>
     </ToastProvider>
   );
 }

@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { formatINR, formatINRShort, formatPercent, formatRelative, initials } from "../src/data/format.ts";
+import { formatINR, formatINRCompact, formatINRShort, formatPercent, formatRelative, initials } from "../src/data/format.ts";
 
 test("lakh and crore short forms", () => {
   assert.equal(formatINRShort(1840000), "₹18.4 lakh");
@@ -10,6 +10,15 @@ test("lakh and crore short forms", () => {
   assert.equal(formatINRShort(100000), "₹1 lakh");
   assert.equal(formatINRShort(92500), "₹92,500");
   assert.equal(formatINRShort(-610000), "−₹6.1 lakh");
+});
+
+test("compact form for tight cards", () => {
+  assert.equal(formatINRCompact(1840000), "₹18.4 L");
+  assert.equal(formatINRCompact(2240000), "₹22.4 L");
+  assert.equal(formatINRCompact(15300000), "₹1.53 Cr");
+  assert.equal(formatINRCompact(28600000), "₹2.86 Cr");
+  assert.equal(formatINRCompact(92500), "₹92,500");
+  assert.equal(formatINRCompact(-610000), "−₹6.1 L");
 });
 
 test("exact values use Indian digit grouping", () => {

@@ -3,9 +3,10 @@
 // event. Replaced by apps/api calls once the backend exists; the function names are the future API.
 // State lives on globalThis so it survives hot reload; it resets when the dev server restarts.
 import type { Evidence } from "../contracts";
+import { EMPTY_WORKSPACE } from "./empty";
 import { SYNTHETIC_DATA } from "./seed-synthetic";
 import { STUDIO8_DATA } from "./seed-studio8";
-import type { Approval, AuditEvent, Decision, Member, Role, Source, TenantDataset } from "./types";
+import type { Approval, AuditEvent, Decision, HistoryItem, Member, Role, Source, TenantDataset } from "./types";
 
 /** Simulated duration of a first sync after connecting a source. */
 export const SYNC_MS = 12_000;
@@ -20,7 +21,7 @@ interface TenantState {
 
 const EMPTY: TenantDataset = {
   people: [], projects: [], budgetLines: [], txns: [], events: [], documents: [], decisions: [],
-  approvals: [], sources: [], members: [], audit: [], evidence: [],
+  approvals: [], sources: [], members: [], audit: [], evidence: [], workspace: EMPTY_WORKSPACE,
 };
 
 const g = globalThis as unknown as { __klarityStore?: Map<string, TenantState> };
@@ -215,6 +216,7 @@ const CONNECTOR_NAMES: Record<Source["connectorType"], string> = {
   sheets: "Google Sheets",
   whatsapp: "WhatsApp export",
   file_drop: "File drop folder",
+  calendar: "Google Calendar",
 };
 
 export function connectSource(tenantId: string, slug: string, actor: string, type: Source["connectorType"], account: string): Source {
@@ -254,6 +256,33 @@ export function reconnectSource(tenantId: string, slug: string, actor: string, s
   src.lastSyncAt = new Date().toISOString();
   audit(s, actor, "source.reauthorise", `${src.displayName} (${src.account})`);
   return src;
+}
+
+/** Session History (screen 40): every question a person asks is kept with its topic, newest first. */
+export function recordQuestion(tenantId: string, slug: string, userId: string, question: string, topic: string, projectId?: string): HistoryItem {
+  const s = state(tenantId, slug);
+  const item: HistoryItem = { historyId: `h-${Date.now().toString(36)}-${s.seq++}`, at: new Date().toISOString(), question: question.slice(0, 2000), topic, projectId, userId };
+  s.data.workspace.history.unshift(item);
+  return item;
+}
+
+export function rateHistory(tenantId: string, slug: string, userId: string, historyId: string, helpful: boolean): void {
+  const s = state(tenantId, slug);
+  const h = s.data.workspace.history.find((x) => x.historyId === historyId && x.userId === userId);
+  if (!h) throw new StoreError("question not found");
+  h.helpful = helpful;
+}
+
+/** "Test connection": a read-only probe. Healthy sources pass; one that needs re-authorising says so. */
+export function testSource(tenantId: string, slug: string, actor: string, sourceId: string): { ok: boolean; message: string } {
+  const s = state(tenantId, slug);
+  const src = s.data.sources.find((x) => x.sourceId === sourceId);
+  if (!src) throw new StoreError("source not found");
+  audit(s, actor, "source.test", `${src.displayName} (${src.account})`);
+  if (src.health === "auth_error") return { ok: false, message: `${src.displayName}: ${src.lastError ?? "sign-in expired"}. Reconnect it to resume syncing.` };
+  if (src.health === "failing") return { ok: false, message: `${src.displayName} is failing: ${src.lastError ?? "see the sync log"}.` };
+  if (src.health === "syncing" || src.health === "never_run") return { ok: true, message: `${src.displayName} is reachable. The first sync has not finished yet.` };
+  return { ok: true, message: `${src.displayName} is reachable${src.lagMinutes !== undefined ? `; last item ${src.lagMinutes} min ago` : ""}.` };
 }
 
 export function markAskedFirstQuestion(tenantId: string, slug: string): void {

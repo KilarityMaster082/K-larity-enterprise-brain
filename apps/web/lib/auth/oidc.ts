@@ -43,7 +43,11 @@ export interface LoginRequest {
   org?: string;
 }
 
-export async function beginLogin(cfg: OidcConfig, next: string, org?: string): Promise<{ url: string; req: LoginRequest }> {
+/** Identity providers the sign-in page may pre-select (Keycloak broker aliases). Anything else is ignored. */
+export const IDP_HINTS = ["google"] as const;
+export type IdpHint = (typeof IDP_HINTS)[number];
+
+export async function beginLogin(cfg: OidcConfig, next: string, org?: string, idp?: IdpHint): Promise<{ url: string; req: LoginRequest }> {
   const d = await discovery(cfg);
   const req: LoginRequest = { state: randomToken(), nonce: randomToken(), verifier: randomToken(48), next, org };
   const scope = ["openid", "profile", "email", org ? `organization:${org}` : "organization"].join(" ");
@@ -56,6 +60,7 @@ export async function beginLogin(cfg: OidcConfig, next: string, org?: string): P
     nonce: req.nonce,
     code_challenge: await sha256b64url(req.verifier),
     code_challenge_method: "S256",
+    ...(idp ? { kc_idp_hint: idp } : {}),
   });
   return { url: `${d.authorization_endpoint}?${params}`, req };
 }
