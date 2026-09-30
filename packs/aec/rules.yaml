@@ -1,2 +1,54 @@
 # Owner task: EB-61 Attention and risk rules
-# Status: scaffold placeholder — not implemented
+# AEC attention rules. Metrics are column names from db/views/finance.sql (finance_project_summary) and the
+# project-health view; values always come from SQL (CLAUDE.md rule 3). Thresholds are Studio 8 pilot defaults and
+# are reviewed with the customer (docs/customer/studio8). Core services run with this file absent.
+version: 1
+rules:
+  - id: budget-overrun-watch
+    metric: overrun_pct
+    operator: ">="
+    threshold: "0.05"
+    severity: medium
+    title: "Budget overrun above 5%"
+    message: "{project} is {value_pct} over budget."
+  - id: budget-overrun-critical
+    metric: overrun_pct
+    operator: ">="
+    threshold: "0.10"
+    severity: high
+    title: "Budget overrun above 10%"
+    message: "{project} is {value_pct} over budget; forecast exceeds the approved budget."
+    action:
+      kind: create_task
+      title: "Review cost overrun on {project}"
+  - id: receivables-overdue
+    metric: overdue
+    operator: ">"
+    threshold: "0"
+    severity: medium
+    title: "Overdue receivables"
+    message: "{project} has INR {value} overdue from the client."
+    action:
+      kind: draft_message
+      title: "Draft payment reminder for {project}"
+  - id: receivables-overdue-heavy
+    metric: overdue_share_of_billed
+    operator: ">="
+    threshold: "0.25"
+    severity: high
+    title: "A quarter of billing is overdue"
+    message: "{project}: {value_pct} of billed amount is overdue."
+  - id: margin-leakage-flags
+    metric: leakage_flag_count
+    operator: ">="
+    threshold: "1"
+    severity: high
+    title: "Possible margin leakage"
+    message: "{project} has {value} unresolved margin-leakage flags (unsigned variation, unbilled change order or duplicate invoice)."
+  - id: stale-project
+    metric: days_since_last_update
+    operator: ">="
+    threshold: "14"
+    severity: low
+    title: "No project activity for 14 days"
+    message: "{project} has had no recorded activity for {value} days."
