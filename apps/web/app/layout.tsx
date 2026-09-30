@@ -1,7 +1,6 @@
 // Owner task: EB-23 Web UI shell — root layout: signed-in pages get the Enterprise Brain frame (rail, top bar,
 // overlays), /login renders bare. The handoff design is a light, pastel "bento" skin (data-skin="eb").
 import "@klarity/ui/styles.css";
-import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";

@@ -58,7 +58,6 @@ export function screenNumberFor(pathname: string): number | undefined {
 }
 
 export function titleFor(pathname: string): string {
-  if (pathname.startsWith("/design")) return "Design system";
   const n = screenNumberFor(pathname);
   return (n ? SCREENS.find((s) => s.n === n)?.title : undefined) ?? "K!larity";
 }

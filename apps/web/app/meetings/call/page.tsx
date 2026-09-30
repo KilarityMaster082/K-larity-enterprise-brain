@@ -4,6 +4,7 @@
 import type { Metadata } from "next";
 
 import { NoAccess } from "@/components/page/common";
+import { Screen } from "@/components/page/Screen";
 import { pageContext } from "@/lib/page";
 import { initialsOf } from "@/lib/workspace";
 
@@ -21,12 +22,14 @@ export default async function CallPage({ searchParams }: { searchParams: Promise
   if (!meeting) return <NoAccess what="a call (nothing is scheduled)" />;
   const drawing = view.data.documents.find((d) => d.projectId === meeting.projectId && d.docType === "drawing" && d.isLatest);
   return (
-    <CallView
-      title={meeting.title}
-      me={{ name: session.user.name, initials: initialsOf(session.user.name) }}
-      others={meeting.attendees.filter((a) => a.name !== session.user.name).map((a) => ({ name: a.org === "Studio 8 Hats" ? a.name : `${a.org}`, initials: initialsOf(a.org === "Studio 8 Hats" ? a.name : a.org) }))}
-      share={drawing ? `${drawing.series} Rev ${drawing.revision}` : undefined}
-      captions={(meeting.transcript ?? []).map((l) => l.text)}
-    />
+    <Screen n={22}>
+      <CallView
+        title={meeting.title}
+        me={{ name: session.user.name, initials: initialsOf(session.user.name) }}
+        others={meeting.attendees.filter((a) => a.name !== session.user.name).map((a) => ({ name: a.org === "Studio 8 Hats" ? a.name : `${a.org}`, initials: initialsOf(a.org === "Studio 8 Hats" ? a.name : a.org) }))}
+        share={drawing ? `${drawing.series} Rev ${drawing.revision}` : undefined}
+        captions={(meeting.transcript ?? []).map((l) => l.text)}
+      />
+    </Screen>
   );
 }
