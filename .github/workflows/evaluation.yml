@@ -1,2 +1,25 @@
-# Owner task: EB-17 CI: lint, tests, licence scan, secret scan
-# Status: scaffold placeholder — not implemented
+# Owner task: EB-25 Cross-tenant isolation suite (release-gate input for EB-69)
+name: evaluation
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  leakage:
+    name: Cross-tenant isolation (must be 100%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest==8.3.3 cryptography==50.0.1 boto3==1.35.30 sqlalchemy==2.0.34 pydantic pyyaml
+      - name: Leakage suite — any single leak fails the build
+        env:
+          PYTHONPATH: .:packages/tenant-context:packages/storage:services/evaluation/leakage
+        run: python services/evaluation/leakage/cross_tenant.py
