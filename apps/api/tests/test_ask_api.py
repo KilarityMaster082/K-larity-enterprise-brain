@@ -44,10 +44,12 @@ async def call_api(
         asgi_headers.append((b"content-type", b"application/json"))
         asgi_headers.append((b"content-length", str(len(payload)).encode("ascii")))
 
+    path_part, _, query_part = path.partition("?")
     scope = {
         "type": "http",
         "method": method,
-        "path": path,
+        "path": path_part,
+        "query_string": query_part.encode("ascii"),
         "headers": asgi_headers,
     }
 
@@ -70,8 +72,13 @@ async def call_api(
             response_body.extend(message.get("body", b""))
 
     await app(scope, receive, send)
-    data = json.loads(response_body.decode("utf-8")) if response_body else {}
-    return response_status, data
+    text = response_body.decode("utf-8").strip() if response_body else ""
+    if not text:
+        return response_status, {}
+    if "\n" in text:
+        events = [json.loads(line) for line in text.split("\n") if line.strip()]
+        return response_status, {"events": events}
+    return response_status, json.loads(text)
 
 
 def test_ask_requires_tenant(api_resolver: PlacementResolver) -> None:
@@ -113,3 +120,26 @@ def test_ask_returns_valid_contract_with_sql_facts(api_resolver: PlacementResolv
         for ev in res["evidence"]:
             assert ev["sourceType"] == "sql"
             assert "finance_" in ev["excerpt"] or "Project" in ev["excerpt"]
+
+
+def test_ask_supports_streaming_ndjson(api_resolver: PlacementResolver) -> None:
+    app = create_app(api_resolver)
+    headers = {"X-Tenant-ID": STUDIO8_ID, "Accept": "application/x-ndjson"}
+    status, res = asyncio.run(
+        call_api(
+            app,
+            "POST",
+            "/api/v1/ask?stream=true",
+            {"question": "Why is Project Phoenix over budget?", "projectId": "prj-phoenix"},
+            headers=headers,
+        )
+    )
+
+    assert status == 200
+    assert "events" in res
+    event_types = [ev["type"] for ev in res["events"]]
+    assert "stage" in event_types
+    assert "evidence" in event_types
+    assert "segment" in event_types
+    assert "facts" in event_types
+    assert "done" in event_types

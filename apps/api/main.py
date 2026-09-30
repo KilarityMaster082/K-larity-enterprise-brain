@@ -12,6 +12,9 @@ from typing import Any, Callable
 
 from apps.api.middleware.tenant import TenantMiddleware
 from apps.api.routers.ask import handle_ask
+from apps.api.routers.decisions import handle_decisions
+from apps.api.routers.finance import handle_finance_cash, handle_finance_summary, handle_finance_variance
+from apps.api.routers.projects import handle_projects
 from tenant_context import PlacementResolver, current_tenant
 
 
@@ -78,6 +81,12 @@ class CoreApiRouter:
             ("GET", "/readyz"): healthz_handler,
             ("GET", "/api/v1/tenant/current"): current_tenant_handler,
             ("POST", "/api/v1/ask"): handle_ask,
+            ("GET", "/api/v1/finance/summary"): handle_finance_summary,
+            ("GET", "/api/v1/finance/variance"): handle_finance_variance,
+            ("GET", "/api/v1/finance/cash"): handle_finance_cash,
+            ("GET", "/api/v1/decisions"): handle_decisions,
+            ("POST", "/api/v1/decisions"): handle_decisions,
+            ("GET", "/api/v1/projects"): handle_projects,
         }
 
     async def __call__(self, scope: dict[str, Any], receive: Callable[..., Any], send: Callable[..., Any]) -> None:

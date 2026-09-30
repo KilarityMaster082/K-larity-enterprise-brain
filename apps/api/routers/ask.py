@@ -130,7 +130,55 @@ async def handle_ask(
     )
 
     contract_dict = json.loads(contract.model_dump_json(by_alias=True))
-    await _send_json(send, 200, contract_dict)
+
+    # 6. Check for streaming request
+    query_string = scope.get("query_string", b"").decode("latin1")
+    accept_header = ""
+    for k, v in scope.get("headers", []):
+        if k.lower() == b"accept":
+            accept_header = v.decode("latin1")
+
+    is_stream = "stream=true" in query_string or "application/x-ndjson" in accept_header
+
+    if is_stream:
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                (b"content-type", b"application/x-ndjson"),
+                (b"cache-control", b"no-cache"),
+                (b"connection", b"keep-alive"),
+            ],
+        })
+        events: list[dict[str, Any]] = [
+            {"type": "stage", "index": 1},
+            {"type": "evidence", "evidence": [json.loads(e.model_dump_json(by_alias=True)) for e in contract.evidence]},
+            {"type": "stage", "index": 2},
+        ]
+        for seg in contract.answer:
+            events.append({"type": "segment", "segment": json.loads(seg.model_dump_json(by_alias=True))})
+        events.extend([
+            {"type": "facts", "facts": [json.loads(f.model_dump_json(by_alias=True)) for f in contract.facts]},
+            {"type": "causes", "causes": [json.loads(c.model_dump_json(by_alias=True)) for c in contract.causes]},
+            {"type": "risks", "risks": [json.loads(r.model_dump_json(by_alias=True)) for r in contract.risks]},
+            {"type": "unknowns", "unknowns": contract.unknowns},
+            {"type": "conflicts", "conflicts": contract.conflicts},
+            {"type": "done", "contract": contract_dict},
+        ])
+        for ev in events:
+            chunk = (json.dumps(ev) + "\n").encode("utf-8")
+            await send({
+                "type": "http.response.body",
+                "body": chunk,
+                "more_body": True,
+            })
+        await send({
+            "type": "http.response.body",
+            "body": b"",
+            "more_body": False,
+        })
+    else:
+        await _send_json(send, 200, contract_dict)
 
 
 async def _send_json(send: Callable[..., Any], status: int, data: dict[str, Any]) -> None:

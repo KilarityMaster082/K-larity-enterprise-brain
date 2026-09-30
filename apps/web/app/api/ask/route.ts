@@ -30,6 +30,37 @@ export async function POST(req: Request) {
   if (!question || question.length > MAX_QUESTION) return json({ error: `question must be 1–${MAX_QUESTION} characters` }, 400);
 
   const view = tenantView(m.tenantId, m.slug);
+
+  const apiUrl = process.env.KLARITY_API_URL;
+  if (apiUrl) {
+    try {
+      const apiRes = await fetch(`${apiUrl}/api/v1/ask?stream=true`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/x-ndjson",
+          "x-tenant-id": m.tenantId,
+        },
+        body: JSON.stringify({ question, projectId }),
+        signal: req.signal,
+      });
+      if (apiRes.ok && apiRes.body) {
+        if (view.hasSyncedSource) {
+          markAskedFirstQuestion(m.tenantId, m.slug);
+          recordQuestion(m.tenantId, m.slug, session.user.id, question, topicOf(question, view.data, projectId), projectId);
+        }
+        return new Response(apiRes.body, {
+          headers: {
+            "content-type": "application/x-ndjson; charset=utf-8",
+            "cache-control": "no-store",
+          },
+        });
+      }
+    } catch {
+      // Fall back to local dev engine if backend API is unavailable
+    }
+  }
+
   const contract = answerQuestion(question, view.data, {
     projectId,
     canSeeFinance: can(m.role, "finance.view"),
