@@ -48,11 +48,11 @@ export function TenantControls({ tenantId, name, status, plan, impersonatingThis
     <div className="stack">
       <div className="stack-sm">
         {impersonatingThis ? (
-          <button type="button" className="btn btn-dark" disabled={busy} onClick={() => run(() => stopImpersonationAction())}>
+          <button type="button" className="eb-pill" data-tone="black" disabled={busy} onClick={() => run(() => stopImpersonationAction())}>
             Stop viewing {name}
           </button>
         ) : (
-          <button type="button" className="btn btn-primary" disabled={status !== "active"} onClick={() => setDialog("impersonate")}>
+          <button type="button" className="eb-pill" data-tone="black" disabled={status !== "active"} onClick={() => setDialog("impersonate")}>
             View tenant data (audited)
           </button>
         )}
@@ -62,19 +62,19 @@ export function TenantControls({ tenantId, name, status, plan, impersonatingThis
       </div>
       <div className="row">
         {status === "active" ? (
-          <button type="button" className="btn btn-danger" onClick={() => setDialog("suspend")}>
+          <button type="button" className="eb-pill" data-tone="pink" onClick={() => setDialog("suspend")}>
             Suspend
           </button>
         ) : null}
         {status === "suspended" ? (
-          <button type="button" className="btn" onClick={() => setDialog("resume")}>
+          <button type="button" className="eb-pill" data-tone="outline" onClick={() => setDialog("resume")}>
             Resume
           </button>
         ) : null}
-        <button type="button" className="btn" disabled={status === "provisioning"} onClick={() => setDialog("plan")}>
+        <button type="button" className="eb-pill" data-tone="outline" disabled={status === "provisioning"} onClick={() => setDialog("plan")}>
           Change plan
         </button>
-        <button type="button" className="btn" disabled title="Offboarding with a deletion certificate arrives with EB-89">
+        <button type="button" className="eb-pill" data-tone="outline" disabled title="Offboarding with a deletion certificate arrives with EB-89">
           Offboard…
         </button>
       </div>
@@ -84,7 +84,7 @@ export function TenantControls({ tenantId, name, status, plan, impersonatingThis
           <p>You will see this tenant&apos;s content in the retrieval console for 30 minutes. The tenant can see this in their audit log.</p>
           {reasonField("e.g. support ticket number and what you are checking")}
           <div className="row">
-            <button type="submit" className="btn btn-primary" disabled={busy}>
+            <button type="submit" className="eb-pill" data-tone="black" disabled={busy}>
               Start viewing
             </button>
           </div>
@@ -96,7 +96,7 @@ export function TenantControls({ tenantId, name, status, plan, impersonatingThis
           <p>{dialog === "suspend" ? "Members are signed out and nobody in this tenant can sign in until it is resumed. Data is kept." : "Members can sign in again."}</p>
           {reasonField("recorded in the audit log")}
           <div className="row">
-            <button type="submit" className={dialog === "suspend" ? "btn btn-danger" : "btn btn-primary"} disabled={busy}>
+            <button type="submit" className="eb-pill" data-tone={dialog === "suspend" ? "pink" : "black"} disabled={busy}>
               {dialog === "suspend" ? "Suspend tenant" : "Resume tenant"}
             </button>
           </div>
@@ -117,7 +117,7 @@ export function TenantControls({ tenantId, name, status, plan, impersonatingThis
           </label>
           {reasonField("recorded in the audit log")}
           <div className="row">
-            <button type="submit" className="btn btn-primary" disabled={busy}>
+            <button type="submit" className="eb-pill" data-tone="black" disabled={busy}>
               Change plan
             </button>
           </div>

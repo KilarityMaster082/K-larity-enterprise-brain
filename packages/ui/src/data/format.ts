@@ -4,7 +4,8 @@ const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR",
 const num = new Intl.NumberFormat("en-IN");
 
 function trim(n: number, digits = 2): string {
-  return n.toFixed(digits).replace(/\.?0+$/, "");
+  const fixed = n.toFixed(digits);
+  return fixed.includes(".") ? fixed.replace(/\.?0+$/, "") : fixed; // never strip the zeros of a whole number ("40", "100")
 }
 
 /** 1840000 → "₹18.4 lakh"; 15300000 → "₹1.53 crore"; below 1 lakh → "₹92,500". */

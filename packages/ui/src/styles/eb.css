@@ -707,3 +707,24 @@ a.eb-li-title:hover { text-decoration: underline; }
 .eb-diff-split .eb-diff-row > code[data-kind="add"] { background: #e6f6e3; }
 .eb-diff-split .eb-diff-row > code[data-kind="del"] { background: #fde6e6; }
 .eb-diff-no { width: 34px; flex: none; text-align: right; padding-right: 6px; color: var(--eb-muted-2); user-select: none; }
+
+/* ---------- operator console (screens 46–54) ---------- */
+.eb-imp-banner { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--eb-black); color: #fff; font-size: var(--eb-t-xs); }
+.eb-imp-banner strong { color: var(--eb-lime); }
+.eb-imp-banner .eb-pill { background: var(--eb-lime); color: var(--eb-ink); }
+.eb-health { display: inline-flex; align-items: center; gap: 6px; font-size: var(--eb-t-xs); font-weight: 600; }
+.eb-health i { width: 9px; height: 9px; border-radius: 50%; background: #2b8a3e; }
+.eb-health[data-state="degraded"] i { background: #e0a800; }
+.eb-health[data-state="failing"] i { background: #b42318; }
+.eb-meter { position: relative; height: 10px; border-radius: 99px; background: rgb(0 0 0 / 0.1); overflow: hidden; }
+.eb-meter > i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--eb-black); }
+.eb-meter[data-state="alert"] > i { background: #e0a800; }
+.eb-meter[data-state="blocked"] > i { background: #b42318; }
+.eb-meter > b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--eb-ink); }
+.eb-stack-trace { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--eb-black); color: #d8d8d8; font: 400 var(--eb-t-xs)/1.7 var(--eb-mono); overflow: auto; white-space: pre; max-height: 200px; }
+.eb-plan { list-style: none; margin: 8px 0 0; padding: 0; counter-reset: plan; }
+.eb-plan > li { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--eb-line); font-size: var(--eb-t-xs); }
+.eb-plan > li:first-child { border-top: 0; }
+.eb-plan > li[data-skipped] { opacity: 0.6; }
+.eb-plan .nm { width: 170px; flex: none; font-weight: 700; }
+.eb-plan .ms { width: 70px; flex: none; text-align: right; font-family: var(--eb-mono); }

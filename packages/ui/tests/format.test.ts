@@ -30,6 +30,9 @@ test("exact values use Indian digit grouping", () => {
 test("percent and relative time", () => {
   assert.equal(formatPercent(0.1203), "12%");
   assert.equal(formatPercent(0.125), "12.5%");
+  assert.equal(formatPercent(0.4, 0), "40%", "whole numbers keep their trailing zeros");
+  assert.equal(formatPercent(1, 0), "100%");
+  assert.equal(formatPercent(0.5), "50%");
   const now = new Date("2026-09-30T12:00:00Z");
   assert.equal(formatRelative("2026-09-27T12:00:00Z", now), "3 days ago");
   assert.equal(formatRelative("2026-10-02T12:00:00Z", now), "in 2 days");
