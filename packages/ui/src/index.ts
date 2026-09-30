@@ -12,6 +12,7 @@ export {
   formatINR,
   formatINRCompact,
   formatINRShort,
+  formatLakhNumber,
   formatNumber,
   formatPercent,
   formatRelative,

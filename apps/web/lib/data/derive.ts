@@ -67,9 +67,13 @@ export function projectFinance(ds: TenantDataset, projectId: string): ProjectFin
 }
 
 // ---------------------------------------------------------------- receivables & payables
+export type AgeBucket = "0–30 d" | "31–60 d" | "61–90 d" | "90+ d";
+
 export interface Receivable extends FinanceTxn {
   daysOverdue: number; // 0 when not yet due
-  bucket: "Not due" | "1–30 days" | "31–60 days" | "60+ days";
+  /** Days since the invoice date; receivables are aged by invoice age (db/views/finance.sql: finance_open_receivables). */
+  ageDays: number;
+  bucket: AgeBucket;
 }
 
 export function openReceivables(ds: TenantDataset, now = DEMO_NOW): Receivable[] {
@@ -77,13 +81,14 @@ export function openReceivables(ds: TenantDataset, now = DEMO_NOW): Receivable[]
     .filter((t) => t.direction === "receivable" && (t.status === "pending" || t.status === "overdue"))
     .map((t) => {
       const d = t.dueDate ? Math.max(0, daysBetween(t.dueDate, now)) : 0;
-      const bucket: Receivable["bucket"] = d === 0 ? "Not due" : d <= 30 ? "1–30 days" : d <= 60 ? "31–60 days" : "60+ days";
-      return { ...t, daysOverdue: d, bucket };
+      const age = Math.max(0, daysBetween(t.txnDate, now));
+      const bucket: AgeBucket = age <= 30 ? "0–30 d" : age <= 60 ? "31–60 d" : age <= 90 ? "61–90 d" : "90+ d";
+      return { ...t, daysOverdue: d, ageDays: age, bucket };
     })
     .sort((a, b) => b.daysOverdue - a.daysOverdue || b.amount - a.amount);
 }
 
-export const AGEING_BUCKETS: Receivable["bucket"][] = ["Not due", "1–30 days", "31–60 days", "60+ days"];
+export const AGEING_BUCKETS: AgeBucket[] = ["0–30 d", "31–60 d", "61–90 d", "90+ d"];
 
 export function ageing(ds: TenantDataset, now = DEMO_NOW): { bucket: Receivable["bucket"]; amount: number }[] {
   const open = openReceivables(ds, now);
@@ -95,6 +100,36 @@ export function payablesDue(ds: TenantDataset, withinDays = 30, now = DEMO_NOW):
   return ds.txns
     .filter((t) => t.direction === "payable" && t.status === "pending" && t.dueDate && new Date(`${t.dueDate}T00:00:00+05:30`).getTime() <= limit)
     .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""));
+}
+
+// ---------------------------------------------------------------- cash
+const istDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(d); // YYYY-MM-DD in IST
+
+/** Net cash movement in the ledger up to `now`: completed receivables minus completed payables (finance_cash_position). */
+export function cashPosition(ds: TenantDataset, now = DEMO_NOW): { cashIn: number; cashOut: number; net: number } {
+  const asOf = istDate(now);
+  const done = ds.txns.filter((t) => t.status === "completed" && t.txnDate <= asOf);
+  const cashIn = sum(done.filter((t) => t.direction === "receivable").map((t) => t.amount));
+  const cashOut = sum(done.filter((t) => t.direction === "payable").map((t) => t.amount));
+  return { cashIn, cashOut, net: cashIn - cashOut };
+}
+
+/** Twelve months ending with the month of `now` (finance_cash_monthly). */
+export function cashMonthly(ds: TenantDataset, now = DEMO_NOW): { month: string; cashIn: number; cashOut: number }[] {
+  const asOf = istDate(now);
+  const [y, m] = asOf.split("-").map(Number) as [number, number];
+  const out: { month: string; cashIn: number; cashOut: number }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(Date.UTC(y, m - 1 - i, 1));
+    const month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const rows = ds.txns.filter((t) => t.status === "completed" && t.txnDate.startsWith(month) && t.txnDate <= asOf);
+    out.push({
+      month,
+      cashIn: sum(rows.filter((t) => t.direction === "receivable").map((t) => t.amount)),
+      cashOut: sum(rows.filter((t) => t.direction === "payable").map((t) => t.amount)),
+    });
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------- leakage flags
@@ -239,7 +274,7 @@ export function attentionList(ds: TenantDataset, now = DEMO_NOW): AttentionItem[
     items.push({ id: `apr-${a.approvalId}`, priority: 2, title: `Waiting for approval: ${a.title}`, detail: a.projectId ? name(a.projectId) : "", href: `/approvals?focus=${a.approvalId}`, evidenceIds: a.evidenceIds });
   }
   for (const s of ds.sources.filter((s) => s.health === "auth_error")) {
-    items.push({ id: `src-${s.sourceId}`, priority: 2, title: `Reconnect ${s.displayName}: sync has stopped`, detail: s.lastError ?? "", href: "/settings?tab=sources", evidenceIds: [] });
+    items.push({ id: `src-${s.sourceId}`, priority: 2, title: `Reconnect ${s.displayName}: sync has stopped`, detail: s.lastError ?? "", href: "/settings/sources", evidenceIds: [] });
   }
   return items.sort((a, b) => a.priority - b.priority || (b.amount ?? 0) - (a.amount ?? 0));
 }
@@ -254,6 +289,8 @@ export interface ExecutiveSummary {
   decisionsWaiting: number;
   approvalsPending: number;
   leakage: number;
+  /** Completed receivables minus completed payables to date (finance_cash_position.net). */
+  cashNet: number;
 }
 
 export function executiveSummary(ds: TenantDataset, now = DEMO_NOW): ExecutiveSummary {
@@ -269,5 +306,6 @@ export function executiveSummary(ds: TenantDataset, now = DEMO_NOW): ExecutiveSu
     decisionsWaiting: ds.decisions.filter((d) => d.status === "proposed").length,
     approvalsPending: ds.approvals.filter((a) => a.status === "pending").length,
     leakage: sum(leakageFlags(ds).map((f) => f.amount)),
+    cashNet: cashPosition(ds, now).net,
   };
 }

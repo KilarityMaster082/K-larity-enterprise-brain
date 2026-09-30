@@ -25,6 +25,11 @@ export function formatINRCompact(amount: number): string {
   return sign + inr.format(abs);
 }
 
+/** A rupee amount as a plain number of lakh, for charts whose axis says "₹ lakh": 6240000 → "62.4". */
+export function formatLakhNumber(amount: number): string {
+  return trim(amount / 1e5, 1);
+}
+
 /** Exact value with Indian digit grouping: 1840000 → "₹18,40,000". */
 export function formatINR(amount: number): string {
   return (amount < 0 ? "−" : "") + inr.format(Math.abs(amount));

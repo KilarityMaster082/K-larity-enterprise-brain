@@ -45,7 +45,8 @@ function state(tenantId: string, slug: string): TenantState {
 
 function settleSyncs(s: TenantState, now: number): void {
   for (const src of s.data.sources) {
-    if (src.health === "syncing" && now - new Date(src.connectedAt).getTime() >= SYNC_MS) {
+    if (src.health === "syncing" && now - new Date(src.syncStartedAt ?? src.connectedAt).getTime() >= SYNC_MS) {
+      src.syncStartedAt = undefined;
       src.health = "ok";
       src.lastSyncAt = new Date(now).toISOString();
       src.itemsSeen = src.itemsSeen || 1;
@@ -89,7 +90,7 @@ export function tenantView(tenantId: string, slug: string, now = Date.now()): Te
       askedFirstQuestion: s.onboarding.askedFirstQuestion,
       done: connected && synced && s.onboarding.askedFirstQuestion,
     },
-    syncProgress: syncing ? Math.min(0.99, (now - new Date(syncing.connectedAt).getTime()) / SYNC_MS) : undefined,
+    syncProgress: syncing ? Math.min(0.99, (now - new Date(syncing.syncStartedAt ?? syncing.connectedAt).getTime()) / SYNC_MS) : undefined,
   };
 }
 
@@ -283,6 +284,36 @@ export function testSource(tenantId: string, slug: string, actor: string, source
   if (src.health === "failing") return { ok: false, message: `${src.displayName} is failing: ${src.lastError ?? "see the sync log"}.` };
   if (src.health === "syncing" || src.health === "never_run") return { ok: true, message: `${src.displayName} is reachable. The first sync has not finished yet.` };
   return { ok: true, message: `${src.displayName} is reachable${src.lagMinutes !== undefined ? `; last item ${src.lagMinutes} min ago` : ""}.` };
+}
+
+/** "Sync now": starts a sync of a healthy source. Sources that need re-authorising must be reconnected first. */
+export function triggerSync(tenantId: string, slug: string, actor: string, sourceId: string): Source {
+  const s = state(tenantId, slug);
+  const src = s.data.sources.find((x) => x.sourceId === sourceId);
+  if (!src) throw new StoreError("source not found");
+  if (src.health === "auth_error") throw new StoreError("reconnect this source first: its sign-in has expired");
+  if (src.health === "syncing") throw new StoreError("a sync is already running");
+  src.health = "syncing";
+  src.syncStartedAt = new Date().toISOString();
+  audit(s, actor, "source.sync", `${src.displayName} (${src.account})`);
+  return src;
+}
+
+export const RETENTION_CHOICES = [90, 365, 1095, 1825, 2555] as const;
+
+export function setRetention(tenantId: string, slug: string, actor: string, days: number): number {
+  const s = state(tenantId, slug);
+  if (!(RETENTION_CHOICES as readonly number[]).includes(days)) throw new StoreError("choose a retention period from 90 days to 7 years");
+  const before = s.data.workspace.retention.days;
+  s.data.workspace.retention.days = days;
+  audit(s, actor, "retention.update", "Tenant retention policy", `${before} → ${days} days`);
+  return days;
+}
+
+export function recordAuditExport(tenantId: string, slug: string, actor: string, rows: number): void {
+  const s = state(tenantId, slug);
+  s.data.workspace.retention.auditExportAt = new Date().toISOString();
+  audit(s, actor, "audit.export", "Audit log", `${rows} events`);
 }
 
 export function markAskedFirstQuestion(tenantId: string, slug: string): void {

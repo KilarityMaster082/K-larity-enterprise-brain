@@ -143,6 +143,8 @@ export interface Source {
   lagMinutes?: number;
   lastError?: string;
   connectedAt: string;
+  /** Start of the running sync: the first sync after connecting, or a manual "Sync now". */
+  syncStartedAt?: string;
 }
 
 export interface Member {

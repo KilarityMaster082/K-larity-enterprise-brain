@@ -1,7 +1,9 @@
 "use client";
-// Owner task: EB-66 Approval model skeleton (UI) — pending queue and history.
-import { Badge, EmptyState, formatDateTime, formatRelative, Modal, TabPanel, Tabs, useToast } from "@klarity/ui";
-import { useEffect, useState, useTransition } from "react";
+// Owner task: EB-66 Approval model skeleton (UI) — the queue (pending first) and history. Approve / Edit / Reject with a
+// mandatory rejection reason kept in the audit log. Approving in development sends nothing; production hands the
+// approved draft to the approved action.
+import { Bento, Pill, PillButton, formatDateTime, formatRelative, useToast } from "@klarity/ui";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { EvidenceLinks } from "@/components/evidence/EvidenceLinks";
 import type { Evidence } from "@/lib/contracts";
@@ -13,163 +15,126 @@ export interface ApprovalRow extends Approval {
   evidence: Evidence[];
 }
 
-const KIND: Record<Approval["kind"], string> = {
-  draft_message: "Message draft",
-  create_task: "Task",
-  update_record: "Record update",
-};
+const KIND: Record<Approval["kind"], string> = { draft_message: "Message draft", create_task: "Task", update_record: "Record update" };
+const toneFor = (r: ApprovalRow): "pink" | "cream" | "sky" => (/payment|reminder|overdue/i.test(r.title) ? "pink" : /variation|claim|change/i.test(r.title) ? "cream" : "sky");
 
 export function ApprovalsView({ rows, canDecide, focus }: { rows: ApprovalRow[]; canDecide: boolean; focus?: string }) {
   const pending = rows.filter((r) => r.status === "pending");
   const done = rows.filter((r) => r.status !== "pending");
-  const [tab, setTab] = useState(done.some((r) => r.approvalId === focus) ? "done" : "pending");
+  const [showDone, setShowDone] = useState(done.some((r) => r.approvalId === focus));
   const [editing, setEditing] = useState<Record<string, string>>({});
-  const [rejecting, setRejecting] = useState<ApprovalRow | null>(null);
+  const [reason, setReason] = useState("");
   const [busy, start] = useTransition();
   const toast = useToast();
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (focus) document.getElementById(`apr-${focus}`)?.scrollIntoView({ block: "center" });
-  }, [focus, tab]);
+  }, [focus, showDone]);
 
-  function decide(r: ApprovalRow, decision: "approve" | "reject", note: string) {
+  function decide(r: ApprovalRow, decision: "approve" | "reject") {
+    if (decision === "reject" && !reason.trim()) {
+      toast("Add a reason before rejecting: it is kept in the audit log.", "danger");
+      reasonRef.current?.focus();
+      return;
+    }
     start(async () => {
-      const res = await decideApprovalAction(r.approvalId, decision, note, editing[r.approvalId]);
+      const res = await decideApprovalAction(r.approvalId, decision, decision === "reject" ? reason : "", editing[r.approvalId]);
       if (res.ok) {
         toast(res.message ?? "Saved.");
-        setRejecting(null);
+        if (decision === "reject") setReason("");
       } else toast(res.error, "danger");
     });
   }
 
   const card = (r: ApprovalRow) => {
-    const isEditing = r.status === "pending" && editing[r.approvalId] !== undefined; // decided drafts show as text
+    const isEditing = r.status === "pending" && editing[r.approvalId] !== undefined;
     return (
-      <article key={r.approvalId} id={`apr-${r.approvalId}`} className="card review-card" data-focus={r.approvalId === focus}>
-        <div className="row-between">
-          <h3>{r.title}</h3>
-          <span className="row">
-            <Badge>{KIND[r.kind]}</Badge>
-            {r.status === "approved" ? <Badge tone="ok">Approved</Badge> : null}
-            {r.status === "rejected" ? <Badge tone="danger">Rejected</Badge> : null}
+      <Bento key={r.approvalId} tone={r.status === "pending" ? toneFor(r) : "glass"} id={`apr-${r.approvalId}`} aria-label={r.title} className="eb-draft" style={{ display: "block" }} data-focus={r.approvalId === focus || undefined}>
+        <div className="eb-row" style={{ justifyContent: "space-between" }}>
+          <h2 className="eb-h-lg">{r.title}</h2>
+          <span className="eb-row" style={{ gap: 5 }}>
+            <Pill size="sm">{KIND[r.kind]}</Pill>
+            {r.status === "pending" ? <Pill>Needs approval</Pill> : r.status === "approved" ? <Pill tone="green">Approved</Pill> : <Pill tone="pink">Rejected</Pill>}
           </span>
         </div>
-        <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>
+        <p className="eb-li-sub" style={{ marginTop: 4 }}>
           Requested by {r.requestedBy}
           {r.requestedVia === "ask_brain" ? " via Ask Brain" : r.requestedVia === "agent" ? " by an agent" : ""} ·{" "}
-          <time dateTime={r.requestedAt} title={formatDateTime(r.requestedAt)}>
-            {formatRelative(r.requestedAt)}
-          </time>
+          <time dateTime={r.requestedAt} title={`${formatDateTime(r.requestedAt)} IST`}>{formatRelative(r.requestedAt)}</time>
           {r.projectName ? ` · ${r.projectName}` : ""}
         </p>
-        <p>
-          <strong>Why:</strong> {r.reason}
+        <p className="eb-body" style={{ margin: "6px 0" }}>
+          <b>Why:</b> {r.reason}
         </p>
         {isEditing ? (
-          <label className="field">
-            Draft (you can edit before approving)
-            <textarea
-              className="textarea"
-              rows={6}
-              maxLength={4000}
-              value={editing[r.approvalId]}
-              onChange={(e) => setEditing((x) => ({ ...x, [r.approvalId]: e.target.value }))}
-            />
+          <label className="eb-label">
+            Draft (edit before approving)
+            <textarea className="eb-input" rows={6} maxLength={4000} value={editing[r.approvalId]} onChange={(e) => setEditing((x) => ({ ...x, [r.approvalId]: e.target.value }))} />
           </label>
         ) : (
-          <div className="draft-body" aria-label="Draft">
-            {r.body}
-          </div>
+          <pre className="eb-draft-body" aria-label="Draft">{r.body}</pre>
         )}
-        <EvidenceLinks evidence={r.evidence} citedFor={[r.reason]} />
-        {r.status !== "pending" ? (
-          <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>
-            {r.status === "approved" ? "Approved" : "Rejected"} by {r.decidedBy}
-            {r.decidedAt ? ` · ${formatDateTime(r.decidedAt)}` : ""}
-            {r.note ? ` — “${r.note}”` : ""}
-          </p>
-        ) : canDecide ? (
-          <div className="row">
-            <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => decide(r, "approve", "")}>
-              {isEditing ? "Approve edited draft" : "Approve"}
-            </button>
-            {isEditing ? (
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={() =>
-                  setEditing((x) => {
-                    const { [r.approvalId]: _, ...rest } = x;
-                    return rest;
-                  })
-                }
-              >
-                Cancel edit
-              </button>
-            ) : (
-              <button type="button" className="btn btn-sm" onClick={() => setEditing((x) => ({ ...x, [r.approvalId]: r.body }))}>
-                Edit draft
-              </button>
-            )}
-            <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => setRejecting(r)}>
-              Reject
-            </button>
-          </div>
-        ) : (
-          <p className="muted" style={{ fontSize: "var(--fs-sm)" }}>
-            Waiting for a partner or owner to approve.
-          </p>
-        )}
-      </article>
+        <div className="eb-row" style={{ marginTop: 8 }}>
+          {r.status === "pending" && canDecide ? (
+            <>
+              <PillButton tone="black" disabled={busy} onClick={() => decide(r, "approve")}>{isEditing ? "Approve edited draft" : "Approve"}</PillButton>
+              {isEditing ? (
+                <PillButton onClick={() => setEditing(({ [r.approvalId]: _, ...rest }) => rest)}>Cancel edit</PillButton>
+              ) : (
+                <PillButton onClick={() => setEditing((x) => ({ ...x, [r.approvalId]: r.body }))}>Edit</PillButton>
+              )}
+              <PillButton tone="danger" disabled={busy} onClick={() => decide(r, "reject")}>Reject</PillButton>
+            </>
+          ) : r.status === "pending" ? (
+            <span className="eb-note">Waiting for a partner or owner to approve.</span>
+          ) : (
+            <span className="eb-note">
+              {r.status === "approved" ? "Approved" : "Rejected"} by {r.decidedBy}
+              {r.decidedAt ? ` · ${formatDateTime(r.decidedAt)} IST` : ""}
+              {r.note ? ` — “${r.note}”` : ""}
+            </span>
+          )}
+          <span className="eb-auto eb-row" style={{ gap: 4 }}>
+            <span className="eb-note">Evidence: {r.evidence.length} source{r.evidence.length === 1 ? "" : "s"}</span>
+            <EvidenceLinks evidence={r.evidence} citedFor={[r.reason]} compact />
+          </span>
+        </div>
+      </Bento>
     );
   };
 
   return (
-    <>
-      <Tabs
-        label="Approvals"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { id: "pending", label: "Waiting", count: pending.length },
-          { id: "done", label: "History", count: done.length },
-        ]}
-      />
-      <TabPanel id="pending" active={tab === "pending"}>
-        {pending.length ? (
-          <div className="stack">{pending.map(card)}</div>
-        ) : (
-          <EmptyState icon="checkCircle" title="No approvals waiting" compact>
-            <p>Drafts suggested by Ask Brain or agents appear here. Nothing is sent until someone approves it.</p>
-          </EmptyState>
-        )}
-      </TabPanel>
-      <TabPanel id="done" active={tab === "done"}>
-        {done.length ? <div className="stack">{done.map(card)}</div> : <p className="muted">No decisions yet.</p>}
-      </TabPanel>
-
-      <Modal open={Boolean(rejecting)} onClose={() => setRejecting(null)} title="Reject this request?">
-        {rejecting ? (
-          <form
-            className="stack"
-            onSubmit={(e) => {
-              e.preventDefault();
-              decide(rejecting, "reject", String(new FormData(e.currentTarget).get("note") ?? ""));
-            }}
-          >
-            <p>“{rejecting.title}” will not be sent or created.</p>
-            <label className="field">
-              Reason <span className="field-hint">required — shown to the requester and kept in the audit log</span>
-              <input name="note" className="input" required maxLength={500} />
-            </label>
-            <div className="row">
-              <button type="submit" className="btn btn-danger" disabled={busy}>
-                Reject
-              </button>
-            </div>
-          </form>
-        ) : null}
-      </Modal>
-    </>
+    <div className="eb-grid" style={{ ["--cols" as string]: "1fr 290px", alignItems: "start" }}>
+      <div className="eb-stack">
+        {pending.length ? pending.map(card) : <Bento tone="green"><h2 className="eb-h">No approvals waiting</h2><p className="eb-body">Drafts suggested by Ask Brain or agents appear here. Nothing is sent until someone approves it.</p></Bento>}
+        <div>
+          <PillButton tone="outline" onClick={() => setShowDone((v) => !v)} aria-expanded={showDone}>
+            History ({done.length}) {showDone ? "▴" : "▾"}
+          </PillButton>
+        </div>
+        {showDone ? (done.length ? done.map(card) : <p className="eb-body">No decisions yet.</p>) : null}
+      </div>
+      <div className="eb-stack">
+        <Bento tone="black" aria-label="Rejection reason">
+          <label htmlFor="reject-reason" className="eb-h" style={{ display: "block" }}>Rejection reason</label>
+          <textarea
+            id="reject-reason"
+            ref={reasonRef}
+            className="eb-input"
+            style={{ marginTop: 10, background: "#262626", color: "#eee", border: 0 }}
+            rows={4}
+            maxLength={500}
+            placeholder="Required when rejecting…"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            disabled={!canDecide}
+          />
+        </Bento>
+        <Bento tone="lime" aria-label="How approvals work">
+          <p className="eb-body"><b>Nothing leaves without a person.</b> Every action is audited with who asked, why and the evidence behind it.</p>
+        </Bento>
+      </div>
+    </div>
   );
 }

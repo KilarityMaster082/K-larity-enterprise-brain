@@ -14,9 +14,12 @@ import {
   inviteMember,
   markAskedFirstQuestion,
   reconnectSource,
+  RETENTION_CHOICES,
   reviewDecision,
   setMemberRole,
   testSource,
+  triggerSync,
+  setRetention,
   StoreError,
   tenantView,
 } from "./store";
@@ -109,7 +112,7 @@ export async function changeRoleAction(userId: string, role: string): Promise<Ac
     if (!(ROLES as string[]).includes(role)) throw new StoreError("unknown role");
     const m = setMemberRole(a.tenantId, a.slug, a.name, userId, role as Role);
     return `${m.email} is now ${role}.`;
-  }, ["/settings"]);
+  }, ["/settings/members"]);
 }
 
 export async function inviteMemberAction(email: string, role: string): Promise<ActionResult> {
@@ -118,7 +121,7 @@ export async function inviteMemberAction(email: string, role: string): Promise<A
     if (!(ROLES as string[]).includes(role) || role === "owner") throw new StoreError("choose admin, member, viewer or guest");
     const m = inviteMember(a.tenantId, a.slug, a.name, email, role as Role);
     return `Invited ${m.email}.`;
-  }, ["/settings"]);
+  }, ["/settings/members"]);
 }
 
 // ---------------------------------------------------------------- sources
@@ -130,7 +133,7 @@ export async function connectSourceAction(type: string, account: string): Promis
     if (!(CONNECTORS as string[]).includes(type)) throw new StoreError("unknown connector");
     const s = connectSource(a.tenantId, a.slug, a.name, type as Source["connectorType"], account);
     return `${s.displayName} connected. The first sync has started.`;
-  }, ["/settings", "/ask"]);
+  }, ["/settings/sources", "/ask", "/apps"]);
 }
 
 export async function disconnectSourceAction(sourceId: string): Promise<ActionResult> {
@@ -138,7 +141,7 @@ export async function disconnectSourceAction(sourceId: string): Promise<ActionRe
     const a = await actor("sources.manage");
     disconnectSource(a.tenantId, a.slug, a.name, sourceId);
     return "Source disconnected. Its items stop syncing; nothing already indexed is deleted until you ask.";
-  }, ["/settings"]);
+  }, ["/settings/sources", "/apps"]);
 }
 
 export async function reconnectSourceAction(sourceId: string): Promise<ActionResult> {
@@ -146,7 +149,24 @@ export async function reconnectSourceAction(sourceId: string): Promise<ActionRes
     const a = await actor("sources.manage");
     const s = reconnectSource(a.tenantId, a.slug, a.name, sourceId);
     return `${s.displayName} reconnected.`;
-  }, ["/settings", "/executive"]);
+  }, ["/settings/sources", "/executive", "/apps"]);
+}
+
+export async function syncNowAction(sourceId: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("sources.manage");
+    const s = triggerSync(a.tenantId, a.slug, a.name, sourceId);
+    return `${s.displayName}: sync started.`;
+  }, ["/settings/sources", "/ask"]);
+}
+
+export async function setRetentionAction(days: number): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("security.manage");
+    if (!(RETENTION_CHOICES as readonly number[]).includes(days)) throw new StoreError("choose a retention period from 90 days to 7 years");
+    setRetention(a.tenantId, a.slug, a.name, days);
+    return "Retention policy saved. The change is in the audit log.";
+  }, ["/settings/security"]);
 }
 
 export async function testConnectionAction(sourceId: string): Promise<ActionResult> {

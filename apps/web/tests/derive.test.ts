@@ -39,8 +39,11 @@ test("receivables ageing uses the fixed demo date and buckets add up", () => {
   assert.deepEqual(late, [["S8/BO/FINAL", 33], ["S8/MC/RA-2", 25]]);
   const a = ageing(ds);
   assert.equal(a.reduce((x, b) => x + b.amount, 0), open.reduce((x, r) => x + r.amount, 0));
-  assert.equal(a.find((b) => b.bucket === "31–60 days")!.amount, 1_800_000);
-  assert.equal(a.find((b) => b.bucket === "1–30 days")!.amount, 2_200_000);
+  // Aged by invoice date: RA-3 (10 d), DES-2 (5 d) are 0–30; RA-2 (40 d) and the Banyan final bill (48 d) are 31–60.
+  assert.equal(a.find((b) => b.bucket === "0–30 d")!.amount, 4_600_000);
+  assert.equal(a.find((b) => b.bucket === "31–60 d")!.amount, 4_000_000);
+  assert.equal(a.find((b) => b.bucket === "61–90 d")!.amount, 0);
+  assert.equal(a.find((b) => b.bucket === "90+ d")!.amount, 0);
 });
 
 test("payables due in 30 days are pending and sorted by due date", () => {
