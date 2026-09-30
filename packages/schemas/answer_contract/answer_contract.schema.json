@@ -382,6 +382,9 @@
           "const": "sql",
           "default": "sql",
           "description": "Numbers only ever come from SQL, never from model",
+          "enum": [
+            "sql"
+          ],
           "title": "Origin",
           "type": "string"
         },
@@ -519,7 +522,6 @@
         "draft": {
           "anyOf": [
             {
-              "additionalProperties": true,
               "type": "object"
             },
             {
@@ -554,7 +556,11 @@
       "type": "string"
     },
     "status": {
-      "$ref": "#/$defs/AnswerStatus",
+      "allOf": [
+        {
+          "$ref": "#/$defs/AnswerStatus"
+        }
+      ],
       "description": "Outcome status of the reasoning step"
     },
     "summary": {
@@ -612,7 +618,11 @@
       "type": "array"
     },
     "confidence": {
-      "$ref": "#/$defs/Confidence",
+      "allOf": [
+        {
+          "$ref": "#/$defs/Confidence"
+        }
+      ],
       "description": "Self-assessed confidence level and justification"
     },
     "actions": {
