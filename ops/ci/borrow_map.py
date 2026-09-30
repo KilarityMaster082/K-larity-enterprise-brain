@@ -21,6 +21,7 @@ OUT = REPO / "docs/borrow/BORROW_MAP.md"
 # Adopted runtime dependencies -> where they are wired in, and the owning task.
 DEPENDENCY_TARGETS = {
     "Docling": ("services/normalization/parsers/", "EB-30"),
+    "Unstructured": ("services/normalization/parsers/", "EB-30"),
     "ezdxf": ("packs/aec/cad/", "EB-35"),
     "Langfuse": ("packages/observability/, services/llm-gateway/", "EB-26"),
     "OpenFGA": ("packages/permissions/", "EB-22"),

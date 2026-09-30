@@ -10,7 +10,7 @@ How code moves from an upstream tool into K!larity:
 3. **Adapt** — write K!larity code in the target path (tenant_id at every boundary, typed + versioned interfaces, no plaintext secrets), with a `Borrowed from:` line naming tool, commit and file.
 4. **Record** — set the feature's `review:` state in `UPSTREAM.yaml` and add the notice to `THIRD_PARTY_NOTICES.md`.
 
-Register totals: 59 tools — Adopt: 7, Borrow pattern: 12, To review: 37, Reject: 3
+Register totals: 59 tools — Adopt: 8, Borrow pattern: 15, To review: 33, Reject: 3
 
 ## 1. Code vendored (Adopt + Copy with attribution)
 
@@ -67,6 +67,7 @@ Installed as packages when the owning task starts — no source is copied.
 | Langfuse | MIT except ee/ folders (retention, masking, metering) | `packages/observability/, services/llm-gateway/` | EB-26 | Already in stack; acquired by ClickHouse Jan 2026; avoid ee/ |
 | OpenFGA | Apache-2.0 | `packages/permissions/` | EB-22 | Already in stack |
 | Temporal (+ samples-python) | MIT | `services/ingestion/workflows/` | EB-29 | Already in stack (ingestion) |
+| Unstructured | Apache-2.0 | `services/normalization/parsers/` | EB-30 |  |
 
 ## 3. Patterns only (read, never copy)
 
@@ -86,6 +87,9 @@ Upstream clones are read at a pinned commit; notes go in `docs/borrow/patterns/<
 | Open WebUI | Open WebUI License (BSD-3 + branding clause above 50 users) | Pipelines/filter plugins; group RBAC on knowledge bases; citation UI |  |
 | Paperless-ngx | GPL-3.0 | Auto-matching of tags/correspondents; IMAP mail rules; consumption workflows; custom fields |  |
 | Windmill | AGPL-3.0 + proprietary enterprise; SDKs and OpenFlow spec Apache-2.0 | Scripts turned into auto-generated UIs; OpenFlow JSON spec; per-workspace worker groups |  |
+| RAGFlow | Apache-2.0 | DeepDoc layout and table recognition; template chunking (table, Q&A, laws); human-editable chunks; grounded citations |  |
+| Haystack | Apache-2.0 | Branching and looping pipelines; serialisable components; hybrid retrieval |  |
+| LlamaIndex | MIT (LlamaParse is a proprietary cloud) | Ingestion pipeline with docstore dedupe; PropertyGraphIndex; metadata-filter auto-retrievers |  |
 
 ## 4. Awaiting decision (To review — no code or dependency until EB-76 sign-off)
 
@@ -97,7 +101,6 @@ Upstream clones are read at a pinned commit; notes go in `docs/borrow/patterns/<
 | LLM Guard | Copy with attribution | 03 Identity & Security | PII anonymise/de-anonymise vault; prompt-injection and secrets scanners |
 | LibreChat | Copy with attribution | 08 UX / UI | Agents with MCP tools; conversation forking; artifacts; per-user token balances |
 | LightRAG | Copy with attribution | 05 RAG & Retrieval | Dual-level (entity/relation) retrieval; incremental graph inserts; graph rebuild on document delete |
-| RAGFlow | Copy with attribution | 05 RAG & Retrieval | DeepDoc layout and table recognition; template chunking (table, Q&A, laws); human-editable chunks; grounded citations |
 | Apache Superset | Dependency OK | 08 UX / UI | Embedded SDK with guest tokens + row-level security per tenant |
 | Cognee | Dependency OK | 02 Database & Data Model | cognify pipeline; grounding extraction in an OWL/RDF ontology (AEC taxonomy) |
 | Composio | Dependency OK | 04 Ingestion & Connectors | Managed OAuth connected accounts per user; triggers; Gmail/Sheets/Drive toolkits |
@@ -106,12 +109,10 @@ Upstream clones are read at a pinned commit; notes go in `docs/borrow/patterns/<
 | DeepEval | Dependency OK | 10 Evaluation & Quality | pytest-style LLM tests; G-Eval custom metrics; conversation metrics |
 | Evidence | Dependency OK | 09 Finance & AEC Pack | Reports written as SQL + Markdown; templated pages (monthly finance pack) |
 | Graphiti (Zep) | Dependency OK | 02 Database & Data Model | Bi-temporal edges (valid/invalid + created/expired); episode-based incremental ingestion; invalidating contradicted facts; BM25 + vector + BFS hybrid search |
-| Haystack | Dependency OK | 05 RAG & Retrieval | Branching and looping pipelines; serialisable components; hybrid retrieval |
 | Kestra | Dependency OK | 07 Agents & Automation | Declarative YAML flows; event and schedule triggers; backfills; plugin model |
 | LangGraph | Dependency OK | 07 Agents & Automation | Postgres checkpointer for durable agent threads; interrupt/resume for human approval; subgraphs per role agent |
 | Langflow | Dependency OK | 07 Agents & Automation | Components written as code; flows exposed as MCP servers/APIs |
 | Letta | Dependency OK | 06 AI Services | Core/archival memory blocks the agent can edit; sleep-time agents that tidy memory in the background |
-| LlamaIndex | Dependency OK | 05 RAG & Retrieval | Ingestion pipeline with docstore dedupe; PropertyGraphIndex; metadata-filter auto-retrievers |
 | Meltano / Singer taps | Dependency OK | 04 Ingestion & Connectors | Singer SDK; state bookmarks |
 | Mem0 | Dependency OK | 06 AI Services | LLM-driven memory ADD/UPDATE/DELETE; memories scoped by user/agent/run |
 | Microsoft GraphRAG | Dependency OK | 05 RAG & Retrieval | Community detection + community reports; global/local/DRIFT search; prompt auto-tuning |
@@ -120,7 +121,6 @@ Upstream clones are read at a pinned commit; notes go in `docs/borrow/patterns/<
 | Pydantic AI | Dependency OK | 07 Agents & Automation | Typed structured outputs with dependency injection; durable execution on Temporal; pydantic_evals datasets |
 | Ragas | Dependency OK | 10 Evaluation & Quality | Faithfulness, context precision/recall; knowledge-graph-based test-set generation |
 | Trigger.dev | Dependency OK | 07 Agents & Automation | Durable long-running tasks; waitpoints for human-in-the-loop; realtime run streams to UI; per-tenant concurrency keys |
-| Unstructured | Dependency OK | 05 RAG & Retrieval | partition_* for eml/msg/xlsx/pptx/pdf; element metadata (page, coordinates); chunk_by_title |
 | Vercel AI SDK | Dependency OK | 08 UX / UI | Provider-agnostic streamText/streamObject (stream the answer contract); multi-step tools; useChat data parts |
 | assistant-ui | Dependency OK | 08 UX / UI | Headless Thread/Composer primitives; tool-call generative UI; branch switching; AI SDK and LangGraph runtimes |
 | dlt (dlthub) | Dependency OK | 04 Ingestion & Connectors | Incremental cursors and state; schema inference and evolution; merge loads; declarative REST source |
