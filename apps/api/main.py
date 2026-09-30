@@ -11,6 +11,7 @@ import json
 from typing import Any, Callable
 
 from apps.api.middleware.tenant import TenantMiddleware
+from apps.api.routers.ask import handle_ask
 from tenant_context import PlacementResolver, current_tenant
 
 
@@ -76,6 +77,7 @@ class CoreApiRouter:
             ("GET", "/healthz"): healthz_handler,
             ("GET", "/readyz"): healthz_handler,
             ("GET", "/api/v1/tenant/current"): current_tenant_handler,
+            ("POST", "/api/v1/ask"): handle_ask,
         }
 
     async def __call__(self, scope: dict[str, Any], receive: Callable[..., Any], send: Callable[..., Any]) -> None:
