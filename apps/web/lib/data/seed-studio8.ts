@@ -1,7 +1,9 @@
 // Owner task: EB-23 Web UI shell — DEMO DATA for the Studio 8 workspace (development only).
 // Fictional projects shaped like DB schema v1. People are role labels, not invented staff names. Totals are
 // never typed here: pages derive them from these rows (lib/data/derive.ts), the way SQL will.
-import type { Evidence, SourceType } from "../contracts";
+import type { Evidence, EvidenceLocator, SourceType } from "../contracts";
+import { ago, ev, inr } from "./seed-util";
+import { STUDIO8_WORKSPACE, WORKSPACE_DECISIONS, WORKSPACE_DOC_EVIDENCE, WORKSPACE_DOCUMENTS, WORKSPACE_EVIDENCE } from "./seed-workspace-studio8";
 import type {
   Approval,
   AuditEvent,
@@ -18,24 +20,6 @@ import type {
 } from "./types";
 
 const AEC_STAGES = ["Concept", "Design", "GFC drawings", "Execution", "Handover"]; // from packs/aec
-
-function ev(
-  id: string,
-  sourceType: SourceType,
-  title: string,
-  excerpt: string,
-  quote: string,
-  extra: Partial<Evidence> = {},
-): Evidence {
-  const start = excerpt.indexOf(quote);
-  if (start < 0) throw new Error(`evidence ${id}: quote not found`);
-  return { id, sourceType, title, excerpt, highlight: { start, end: start + quote.length }, ...extra };
-}
-
-/** Timestamp `minutes` ago. Source freshness and member activity are relative to now so they never read as future. */
-const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
-
-const inr = (n: number) => "₹" + new Intl.NumberFormat("en-IN").format(n);
 
 // ---------------------------------------------------------------- people
 const people: Person[] = [
@@ -357,7 +341,20 @@ const narrative: Evidence[] = [
   ),
 ];
 
-const evidence = [...narrative, ...txnEvidence];
+// Where the passage sits in the original file, as the parsers (Docling / TableFormer) record it. Coordinates are
+// normalised to the page. Only file-backed sources have a locator; messages and ledger rows do not.
+const LOCATORS: Record<string, EvidenceLocator> = {
+  "ev-phx-facade-quote": { page: 1, bbox: { x0: 0.12, y0: 0.42, x1: 0.88, y1: 0.49 }, table: { tableId: "t1", caption: "Cladding package", rowStart: 2, rowEnd: 2, colStart: 1, colEnd: 3 }, parser: "docling" },
+  "ev-phx-str204c": { page: 1, bbox: { x0: 0.58, y0: 0.82, x1: 0.96, y1: 0.93 }, parser: "docling" },
+  "ev-phx-str204b": { page: 1, bbox: { x0: 0.58, y0: 0.82, x1: 0.96, y1: 0.93 }, parser: "docling" },
+  "ev-phx-arc101": { page: 1, bbox: { x0: 0.58, y0: 0.82, x1: 0.96, y1: 0.93 }, parser: "docling" },
+  "ev-phx-fac301": { page: 1, bbox: { x0: 0.58, y0: 0.82, x1: 0.96, y1: 0.93 }, parser: "docling" },
+  "ev-phx-vo07": { page: 2, bbox: { x0: 0.1, y0: 0.61, x1: 0.9, y1: 0.7 }, table: { tableId: "t3", caption: "Signature block", rowStart: 1, rowEnd: 1 }, parser: "docling" },
+  "ev-phx-budget": { page: 1, bbox: { x0: 0.08, y0: 0.3, x1: 0.92, y1: 0.36 }, table: { tableId: "t1", caption: "Budget vs actual", rowStart: 6, rowEnd: 6, colStart: 0, colEnd: 4 }, parser: "native" },
+  "ev-mc-hvac-c": { page: 1, bbox: { x0: 0.58, y0: 0.82, x1: 0.96, y1: 0.93 }, parser: "docling" },
+};
+
+const evidence: Evidence[] = [...narrative, ...txnEvidence, ...WORKSPACE_EVIDENCE, ...WORKSPACE_DOC_EVIDENCE].map((e) => (LOCATORS[e.id] ? { ...e, locator: LOCATORS[e.id] } : e));
 
 // ---------------------------------------------------------------- events (project timelines)
 const events: ProjectEvent[] = [
@@ -387,7 +384,7 @@ const events: ProjectEvent[] = [
 ];
 
 // ---------------------------------------------------------------- documents
-const documents: DocumentItem[] = [
+const coreDocuments: DocumentItem[] = [
   { documentId: "d-phx-str204-c", projectId: "phoenix", title: "Transfer beam details", docType: "drawing", series: "PHX-STR-204", revision: "C", isLatest: true, source: "drive", updatedAt: "2026-07-30T10:00:00+05:30", sizeBytes: 2_400_000, summary: "GFC structural drawing: level-2 transfer beam in steel (ISMB 600).", facts: ["Transfer beam: steel ISMB 600", "Supersedes Rev B", "Issued for construction"], evidenceId: "ev-phx-str204c" },
   { documentId: "d-phx-str204-b", projectId: "phoenix", title: "Transfer beam details", docType: "drawing", series: "PHX-STR-204", revision: "B", isLatest: false, source: "drive", updatedAt: "2026-06-18T10:00:00+05:30", sizeBytes: 2_100_000, summary: "Coordination issue with an RCC transfer beam.", facts: ["Transfer beam: RCC 450 x 900"], evidenceId: "ev-phx-str204b" },
   { documentId: "d-phx-arc101-d", projectId: "phoenix", title: "Ground floor plan", docType: "drawing", series: "PHX-ARC-101", revision: "D", isLatest: true, source: "drive", updatedAt: "2026-07-22T10:00:00+05:30", sizeBytes: 3_800_000, summary: "Staircase and column C4 moved to clear the car porch.", facts: ["Staircase shifted 600 mm east", "Column C4 relocated"], evidenceId: "ev-phx-arc101" },
@@ -401,8 +398,10 @@ const documents: DocumentItem[] = [
   { documentId: "d-bo-snags", projectId: "banyan", title: "Snag list — 28 Sep", docType: "report", isLatest: true, source: "sheets", updatedAt: "2026-09-28T17:00:00+05:30", sizeBytes: 90_000, summary: "42 open snags, 3 critical; 23 closed this week.", facts: ["Open: 42", "Critical: 3"], evidenceId: "ev-bo-snags" },
 ];
 
+const documents: DocumentItem[] = [...coreDocuments, ...WORKSPACE_DOCUMENTS];
+
 // ---------------------------------------------------------------- decisions
-const decisions: Decision[] = [
+const coreDecisions: Decision[] = [
   { decisionId: "dec-phx-facade", projectId: "phoenix", title: "Front facade in HPL instead of ACP", description: "Client approved HPL panels for the front facade.", rationale: "Client preference after site samples.", status: "decided", decidedBy: "Client representative", decidedAt: "2026-08-12T11:04:00+05:30", alternatives: ["ACP (original)"], costImpact: 920000, evidenceIds: ["ev-phx-client-hpl", "ev-phx-facade-quote"] },
   { decisionId: "dec-phx-beam", projectId: "phoenix", title: "Level-2 transfer beam in steel (ISMB 600)", description: "Transfer beam changed from RCC to steel after the column shift.", rationale: "Column C4 relocation increased the span.", status: "decided", decidedBy: "Structural consultant", decidedAt: "2026-07-30T10:00:00+05:30", alternatives: ["Deeper RCC beam"], costImpact: 610000, evidenceIds: ["ev-phx-str204c", "ev-phx-arc101"] },
   { decisionId: "dec-phx-crews", projectId: "phoenix", title: "Keep masonry and MEP crews on site during the steel delay", description: "Crews retained for three weeks to hold the schedule.", status: "proposed", alternatives: ["Demobilise and remobilise later"], costImpact: 310000, timeImpactDays: 0, evidenceIds: ["ev-phx-site-w36"], confidence: 0.78 },
@@ -414,6 +413,8 @@ const decisions: Decision[] = [
   { decisionId: "dec-bo-handover", projectId: "banyan", title: "Handover on 15 October after snag closure", description: "Facilities manager proposed handover once 42 snags close and the fire NOC arrives.", status: "proposed", alternatives: [], timeImpactDays: 0, evidenceIds: ["ev-bo-handover", "ev-bo-snags"], confidence: 0.82 },
 ];
 
+const decisions: Decision[] = [...coreDecisions, ...WORKSPACE_DECISIONS];
+
 // ---------------------------------------------------------------- approvals, sources, members, audit
 const approvals: Approval[] = [
   { approvalId: "apr-001", kind: "draft_message", title: "Payment reminder to Marigold Clinic for RA-2", body: "Dear Clinic administrator,\n\nRA-2 (₹22,00,000) was due on 5 September. Could you confirm when the payment will be released? We have kept the MEP works on schedule for the OT.\n\nRegards,\nAccounts, Studio 8 Hats", projectId: "marigold", requestedBy: "Accounts", requestedVia: "ask_brain", requestedAt: "2026-09-29T10:15:00+05:30", reason: "RA-2 is 25 days overdue and the client last replied on 16 Sep.", evidenceIds: ["ev-mc-c-002", "ev-mc-reminder"], status: "pending" },
@@ -422,6 +423,7 @@ const approvals: Approval[] = [
 ];
 
 const sources: Source[] = [
+  { sourceId: "src-calendar", connectorType: "calendar", displayName: "Partners calendar", account: "partners@studio8.example", health: "ok", lastSyncAt: ago(6), itemsSeen: 412, errorRate: 0, lagMinutes: 6, connectedAt: "2026-09-20T10:20:00+05:30" },
   { sourceId: "src-gmail-partners", connectorType: "gmail", displayName: "Partners mailbox", account: "partners@studio8.example", health: "ok", lastSyncAt: ago(3), itemsSeen: 18240, errorRate: 0.002, lagMinutes: 3, connectedAt: "2026-09-20T10:00:00+05:30" },
   { sourceId: "src-gmail-accounts", connectorType: "gmail", displayName: "Accounts mailbox", account: "accounts@studio8.example", health: "auth_error", lastSyncAt: ago(2 * 24 * 60 + 170), itemsSeen: 6120, errorRate: 1, lastError: "Google revoked the refresh token. The mailbox owner must reconnect.", connectedAt: "2026-09-20T10:05:00+05:30" },
   { sourceId: "src-drive", connectorType: "drive", displayName: "Projects shared drive", account: "Studio 8 Projects", health: "ok", lastSyncAt: ago(10), itemsSeen: 4310, errorRate: 0.004, lagMinutes: 10, connectedAt: "2026-09-20T10:10:00+05:30" },
@@ -457,4 +459,5 @@ export const STUDIO8_DATA: TenantDataset = {
   members,
   audit,
   evidence,
+  workspace: STUDIO8_WORKSPACE,
 };

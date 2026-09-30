@@ -6,8 +6,10 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { AdminShell } from "@/components/AdminShell";
-import { getTenant } from "@/lib/data";
-import { getOperator } from "@/lib/session";
+import { getTenant, listTenants } from "@/lib/data";
+import { openDeadLetters } from "@/lib/ops";
+import { opLauncher, opRail } from "@/lib/screens";
+import { adminAuthMode, getOperator } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +25,14 @@ export default async function Layout({ children }: { children: ReactNode }) {
   const imp = s?.impersonating;
   const tenant = imp ? getTenant(imp.tenantId) : undefined;
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" data-skin="eb" data-theme="light">
       <body>
         {s ? (
           <AdminShell
             operator={{ name: s.operator.name, email: s.operator.email }}
+            rail={opRail({ "/dead-letter": listTenants().reduce((n, t) => n + openDeadLetters(t.tenantId), 0) })}
+            launcher={opLauncher()}
+            devMode={adminAuthMode() === "dev"}
             impersonating={imp && tenant ? { tenantName: tenant.name, reason: imp.reason, expiresAt: imp.expiresAt } : undefined}
           >
             {children}

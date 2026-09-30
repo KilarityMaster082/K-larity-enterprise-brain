@@ -15,6 +15,10 @@ import json
 from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+# 1.1.0 (additive): Evidence.locator (page, normalised bounding box, table cell range, parser) so the Evidence
+# Side-Sheet can draw Docling TableFormer boxes over the source page. 1.0.0 payloads remain valid.
+SCHEMA_VERSION = "1.1.0"
+
 
 class SourceType(str, Enum):
     EMAIL = "email"
@@ -53,6 +57,55 @@ class EvidenceSpan(BaseModel):
         return self
 
 
+class EvidenceBBox(BaseModel):
+    """Bounding box on a page, normalised to 0..1 of page width/height (origin top-left)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    x0: float = Field(ge=0.0, le=1.0)
+    y0: float = Field(ge=0.0, le=1.0)
+    x1: float = Field(ge=0.0, le=1.0)
+    y1: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_box(self) -> EvidenceBBox:
+        if self.x1 <= self.x0 or self.y1 <= self.y0:
+            raise ValueError("bounding box must have positive width and height")
+        return self
+
+
+class EvidenceTableRef(BaseModel):
+    """The table (and cell range) the evidence was read from, as recognised by Docling TableFormer."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    table_id: str = Field(..., alias="tableId")
+    caption: str | None = None
+    row_start: int = Field(ge=0, alias="rowStart")
+    row_end: int = Field(ge=0, alias="rowEnd")
+    col_start: int = Field(default=0, ge=0, alias="colStart")
+    col_end: int | None = Field(default=None, ge=0, alias="colEnd")
+
+    @model_validator(mode="after")
+    def validate_range(self) -> EvidenceTableRef:
+        if self.row_end < self.row_start:
+            raise ValueError("table row range is reversed")
+        if self.col_end is not None and self.col_end < self.col_start:
+            raise ValueError("table column range is reversed")
+        return self
+
+
+class EvidenceLocator(BaseModel):
+    """Where in the original file the supporting passage sits (documents and drawings)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    page: int | None = Field(default=None, ge=1, description="1-indexed page")
+    bbox: EvidenceBBox | None = None
+    table: EvidenceTableRef | None = None
+    parser: Literal["docling", "tika", "ocr", "native"] | None = None
+
+
 class Evidence(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -65,6 +118,13 @@ class Evidence(BaseModel):
     excerpt: str = Field(..., description="Exact context snippet supporting the claim")
     highlight: EvidenceSpan | None = Field(default=None, description="Precise bounding span within excerpt")
     open_url: str | None = Field(default=None, alias="openUrl", description="Deep link to source")
+    locator: EvidenceLocator | None = Field(default=None, description="Page, bounding box and table range in the original file")
+
+    @model_validator(mode="after")
+    def validate_highlight_inside_excerpt(self) -> Evidence:
+        if self.highlight is not None and self.highlight.end > len(self.excerpt):
+            raise ValueError(f"Evidence '{self.id}': highlight ends at {self.highlight.end} but the excerpt has {len(self.excerpt)} characters")
+        return self
 
 
 class Figure(BaseModel):
@@ -130,7 +190,7 @@ class AnswerContract(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    version: str = Field(default="1.0.0", description="Contract schema version")
+    version: str = Field(default=SCHEMA_VERSION, description="Contract schema version")
     question: str = Field(..., description="Original user prompt or normalized query")
     status: AnswerStatus = Field(..., description="Outcome status of the reasoning step")
     summary: str = Field(default="", description="High-level executive summary")

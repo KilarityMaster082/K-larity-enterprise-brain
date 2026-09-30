@@ -1,11 +1,11 @@
 // Owner task: EB-96 Streaming answers — /api/ask streams the answer contract as NDJSON.
 // Development: answers come from the dev engine over this tenant's data. Production: this route will call the
 // context engine through apps/api with the caller's token; the stream format stays the same.
-import { answerQuestion } from "@/lib/ask/engine";
+import { answerQuestion, topicOf } from "@/lib/ask/engine";
 import { eventsFor } from "@/lib/ask/stream";
 import { authMode } from "@/lib/auth/config";
 import { activeMembership, getSession } from "@/lib/auth/session";
-import { markAskedFirstQuestion, tenantView } from "@/lib/data/store";
+import { markAskedFirstQuestion, recordQuestion, tenantView } from "@/lib/data/store";
 import { can } from "@/lib/permissions";
 
 const MAX_QUESTION = 2000;
@@ -35,7 +35,10 @@ export async function POST(req: Request) {
     canSeeFinance: can(m.role, "finance.view"),
     hasSyncedSource: view.hasSyncedSource,
   });
-  if (view.hasSyncedSource) markAskedFirstQuestion(m.tenantId, m.slug);
+  if (view.hasSyncedSource) {
+    markAskedFirstQuestion(m.tenantId, m.slug);
+    recordQuestion(m.tenantId, m.slug, session.user.id, question, topicOf(question, view.data, projectId), projectId);
+  }
 
   const enc = new TextEncoder();
   const signal = req.signal;

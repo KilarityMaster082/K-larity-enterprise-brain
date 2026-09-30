@@ -1,6 +1,6 @@
 "use client";
 // Owner task: EB-100 Admin console shell — filterable operator audit table.
-import { Badge, DataTable, formatDateTime, type Column } from "@klarity/ui";
+import { DataTable, Pill, formatDateTime, type Column } from "@klarity/ui";
 
 import type { OpAudit } from "@/lib/data";
 
@@ -11,7 +11,7 @@ export function AuditTable({ rows }: { rows: OpAudit[] }) {
     {
       key: "action",
       header: "Action",
-      cell: (a) => <Badge tone={a.action.startsWith("impersonation") ? "brand" : a.action.includes("suspend") ? "danger" : "neutral"}>{a.action}</Badge>,
+      cell: (a) => <Pill size="sm" tone={a.action.startsWith("impersonation") ? "lavender" : a.action.includes("suspend") ? "pink" : "outline"}>{a.action}</Pill>,
       sort: (a) => a.action,
     },
     { key: "tenant", header: "Tenant", cell: (a) => a.tenant ?? "—", sort: (a) => a.tenant ?? "" },

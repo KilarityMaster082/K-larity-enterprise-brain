@@ -1,0 +1,406 @@
+{
+  "version": "1.1.0",
+  "question": "Why is Project Phoenix over budget?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "Project Phoenix is ₹18.4 lakh (12%) over its approved budget of ₹1.53 crore.",
+  "conflicts": [],
+  "status": "answered",
+  "answer": [
+    {
+      "text": "Project Phoenix is ₹18.4 lakh (12%) over its approved budget of ₹1.53 crore.",
+      "evidenceIds": [
+        "q-variance-phoenix"
+      ]
+    },
+    {
+      "text": " Half (₹9.2 lakh, facade) comes from “Front facade in HPL instead of ACP”.",
+      "evidenceIds": [
+        "ev-phx-client-hpl",
+        "ev-phx-facade-quote"
+      ]
+    },
+    {
+      "text": " About a third (₹6.1 lakh, structural steel) comes from “Level-2 transfer beam in steel (ISMB 600)”.",
+      "evidenceIds": [
+        "ev-phx-str204c",
+        "ev-phx-arc101"
+      ]
+    },
+    {
+      "text": " The rest (₹3.1 lakh, site labour) comes from “Keep masonry and MEP crews on site during the steel delay” — a draft decision not yet confirmed.",
+      "evidenceIds": [
+        "ev-phx-site-w36"
+      ]
+    },
+    {
+      "text": " Variation order VO-07 (facade ACP → HPL) is not yet billable: it is still unsigned.",
+      "evidenceIds": [
+        "ev-phx-vo07"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "f-total",
+      "text": "Over budget",
+      "evidenceIds": [
+        "q-variance-phoenix"
+      ],
+      "figure": {
+        "amount": 1840000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.variance_by_package"
+      }
+    },
+    {
+      "id": "f-0",
+      "text": "Facade",
+      "evidenceIds": [
+        "ev-phx-v-006",
+        "ev-phx-v-007"
+      ],
+      "figure": {
+        "amount": 920000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.variance_by_package"
+      }
+    },
+    {
+      "id": "f-1",
+      "text": "Structural steel",
+      "evidenceIds": [
+        "ev-phx-v-004",
+        "ev-phx-v-005"
+      ],
+      "figure": {
+        "amount": 610000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.variance_by_package"
+      }
+    },
+    {
+      "id": "f-2",
+      "text": "Site labour",
+      "evidenceIds": [
+        "ev-phx-v-012",
+        "ev-phx-v-013"
+      ],
+      "figure": {
+        "amount": 310000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.variance_by_package"
+      }
+    }
+  ],
+  "causes": [
+    {
+      "id": "c-0",
+      "text": "Front facade in HPL instead of ACP.",
+      "evidenceIds": [
+        "ev-phx-client-hpl",
+        "ev-phx-facade-quote"
+      ]
+    },
+    {
+      "id": "c-1",
+      "text": "Level-2 transfer beam in steel (ISMB 600).",
+      "evidenceIds": [
+        "ev-phx-str204c",
+        "ev-phx-arc101"
+      ]
+    },
+    {
+      "id": "c-2",
+      "text": "Keep masonry and MEP crews on site during the steel delay (draft, not yet confirmed).",
+      "evidenceIds": [
+        "ev-phx-site-w36"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "r-unsigned-d-phx-vo07",
+      "text": "₹9.2 lakh cannot be billed until the variation is signed.",
+      "severity": "high",
+      "evidenceIds": [
+        "ev-phx-vo07"
+      ]
+    },
+    {
+      "id": "r-unbilled-phx-v-005",
+      "text": "Change order SS-CO-02 not passed to the client (₹6.1 lakh).",
+      "severity": "medium",
+      "evidenceIds": [
+        "ev-phx-v-005"
+      ]
+    }
+  ],
+  "unknowns": [
+    "Whether the ₹6.1 lakh change order can be billed to the client — no client variation found.",
+    "Costs incurred after 30 Sept are not in the ledger yet."
+  ],
+  "confidence": {
+    "level": "medium",
+    "reason": "Figures come from the ledger; one cause rests on a draft decision that is not yet confirmed."
+  },
+  "actions": [
+    {
+      "id": "a-unsigned-d-phx-vo07",
+      "label": "Draft a reminder to the client to sign the variation",
+      "kind": "draft_message",
+      "requiresApproval": true,
+      "draft": {
+        "title": "Reminder to Phoenix client: please sign the pending variation",
+        "body": "Dear Phoenix client,\n\nThe variation for Project Phoenix (₹9,20,000) was sent for signature and is still pending. Could you sign it this week so we can include it in the next bill?\n\nRegards,\nStudio team",
+        "reason": "Variation order VO-07 (facade ACP → HPL) is unsigned; the work is already under way.",
+        "evidenceIds": [
+          "ev-phx-vo07"
+        ],
+        "projectId": "phoenix"
+      }
+    },
+    {
+      "id": "a-unbilled-phx-v-005",
+      "label": "Create a task: raise a client variation for this change",
+      "kind": "create_task",
+      "requiresApproval": true,
+      "draft": {
+        "title": "Raise a client variation for SS-CO-02",
+        "body": "Prepare a variation for Phoenix client covering ₹6,10,000 (Deccan Steel charged a change order for Structural steel with no client variation raised.) and attach the supporting drawing.",
+        "reason": "Deccan Steel charged a change order for Structural steel with no client variation raised.",
+        "evidenceIds": [
+          "ev-phx-v-005"
+        ],
+        "projectId": "phoenix"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "q-variance-phoenix",
+      "sourceType": "sql",
+      "title": "finance.variance_by_package — Project Phoenix",
+      "excerpt": "Approved budget ₹1,53,00,000 · Forecast at completion ₹1,71,40,000 · Over budget ₹18,40,000 (12%) · Civil & structure: budget ₹52,00,000, committed ₹52,00,000 · Structural steel: budget ₹18,00,000, committed ₹24,10,000 · Facade: budget ₹14,80,000, committed ₹24,00,000 · MEP: budget ₹24,00,000, committed ₹24,00,000 · Finishes: budget ₹29,20,000, committed ₹29,20,000 · Site labour: budget ₹15,00,000, committed ₹18,10,000",
+      "highlight": {
+        "start": 69,
+        "end": 97
+      },
+      "project": "Project Phoenix",
+      "author": "Finance ledger (SQL)",
+      "occurredAt": "2026-09-30T06:30:00.000Z"
+    },
+    {
+      "id": "ev-phx-client-hpl",
+      "sourceType": "whatsapp",
+      "title": "Phoenix client group",
+      "excerpt": "Saw the HPL samples at site today. We prefer the HPL panels over ACP for the front facade even if it costs more — please go ahead and update the drawings.",
+      "highlight": {
+        "start": 35,
+        "end": 111
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-08-12T11:04:00+05:30",
+      "author": "Client representative"
+    },
+    {
+      "id": "ev-phx-facade-quote",
+      "sourceType": "email",
+      "title": "Revised quotation — facade cladding (HPL)",
+      "excerpt": "As discussed, switching the front facade from ACP to HPL changes the cladding package from ₹14,80,000 to ₹24,00,000 including fixing system. Validity 30 days.",
+      "highlight": {
+        "start": 86,
+        "end": 115
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-08-19T16:20:00+05:30",
+      "author": "Facade vendor",
+      "locator": {
+        "page": 1,
+        "bbox": {
+          "x0": 0.12,
+          "y0": 0.42,
+          "x1": 0.88,
+          "y1": 0.49
+        },
+        "table": {
+          "tableId": "t1",
+          "caption": "Cladding package",
+          "rowStart": 2,
+          "rowEnd": 2,
+          "colStart": 1,
+          "colEnd": 3
+        },
+        "parser": "docling"
+      }
+    },
+    {
+      "id": "ev-phx-v-006",
+      "sourceType": "email",
+      "title": "Invoice SKF/PHX/01",
+      "excerpt": "Invoice SKF/PHX/01 from Skyline Facades for Facade. Dated 2026-08-28. Amount: ₹12,00,000.",
+      "highlight": {
+        "start": 70,
+        "end": 88
+      },
+      "author": "Skyline Facades",
+      "occurredAt": "2026-08-28T10:00:00+05:30",
+      "project": "Project Phoenix"
+    },
+    {
+      "id": "ev-phx-v-007",
+      "sourceType": "email",
+      "title": "Invoice SKF/PHX/02",
+      "excerpt": "Invoice SKF/PHX/02 from Skyline Facades for Facade. Dated 2026-09-25. Amount: ₹12,00,000. Due 2026-10-25.",
+      "highlight": {
+        "start": 70,
+        "end": 88
+      },
+      "author": "Skyline Facades",
+      "occurredAt": "2026-09-25T10:00:00+05:30",
+      "project": "Project Phoenix"
+    },
+    {
+      "id": "ev-phx-str204c",
+      "sourceType": "drawing",
+      "title": "PHX-STR-204 Rev C (GFC) — transfer beam",
+      "excerpt": "Rev C: transfer beam at level 2 revised from RCC to steel section ISMB 600 following the column shift. Supersedes Rev B.",
+      "highlight": {
+        "start": 32,
+        "end": 74
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-07-30T10:00:00+05:30",
+      "author": "Structural consultant",
+      "locator": {
+        "page": 1,
+        "bbox": {
+          "x0": 0.58,
+          "y0": 0.82,
+          "x1": 0.96,
+          "y1": 0.93
+        },
+        "parser": "docling"
+      }
+    },
+    {
+      "id": "ev-phx-arc101",
+      "sourceType": "drawing",
+      "title": "PHX-ARC-101 Rev D — ground floor plan",
+      "excerpt": "Rev D: staircase shifted 600 mm east; column C4 relocated to clear the car porch. Supersedes Rev C.",
+      "highlight": {
+        "start": 38,
+        "end": 57
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-07-22T10:00:00+05:30",
+      "author": "Principal architect",
+      "locator": {
+        "page": 1,
+        "bbox": {
+          "x0": 0.58,
+          "y0": 0.82,
+          "x1": 0.96,
+          "y1": 0.93
+        },
+        "parser": "docling"
+      }
+    },
+    {
+      "id": "ev-phx-v-004",
+      "sourceType": "email",
+      "title": "Invoice SS-4410",
+      "excerpt": "Invoice SS-4410 from Deccan Steel for Structural steel. Dated 2026-06-10. Amount: ₹18,00,000.",
+      "highlight": {
+        "start": 74,
+        "end": 92
+      },
+      "author": "Deccan Steel",
+      "occurredAt": "2026-06-10T10:00:00+05:30",
+      "project": "Project Phoenix"
+    },
+    {
+      "id": "ev-phx-v-005",
+      "sourceType": "email",
+      "title": "Change order SS-CO-02",
+      "excerpt": "Change order SS-CO-02 from Deccan Steel for Structural steel. Dated 2026-08-04. Amount: ₹6,10,000. Due 2026-10-04.",
+      "highlight": {
+        "start": 80,
+        "end": 97
+      },
+      "author": "Deccan Steel",
+      "occurredAt": "2026-08-04T10:00:00+05:30",
+      "project": "Project Phoenix"
+    },
+    {
+      "id": "ev-phx-site-w36",
+      "sourceType": "email",
+      "title": "Site update — week 36",
+      "excerpt": "Steel delivery slipped by 3 weeks; masonry and MEP crews were retained on site to hold the schedule, adding labour cost for the period.",
+      "highlight": {
+        "start": 0,
+        "end": 33
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-09-06T19:12:00+05:30",
+      "author": "Site engineer"
+    },
+    {
+      "id": "ev-phx-v-012",
+      "sourceType": "email",
+      "title": "Invoice LAB-PHX-Q2",
+      "excerpt": "Invoice LAB-PHX-Q2 from Labour contractor for Site labour. Dated 2026-07-31. Amount: ₹15,00,000.",
+      "highlight": {
+        "start": 77,
+        "end": 95
+      },
+      "author": "Labour contractor",
+      "occurredAt": "2026-07-31T10:00:00+05:30",
+      "project": "Project Phoenix"
+    },
+    {
+      "id": "ev-phx-v-013",
+      "sourceType": "email",
+      "title": "Invoice LAB-PHX-SEP",
+      "excerpt": "Invoice LAB-PHX-SEP from Labour contractor for Site labour. Dated 2026-09-27. Amount: ₹3,10,000. Due 2026-10-12.",
+      "highlight": {
+        "start": 78,
+        "end": 95
+      },
+      "author": "Labour contractor",
+      "occurredAt": "2026-09-27T10:00:00+05:30",
+      "project": "Project Phoenix"
+    },
+    {
+      "id": "ev-phx-vo07",
+      "sourceType": "document",
+      "title": "Variation order VO-07 (draft, unsigned)",
+      "excerpt": "VO-07: Facade material change ACP → HPL. Amount ₹9,20,000. Status: sent to client for signature. Signature: pending.",
+      "highlight": {
+        "start": 97,
+        "end": 115
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-09-02T12:00:00+05:30",
+      "locator": {
+        "page": 2,
+        "bbox": {
+          "x0": 0.1,
+          "y0": 0.61,
+          "x1": 0.9,
+          "y1": 0.7
+        },
+        "table": {
+          "tableId": "t3",
+          "caption": "Signature block",
+          "rowStart": 1,
+          "rowEnd": 1
+        },
+        "parser": "docling"
+      }
+    }
+  ]
+}

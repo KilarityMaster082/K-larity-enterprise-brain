@@ -40,6 +40,10 @@ export interface SourceHealthRow {
   itemsPerDay: number;
   errorRate: number;
   deadLetters: number;
+  /** Gmail incremental sync: the mailbox's newest historyId against the last one this pipeline processed. */
+  gmail?: { headHistoryId: number; processedHistoryId: number };
+  /** WhatsApp export queue: files waiting to be parsed, being parsed, parsed in the last 24 h, and failed. */
+  whatsapp?: { queued: number; parsing: number; parsed24h: number; failed: number; oldestQueuedMinutes: number };
 }
 
 export interface AdminTenant {
@@ -122,11 +126,11 @@ const SEED: AdminTenant[] = [
     placement: { ...placementFor("0fdc5142-8c25-41c5-aab4-0a88db52a5bf", "pool"), keycloakOrgId: "kc-org-studio8" },
     usage: { questionsMonth: 412, llmTokensMonth: 3_860_000, storageGb: 18.4, vectors: 212_000, costMonthINR: 14_850 },
     sources: [
-      { sourceId: "src-gmail-partners", name: "Partners mailbox", type: "gmail", health: "ok", lastSyncAt: ago(3), lagMinutes: 3, itemsPerDay: 184, errorRate: 0.002, deadLetters: 0 },
-      { sourceId: "src-gmail-accounts", name: "Accounts mailbox", type: "gmail", health: "auth_error", lastSyncAt: ago(2 * 24 * 60 + 170), lagMinutes: 2 * 24 * 60 + 170, itemsPerDay: 0, errorRate: 1, deadLetters: 14 },
-      { sourceId: "src-drive", name: "Projects shared drive", type: "drive", health: "ok", lastSyncAt: ago(10), lagMinutes: 10, itemsPerDay: 36, errorRate: 0.004, deadLetters: 0 },
+      { sourceId: "src-gmail-partners", name: "Partners mailbox", type: "gmail", health: "ok", lastSyncAt: ago(3), lagMinutes: 3, itemsPerDay: 184, errorRate: 0.002, deadLetters: 0, gmail: { headHistoryId: 8_412_903, processedHistoryId: 8_412_897 } },
+      { sourceId: "src-gmail-accounts", name: "Accounts mailbox", type: "gmail", health: "auth_error", lastSyncAt: ago(2 * 24 * 60 + 170), lagMinutes: 2 * 24 * 60 + 170, itemsPerDay: 0, errorRate: 1, deadLetters: 14, gmail: { headHistoryId: 8_399_120, processedHistoryId: 8_371_044 } },
+      { sourceId: "src-drive", name: "Projects shared drive", type: "drive", health: "ok", lastSyncAt: ago(10), lagMinutes: 10, itemsPerDay: 36, errorRate: 0.004, deadLetters: 3 },
       { sourceId: "src-sheets", name: "Finance workbook", type: "sheets", health: "ok", lastSyncAt: ago(15), lagMinutes: 15, itemsPerDay: 22, errorRate: 0, deadLetters: 0 },
-      { sourceId: "src-whatsapp", name: "Phoenix client group (export)", type: "whatsapp", health: "degraded", lastSyncAt: ago(240), lagMinutes: 240, itemsPerDay: 95, errorRate: 0.031, deadLetters: 2 },
+      { sourceId: "src-whatsapp", name: "Phoenix client group (export)", type: "whatsapp", health: "degraded", lastSyncAt: ago(240), lagMinutes: 240, itemsPerDay: 95, errorRate: 0.031, deadLetters: 2, whatsapp: { queued: 4, parsing: 1, parsed24h: 38, failed: 2, oldestQueuedMinutes: 240 } },
     ],
   },
   {

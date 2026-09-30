@@ -1,0 +1,25 @@
+{
+  "version": "1.1.0",
+  "question": "Why is Project Phoenix over budget?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "Budgets and billing are visible to partners and owners, so I can't answer this for your role.",
+  "conflicts": [],
+  "status": "no_access",
+  "answer": [
+    {
+      "text": "Budgets and billing are visible to partners and owners, so I can't answer this for your role."
+    }
+  ],
+  "facts": [],
+  "causes": [],
+  "risks": [],
+  "unknowns": [
+    "Ask a partner, or ask an owner to change your role."
+  ],
+  "confidence": {
+    "level": "low",
+    "reason": "Restricted by role."
+  },
+  "actions": [],
+  "evidence": []
+}

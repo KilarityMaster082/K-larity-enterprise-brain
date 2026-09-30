@@ -1,0 +1,77 @@
+/* Owner task: EB-91 UI design system — Enterprise Brain (54-screen handoff) tokens.
+   Source: docs/architecture/design_handoff_enterprise_brain/README.md and the .dc.html references.
+   The references are drawn on a canvas shown at zoom .74; production code uses the already-shrunk sizes
+   (no CSS zoom anywhere): geometry is the drawn value x 0.74, type steps are listed below and never drop
+   under 10px so captions stay readable. packages/ui/tests/eb-contrast.test.ts checks every text pair. */
+
+:root {
+  /* palette (handoff "Design Tokens") */
+  --eb-lime: #d2ff1f;
+  --eb-black: #0e0e0e;
+  --eb-ink: #1b1b1b;
+  --eb-sky: #c5effd;
+  --eb-lavender: #dcd3f8;
+  --eb-pink: #ffc9c9;
+  --eb-green: #c6e4c1;
+  --eb-cream: #fff4d6;
+  --eb-white: #ffffff;
+  --eb-muted: #5d5b66;
+  --eb-muted-2: #57565f; /* secondary text; the drawn #777 is only 4.48:1 on white and 3.6:1 on the frame */
+  --eb-glass: rgb(255 255 255 / 0.6);
+  --eb-glass-strong: rgb(255 255 255 / 0.68);
+  --eb-glass-soft: rgb(255 255 255 / 0.4);
+  --eb-line: rgb(0 0 0 / 0.08);
+  --eb-line-strong: rgb(0 0 0 / 0.18);
+  --eb-graphite: #232323; /* graph / wedge canvases */
+
+  /* text on dark surfaces */
+  --eb-on-dark: #eeeeee;
+  --eb-on-dark-2: #cfcfd6;
+  --eb-on-dark-3: #9a9aa4;
+
+  /* status (handoff: live = lime, overdue/failed = pink, pending = cream, healthy = green) */
+  --eb-danger: #b42318;
+  --eb-warn: #8a5a00;
+  --eb-ok: #1e6b32;
+  --eb-lime-deep: #b5dd00; /* cash-in line */
+
+  /* page + frame */
+  --eb-page: #1b1b1b;
+  --eb-frame: linear-gradient(135deg, #e8e2f0 0%, #e3e9f4 42%, #f3e6e4 100%);
+  --eb-hero: linear-gradient(160deg, #c9e6f5 0%, #d9d4f3 60%, #ecdcea 100%);
+  --eb-stripe: repeating-linear-gradient(135deg, #8a8a90 0 1px, transparent 1px 4px);
+  --eb-stripe-light: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.3) 0 1px, transparent 1px 4px);
+
+  /* type: Google Sans (UI) and JetBrains Mono (routes, numbers, ids) */
+  --eb-font: "Google Sans", "Google Sans Text", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+    "Noto Sans Telugu", "Noto Sans Devanagari", sans-serif;
+  --eb-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --eb-t-cap: 10px; /* drawn 9–10.5 */
+  --eb-t-xs: 11px; /* drawn 11–12 */
+  --eb-t-sm: 12px; /* drawn 12.5–13 */
+  --eb-t-md: 13px; /* drawn 14–15 */
+  --eb-t-lg: 15px; /* drawn 16–18 */
+  --eb-t-xl: 17px; /* drawn 19–22 (metric values) */
+  --eb-t-2xl: 20px; /* drawn 24 */
+  --eb-t-hero: 26px; /* drawn 32–34 */
+
+  /* radius (drawn 99 / 12–14 / 18–24 / 34) */
+  --eb-r-pill: 99px;
+  --eb-r-sm: 9px;
+  --eb-r-md: 11px;
+  --eb-r-card: 15px;
+  --eb-r-lg: 18px;
+  --eb-r-frame: 25px;
+
+  /* spacing (drawn 8 / 10 / 12 / 14 / 24) */
+  --eb-gap: 7px;
+  --eb-gap-lg: 10px;
+  --eb-pad: 10px;
+  --eb-pad-lg: 13px;
+
+  --eb-rail-w: 55px;
+  --eb-sheet-w: 360px;
+  --eb-shadow-frame: 0 30px 80px rgb(0 0 0 / 0.5);
+  --eb-shadow-pop: 0 20px 60px rgb(0 0 0 / 0.22);
+  --eb-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

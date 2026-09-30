@@ -1,0 +1,65 @@
+{
+  "version": "1.1.0",
+  "question": "What is the latest structural drawing for Phoenix?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "The latest PHX-STR-204 (Transfer beam details) is Rev C, issued 30 Jul 2026: GFC structural drawing: level-2 transfer beam in steel (ISMB 600).",
+  "conflicts": [],
+  "status": "answered",
+  "answer": [
+    {
+      "text": "The latest PHX-STR-204 (Transfer beam details) is Rev C, issued 30 Jul 2026: GFC structural drawing: level-2 transfer beam in steel (ISMB 600).",
+      "evidenceIds": [
+        "ev-phx-str204c"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "f-d-phx-str204-c",
+      "text": "PHX-STR-204 is at Rev C",
+      "evidenceIds": [
+        "ev-phx-str204c"
+      ]
+    }
+  ],
+  "causes": [],
+  "risks": [],
+  "unknowns": [],
+  "confidence": {
+    "level": "high",
+    "reason": "Revision taken from the drawing register."
+  },
+  "actions": [
+    {
+      "id": "a-open",
+      "label": "Open in Documents",
+      "kind": "open_source",
+      "requiresApproval": false
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-phx-str204c",
+      "sourceType": "drawing",
+      "title": "PHX-STR-204 Rev C (GFC) — transfer beam",
+      "excerpt": "Rev C: transfer beam at level 2 revised from RCC to steel section ISMB 600 following the column shift. Supersedes Rev B.",
+      "highlight": {
+        "start": 32,
+        "end": 74
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-07-30T10:00:00+05:30",
+      "author": "Structural consultant",
+      "locator": {
+        "page": 1,
+        "bbox": {
+          "x0": 0.58,
+          "y0": 0.82,
+          "x1": 0.96,
+          "y1": 0.93
+        },
+        "parser": "docling"
+      }
+    }
+  ]
+}

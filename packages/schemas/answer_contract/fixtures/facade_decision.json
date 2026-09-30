@@ -1,0 +1,123 @@
+{
+  "version": "1.1.0",
+  "question": "What did we decide about the Phoenix facade?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "Client representative decided: Front facade in HPL instead of ACP.",
+  "conflicts": [],
+  "status": "answered",
+  "answer": [
+    {
+      "text": "Client representative decided: Front facade in HPL instead of ACP.",
+      "evidenceIds": [
+        "ev-phx-client-hpl",
+        "ev-phx-facade-quote"
+      ]
+    },
+    {
+      "text": " Client approved HPL panels for the front facade.",
+      "evidenceIds": [
+        "ev-phx-client-hpl",
+        "ev-phx-facade-quote"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "f-decision",
+      "text": "Decision: Front facade in HPL instead of ACP",
+      "evidenceIds": [
+        "ev-phx-client-hpl",
+        "ev-phx-facade-quote"
+      ]
+    }
+  ],
+  "causes": [
+    {
+      "id": "c-why",
+      "text": "Client preference after site samples.",
+      "evidenceIds": [
+        "ev-phx-client-hpl",
+        "ev-phx-facade-quote"
+      ]
+    }
+  ],
+  "risks": [],
+  "unknowns": [],
+  "confidence": {
+    "level": "high",
+    "reason": "Answered from a confirmed decision with its source."
+  },
+  "actions": [],
+  "evidence": [
+    {
+      "id": "ev-phx-client-hpl",
+      "sourceType": "whatsapp",
+      "title": "Phoenix client group",
+      "excerpt": "Saw the HPL samples at site today. We prefer the HPL panels over ACP for the front facade even if it costs more — please go ahead and update the drawings.",
+      "highlight": {
+        "start": 35,
+        "end": 111
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-08-12T11:04:00+05:30",
+      "author": "Client representative"
+    },
+    {
+      "id": "ev-phx-facade-quote",
+      "sourceType": "email",
+      "title": "Revised quotation — facade cladding (HPL)",
+      "excerpt": "As discussed, switching the front facade from ACP to HPL changes the cladding package from ₹14,80,000 to ₹24,00,000 including fixing system. Validity 30 days.",
+      "highlight": {
+        "start": 86,
+        "end": 115
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-08-19T16:20:00+05:30",
+      "author": "Facade vendor",
+      "locator": {
+        "page": 1,
+        "bbox": {
+          "x0": 0.12,
+          "y0": 0.42,
+          "x1": 0.88,
+          "y1": 0.49
+        },
+        "table": {
+          "tableId": "t1",
+          "caption": "Cladding package",
+          "rowStart": 2,
+          "rowEnd": 2,
+          "colStart": 1,
+          "colEnd": 3
+        },
+        "parser": "docling"
+      }
+    },
+    {
+      "id": "ev-phx-glazing",
+      "sourceType": "whatsapp",
+      "title": "Phoenix site group",
+      "excerpt": "Client wants double low-E glazing on the front facade. Let us update the spec and ask Skyline for the revised cost.",
+      "highlight": {
+        "start": 0,
+        "end": 53
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-09-27T10:32:00+05:30",
+      "author": "Project lead (Phoenix)"
+    },
+    {
+      "id": "ev-skyline-curtain",
+      "sourceType": "email",
+      "title": "Revised quote — curtain wall variation",
+      "excerpt": "Attached is the revised quote for the curtain wall. The glazing change adds a variation of ₹6,10,000 over the original package. Validity 15 days.",
+      "highlight": {
+        "start": 71,
+        "end": 100
+      },
+      "project": "Project Phoenix",
+      "occurredAt": "2026-09-29T14:40:00+05:30",
+      "author": "Facade vendor, Skyline Facades"
+    }
+  ]
+}

@@ -4,7 +4,8 @@ const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR",
 const num = new Intl.NumberFormat("en-IN");
 
 function trim(n: number, digits = 2): string {
-  return n.toFixed(digits).replace(/\.?0+$/, "");
+  const fixed = n.toFixed(digits);
+  return fixed.includes(".") ? fixed.replace(/\.?0+$/, "") : fixed; // never strip the zeros of a whole number ("40", "100")
 }
 
 /** 1840000 → "₹18.4 lakh"; 15300000 → "₹1.53 crore"; below 1 lakh → "₹92,500". */
@@ -14,6 +15,20 @@ export function formatINRShort(amount: number): string {
   if (abs >= 1e7) return `${sign}₹${trim(abs / 1e7)} crore`;
   if (abs >= 1e5) return `${sign}₹${trim(abs / 1e5)} lakh`;
   return sign + inr.format(abs);
+}
+
+/** Compact form for tight cards and bar rows: 1840000 → "₹18.4 L"; 15300000 → "₹1.53 Cr"; below 1 lakh → "₹92,500". */
+export function formatINRCompact(amount: number): string {
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "−" : "";
+  if (abs >= 1e7) return `${sign}₹${trim(abs / 1e7)} Cr`;
+  if (abs >= 1e5) return `${sign}₹${trim(abs / 1e5, 1)} L`;
+  return sign + inr.format(abs);
+}
+
+/** A rupee amount as a plain number of lakh, for charts whose axis says "₹ lakh": 6240000 → "62.4". */
+export function formatLakhNumber(amount: number): string {
+  return trim(amount / 1e5, 1);
 }
 
 /** Exact value with Indian digit grouping: 1840000 → "₹18,40,000". */

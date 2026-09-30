@@ -1,0 +1,648 @@
+{
+  "$defs": {
+    "AnswerStatus": {
+      "enum": [
+        "answered",
+        "partial",
+        "insufficient_evidence",
+        "no_access"
+      ],
+      "title": "AnswerStatus",
+      "type": "string"
+    },
+    "Claim": {
+      "properties": {
+        "id": {
+          "description": "Unique claim identifier (e.g. fact_1)",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "description": "Atomic factual assertion",
+          "title": "Text",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "description": "Referenced evidence IDs",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Figure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Associated audited numeric figure"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "evidenceIds"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "Confidence": {
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/ConfidenceLevel"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "reason"
+      ],
+      "title": "Confidence",
+      "type": "object"
+    },
+    "ConfidenceLevel": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "ConfidenceLevel",
+      "type": "string"
+    },
+    "Evidence": {
+      "properties": {
+        "id": {
+          "description": "Unique evidence ID (e.g. ev_chk_123 or ev_sql_456)",
+          "title": "Id",
+          "type": "string"
+        },
+        "sourceType": {
+          "$ref": "#/$defs/SourceType"
+        },
+        "title": {
+          "description": "Document, email subject, or record title",
+          "title": "Title",
+          "type": "string"
+        },
+        "author": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sender, author, or creator",
+          "title": "Author"
+        },
+        "occurredAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO 8601 timestamp",
+          "title": "Occurredat"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Associated project code or name",
+          "title": "Project"
+        },
+        "excerpt": {
+          "description": "Exact context snippet supporting the claim",
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "highlight": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceSpan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Precise bounding span within excerpt"
+        },
+        "openUrl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deep link to source",
+          "title": "Openurl"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceLocator"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Page, bounding box and table range in the original file"
+        }
+      },
+      "required": [
+        "id",
+        "sourceType",
+        "title",
+        "excerpt"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "EvidenceBBox": {
+      "description": "Bounding box on a page, normalised to 0..1 of page width/height (origin top-left).",
+      "properties": {
+        "x0": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X0",
+          "type": "number"
+        },
+        "y0": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y0",
+          "type": "number"
+        },
+        "x1": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X1",
+          "type": "number"
+        },
+        "y1": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y1",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x0",
+        "y0",
+        "x1",
+        "y1"
+      ],
+      "title": "EvidenceBBox",
+      "type": "object"
+    },
+    "EvidenceLocator": {
+      "description": "Where in the original file the supporting passage sits (documents and drawings).",
+      "properties": {
+        "page": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "1-indexed page",
+          "title": "Page"
+        },
+        "bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceBBox"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "table": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceTableRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parser": {
+          "anyOf": [
+            {
+              "enum": [
+                "docling",
+                "tika",
+                "ocr",
+                "native"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parser"
+        }
+      },
+      "title": "EvidenceLocator",
+      "type": "object"
+    },
+    "EvidenceSpan": {
+      "properties": {
+        "start": {
+          "description": "Character offset start in excerpt",
+          "minimum": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "description": "Character offset end in excerpt",
+          "minimum": 0,
+          "title": "End",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "EvidenceSpan",
+      "type": "object"
+    },
+    "EvidenceTableRef": {
+      "description": "The table (and cell range) the evidence was read from, as recognised by Docling TableFormer.",
+      "properties": {
+        "tableId": {
+          "title": "Tableid",
+          "type": "string"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        },
+        "rowStart": {
+          "minimum": 0,
+          "title": "Rowstart",
+          "type": "integer"
+        },
+        "rowEnd": {
+          "minimum": 0,
+          "title": "Rowend",
+          "type": "integer"
+        },
+        "colStart": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Colstart",
+          "type": "integer"
+        },
+        "colEnd": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Colend"
+        }
+      },
+      "required": [
+        "tableId",
+        "rowStart",
+        "rowEnd"
+      ],
+      "title": "EvidenceTableRef",
+      "type": "object"
+    },
+    "Figure": {
+      "properties": {
+        "amount": {
+          "description": "Numeric value or monetary amount",
+          "title": "Amount",
+          "type": "number"
+        },
+        "currency": {
+          "default": "INR",
+          "description": "Currency symbol",
+          "enum": [
+            "INR",
+            "USD"
+          ],
+          "title": "Currency",
+          "type": "string"
+        },
+        "origin": {
+          "const": "sql",
+          "default": "sql",
+          "description": "Numbers only ever come from SQL, never from model",
+          "title": "Origin",
+          "type": "string"
+        },
+        "query": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Named, reviewed query or hash producing the figure",
+          "title": "Query"
+        }
+      },
+      "required": [
+        "amount"
+      ],
+      "title": "Figure",
+      "type": "object"
+    },
+    "Risk": {
+      "properties": {
+        "id": {
+          "description": "Unique risk identifier (e.g. risk_1)",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "description": "Risk assertion",
+          "title": "Text",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "severity": {
+          "default": "medium",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "figure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Figure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "Risk",
+      "type": "object"
+    },
+    "Segment": {
+      "properties": {
+        "text": {
+          "description": "Sentence or paragraph text",
+          "title": "Text",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Segment",
+      "type": "object"
+    },
+    "SourceType": {
+      "enum": [
+        "email",
+        "whatsapp",
+        "sheet",
+        "document",
+        "drawing",
+        "meeting",
+        "ledger",
+        "sql"
+      ],
+      "title": "SourceType",
+      "type": "string"
+    },
+    "SuggestedAction": {
+      "properties": {
+        "id": {
+          "description": "Action identifier",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "description": "Human-readable button or task label",
+          "title": "Label",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Action type",
+          "enum": [
+            "draft_message",
+            "create_task",
+            "open_source"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "requiresApproval": {
+          "default": true,
+          "description": "CLAUDE.md rule 10: side-effects require approval",
+          "title": "Requiresapproval",
+          "type": "boolean"
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Draft payload for human-in-the-loop review",
+          "title": "Draft"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "kind"
+      ],
+      "title": "SuggestedAction",
+      "type": "object"
+    }
+  },
+  "description": "The canonical Answer Contract delivered by the Reasoning step (EB-47).",
+  "properties": {
+    "version": {
+      "default": "1.1.0",
+      "description": "Contract schema version",
+      "title": "Version",
+      "type": "string"
+    },
+    "question": {
+      "description": "Original user prompt or normalized query",
+      "title": "Question",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/AnswerStatus",
+      "description": "Outcome status of the reasoning step"
+    },
+    "summary": {
+      "default": "",
+      "description": "High-level executive summary",
+      "title": "Summary",
+      "type": "string"
+    },
+    "answer": {
+      "description": "Structured sentences with inline evidence citation chips",
+      "items": {
+        "$ref": "#/$defs/Segment"
+      },
+      "title": "Answer",
+      "type": "array"
+    },
+    "facts": {
+      "description": "Extracted atomic factual claims",
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "title": "Facts",
+      "type": "array"
+    },
+    "causes": {
+      "description": "Causal factors identified",
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "title": "Causes",
+      "type": "array"
+    },
+    "risks": {
+      "description": "Risks identified from evidence",
+      "items": {
+        "$ref": "#/$defs/Risk"
+      },
+      "title": "Risks",
+      "type": "array"
+    },
+    "unknowns": {
+      "description": "Gaps, missing data, or unanswered parts",
+      "items": {
+        "type": "string"
+      },
+      "title": "Unknowns",
+      "type": "array"
+    },
+    "conflicts": {
+      "description": "Conflicting evidence discovered across sources",
+      "items": {
+        "type": "string"
+      },
+      "title": "Conflicts",
+      "type": "array"
+    },
+    "confidence": {
+      "$ref": "#/$defs/Confidence",
+      "description": "Self-assessed confidence level and justification"
+    },
+    "actions": {
+      "description": "Actionable recommendations",
+      "items": {
+        "$ref": "#/$defs/SuggestedAction"
+      },
+      "title": "Actions",
+      "type": "array"
+    },
+    "evidence": {
+      "description": "All cited evidence context passages",
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "generatedAt": {
+      "description": "ISO 8601 generation timestamp",
+      "title": "Generatedat",
+      "type": "string"
+    }
+  },
+  "required": [
+    "question",
+    "status",
+    "answer",
+    "confidence"
+  ],
+  "title": "AnswerContract",
+  "type": "object"
+}

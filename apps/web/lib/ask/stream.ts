@@ -11,6 +11,7 @@ export type StreamEvent =
   | { type: "causes"; causes: Claim[] }
   | { type: "risks"; risks: Risk[] }
   | { type: "unknowns"; unknowns: string[] }
+  | { type: "conflicts"; conflicts: string[] }
   | { type: "done"; contract: AnswerContract }
   | { type: "error"; message: string };
 
@@ -27,6 +28,7 @@ export function eventsFor(c: AnswerContract): StreamEvent[] {
     { type: "causes", causes: c.causes },
     { type: "risks", risks: c.risks },
     { type: "unknowns", unknowns: c.unknowns },
+    { type: "conflicts", conflicts: c.conflicts },
     { type: "done", contract: c },
   ];
 }
@@ -39,10 +41,11 @@ export interface PartialAnswer {
   causes: Claim[];
   risks: Risk[];
   unknowns: string[];
+  conflicts: string[];
   actions: SuggestedAction[];
 }
 
-export const EMPTY_PARTIAL: PartialAnswer = { stage: 0, evidence: [], answer: [], facts: [], causes: [], risks: [], unknowns: [], actions: [] };
+export const EMPTY_PARTIAL: PartialAnswer = { stage: 0, evidence: [], answer: [], facts: [], causes: [], risks: [], unknowns: [], conflicts: [], actions: [] };
 
 /** Client side: fold one event into the partial answer. Claims whose evidence has not arrived are dropped. */
 export function apply(p: PartialAnswer, e: StreamEvent): PartialAnswer {
@@ -63,6 +66,8 @@ export function apply(p: PartialAnswer, e: StreamEvent): PartialAnswer {
       return { ...p, risks: e.risks.filter((c) => cited(c.evidenceIds)) };
     case "unknowns":
       return { ...p, unknowns: e.unknowns };
+    case "conflicts":
+      return { ...p, conflicts: e.conflicts };
     default:
       return p;
   }

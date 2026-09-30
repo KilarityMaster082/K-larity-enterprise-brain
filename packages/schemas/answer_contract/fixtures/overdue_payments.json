@@ -1,0 +1,181 @@
+{
+  "version": "1.1.0",
+  "question": "Which client payments are overdue?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "₹40 lakh is overdue across 2 invoices.",
+  "conflicts": [],
+  "status": "answered",
+  "answer": [
+    {
+      "text": "₹40 lakh is overdue across 2 invoices.",
+      "evidenceIds": [
+        "q-overdue"
+      ]
+    },
+    {
+      "text": " Banyan Office owes ₹18 lakh on S8/BO/FINAL (Banyan Office fit-out), 33 days late.",
+      "evidenceIds": [
+        "ev-bo-c-002"
+      ]
+    },
+    {
+      "text": " Marigold Clinic owes ₹22 lakh on S8/MC/RA-2 (Marigold Clinic), 25 days late.",
+      "evidenceIds": [
+        "ev-mc-c-002"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "f-total",
+      "text": "Overdue total",
+      "evidenceIds": [
+        "q-overdue"
+      ],
+      "figure": {
+        "amount": 4000000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.open_receivables"
+      }
+    },
+    {
+      "id": "f-0",
+      "text": "S8/BO/FINAL · Banyan Office",
+      "evidenceIds": [
+        "ev-bo-c-002"
+      ],
+      "figure": {
+        "amount": 1800000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.open_receivables"
+      }
+    },
+    {
+      "id": "f-1",
+      "text": "S8/MC/RA-2 · Marigold Clinic",
+      "evidenceIds": [
+        "ev-mc-c-002"
+      ],
+      "figure": {
+        "amount": 2200000,
+        "currency": "INR",
+        "origin": "sql",
+        "query": "finance.open_receivables"
+      }
+    }
+  ],
+  "causes": [
+    {
+      "id": "c-1",
+      "text": "Marigold Clinic said payment is delayed.",
+      "evidenceIds": [
+        "ev-mc-reminder"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "r-bo-c-002",
+      "text": "S8/BO/FINAL is more than 30 days overdue.",
+      "severity": "high",
+      "evidenceIds": [
+        "ev-bo-c-002"
+      ]
+    }
+  ],
+  "unknowns": [
+    "Payments received today may not be in the ledger until the next sync."
+  ],
+  "confidence": {
+    "level": "high",
+    "reason": "Every amount comes from the ledger."
+  },
+  "actions": [
+    {
+      "id": "a-bo-c-002",
+      "label": "Draft a payment reminder to Banyan Office",
+      "kind": "draft_message",
+      "requiresApproval": true,
+      "draft": {
+        "title": "Payment reminder to Banyan Office for S8/BO/FINAL",
+        "body": "Dear Banyan Office,\n\nS8/BO/FINAL (₹18,00,000) was due on 2026-08-28. Could you confirm when the payment will be released?\n\nRegards,\nAccounts",
+        "reason": "S8/BO/FINAL is 33 days overdue.",
+        "evidenceIds": [
+          "ev-bo-c-002"
+        ],
+        "projectId": "banyan"
+      }
+    },
+    {
+      "id": "a-mc-c-002",
+      "label": "Draft a payment reminder to Marigold Clinic",
+      "kind": "draft_message",
+      "requiresApproval": true,
+      "draft": {
+        "title": "Payment reminder to Marigold Clinic for S8/MC/RA-2",
+        "body": "Dear Marigold Clinic,\n\nS8/MC/RA-2 (₹22,00,000) was due on 2026-09-05. Could you confirm when the payment will be released?\n\nRegards,\nAccounts",
+        "reason": "S8/MC/RA-2 is 25 days overdue.",
+        "evidenceIds": [
+          "ev-mc-c-002",
+          "ev-mc-reminder"
+        ],
+        "projectId": "marigold"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "q-overdue",
+      "sourceType": "sql",
+      "title": "finance.open_receivables — overdue",
+      "excerpt": "Overdue total ₹40,00,000 · S8/BO/FINAL Banyan Office: ₹18,00,000, 33 days overdue · S8/MC/RA-2 Marigold Clinic: ₹22,00,000, 25 days overdue",
+      "highlight": {
+        "start": 0,
+        "end": 24
+      },
+      "author": "Finance ledger (SQL)",
+      "occurredAt": "2026-09-30T06:30:00.000Z"
+    },
+    {
+      "id": "ev-bo-c-002",
+      "sourceType": "sheet",
+      "title": "Invoice S8/BO/FINAL",
+      "excerpt": "Invoice S8/BO/FINAL issued by Studio 8 Hats to Banyan Office. Dated 2026-08-13. Amount: ₹18,00,000. Due 2026-08-28.",
+      "highlight": {
+        "start": 80,
+        "end": 98
+      },
+      "author": "Accounts",
+      "occurredAt": "2026-08-13T10:00:00+05:30",
+      "project": "Banyan Office fit-out"
+    },
+    {
+      "id": "ev-mc-c-002",
+      "sourceType": "sheet",
+      "title": "Invoice S8/MC/RA-2",
+      "excerpt": "Invoice S8/MC/RA-2 issued by Studio 8 Hats to Marigold Clinic. Dated 2026-08-21. Amount: ₹22,00,000. Due 2026-09-05.",
+      "highlight": {
+        "start": 81,
+        "end": 99
+      },
+      "author": "Accounts",
+      "occurredAt": "2026-08-21T10:00:00+05:30",
+      "project": "Marigold Clinic"
+    },
+    {
+      "id": "ev-mc-reminder",
+      "sourceType": "email",
+      "title": "Re: RA-2 payment",
+      "excerpt": "We will process RA-2 after the board meeting. Please bear with us for a few more days.",
+      "highlight": {
+        "start": 0,
+        "end": 44
+      },
+      "project": "Marigold Clinic",
+      "occurredAt": "2026-09-16T15:05:00+05:30",
+      "author": "Clinic administrator"
+    }
+  ]
+}

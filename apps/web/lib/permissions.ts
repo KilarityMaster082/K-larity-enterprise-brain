@@ -15,7 +15,20 @@ export type Capability =
   | "approvals.decide"
   | "settings.view"
   | "sources.manage"
-  | "members.manage";
+  | "members.manage"
+  | "security.manage"
+  | "comms.view"
+  | "knowledge.view"
+  | "meetings.view"
+  | "todos.view"
+  | "agents.view"
+  | "spaces.view"
+  | "activity.view"
+  | "apps.manage"
+  | "history.view"
+  | "explore.view"
+  | "code.view"
+  | "onboarding.run";
 
 const ALL: Capability[] = [
   "ask",
@@ -30,15 +43,32 @@ const ALL: Capability[] = [
   "settings.view",
   "sources.manage",
   "members.manage",
+  "security.manage",
+  "comms.view",
+  "knowledge.view",
+  "meetings.view",
+  "todos.view",
+  "agents.view",
+  "spaces.view",
+  "activity.view",
+  "apps.manage",
+  "history.view",
+  "explore.view",
+  "code.view",
+  "onboarding.run",
 ];
+
+/** Screens every signed-in person with a working role may open (catalog role "Everyone"). */
+const EVERYONE: Capability[] = ["comms.view", "knowledge.view", "meetings.view", "todos.view", "spaces.view", "activity.view", "history.view", "explore.view"];
 
 const MATRIX: Record<Role, readonly Capability[]> = {
   owner: ALL,
-  admin: ALL.filter((c) => c !== "members.manage"),
+  admin: ALL.filter((c) => c !== "members.manage" && c !== "security.manage"),
   // Members review decisions only on projects they lead (checked in the action).
-  member: ["ask", "projects.view", "decisions.view", "decisions.review", "documents.view", "approvals.view"],
-  viewer: ["ask", "projects.view", "decisions.view", "documents.view", "approvals.view"],
-  guest: ["ask", "documents.view"],
+  member: ["ask", "projects.view", "decisions.view", "decisions.review", "documents.view", "approvals.view", ...EVERYONE],
+  viewer: ["ask", "projects.view", "decisions.view", "documents.view", "approvals.view", ...EVERYONE],
+  // Guests are external: their own questions and the documents shared with them, nothing internal.
+  guest: ["ask", "documents.view", "history.view"],
 };
 
 export const ROLE_LABEL: Record<Role, string> = {

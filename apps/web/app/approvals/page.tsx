@@ -1,9 +1,11 @@
-// Owner task: EB-66 Approval model skeleton (UI) — nothing leaves K!larity without a person approving it
-// (CLAUDE.md rule 10). Drafts from Ask Brain and agents wait here with the evidence behind them.
-import { PageHeader } from "@klarity/ui";
+// Owner task: EB-66 Approval model skeleton (UI) — Action Approvals Queue (screen 18): nothing leaves K!larity without a
+// person approving it (CLAUDE.md rule 10). Drafts from Ask Brain and agents wait here with the evidence behind them;
+// rejecting needs a reason; every choice is audited.
 import type { Metadata } from "next";
 
 import { NoAccess } from "@/components/page/common";
+import { Brief, Screen, presenceOf } from "@/components/page/Screen";
+import { workBrief } from "@/lib/briefs";
 import { evidenceById } from "@/lib/data/store";
 import { pageContext } from "@/lib/page";
 
@@ -15,15 +17,15 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const ctx = await pageContext("/approvals", "approvals.view");
   if (!ctx.allowed) return <NoAccess what="approvals" />;
   const { focus } = await searchParams;
-  const { data } = ctx.view;
+  const { view, session } = ctx;
+  const { data } = view;
   const name = (id?: string) => (id ? data.projects.find((p) => p.projectId === id)?.name : undefined);
-  const rows: ApprovalRow[] = ctx.view.approvals
-    .map((a) => ({ ...a, projectName: name(a.projectId), evidence: evidenceById(ctx.view, a.evidenceIds) }))
+  const rows: ApprovalRow[] = view.approvals
+    .map((a) => ({ ...a, projectName: name(a.projectId), evidence: evidenceById(view, a.evidenceIds) }))
     .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
   return (
-    <div className="content content-wide">
-      <PageHeader title="Approvals" lead="Drafted messages and tasks wait here until someone with the right role approves them. Every choice is audited." />
+    <Screen n={18} brief={<Brief metrics={workBrief(view, ctx.can)} live={presenceOf(view.members, session.user)} />}>
       <ApprovalsView rows={rows} canDecide={ctx.can("approvals.decide")} focus={focus} />
-    </div>
+    </Screen>
   );
 }

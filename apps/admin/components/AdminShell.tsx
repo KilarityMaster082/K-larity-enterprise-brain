@@ -1,19 +1,12 @@
 "use client";
-// Owner task: EB-100 Admin console shell — operator frame: logo, navigation, and a persistent impersonation
-// banner with the reason, time left and an Exit button on every page.
-import { Badge, Icon, initials, Logo, ShellFrame, ToastProvider, useToast, type IconName } from "@klarity/ui";
+// Owner task: EB-100 Admin console shell — the operator frame (screens 46–54): the Enterprise Brain rail and top bar shared
+// with apps/web, plus a persistent impersonation banner with the reason, time left and an Exit button on every page.
+import { EbShell, Icon, ToastProvider, initials, useToast, type LauncherGroup, type RailItem } from "@klarity/ui";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 
 import { operatorSignOut, stopImpersonationAction } from "@/lib/actions";
-
-const NAV: { href: string; label: string; icon: IconName }[] = [
-  { href: "/tenants", label: "Tenants", icon: "building" },
-  { href: "/sources-health", label: "Sources health", icon: "pulse" },
-  { href: "/retrieval", label: "Retrieval console", icon: "search" },
-  { href: "/audit", label: "Audit log", icon: "audit" },
-];
 
 export interface ShellImpersonation {
   tenantName: string;
@@ -21,59 +14,70 @@ export interface ShellImpersonation {
   expiresAt: string;
 }
 
-export function AdminShell({ operator, impersonating, children }: { operator: { name: string; email: string }; impersonating?: ShellImpersonation; children: ReactNode }) {
+type ShellLink = (p: { href: string; className?: string; children: ReactNode; "aria-current"?: "page"; "aria-label"?: string; title?: string }) => ReactNode;
+const ShellLinkImpl: ShellLink = ({ href, className, children, ...rest }) => (
+  <Link href={href} className={className} {...rest}>
+    {children}
+  </Link>
+);
+
+export function AdminShell({ operator, impersonating, rail, launcher, devMode, children }: { operator: { name: string; email: string }; impersonating?: ShellImpersonation; rail: RailItem[]; launcher: LauncherGroup[]; devMode: boolean; children: ReactNode }) {
   const pathname = usePathname();
-  const title = NAV.find((n) => pathname.startsWith(n.href))?.label ?? "Operator console";
-  const sidebar = (
-    <>
-      <Link href="/tenants" className="logo-link" aria-label="K!larity operator console — Tenants">
-        <Logo width={128} caption="Operator console" />
-      </Link>
-      <nav className="nav" aria-label="Main">
-        <div className="nav-section">Operate</div>
-        {NAV.map((n) => (
-          <Link key={n.href} href={n.href} className="nav-link" aria-current={pathname.startsWith(n.href) ? "page" : undefined}>
-            <Icon name={n.icon} />
-            {n.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="sidebar-foot">
-        <Badge tone="warn" icon="shield">
-          K!larity staff only
-        </Badge>
+  const account = (
+    <details className="eb-menu">
+      <summary className="eb-avatar" aria-label={`Operator: ${operator.name}`} style={{ listStyle: "none", cursor: "pointer" }}>
+        {initials(operator.name)}
+      </summary>
+      <div className="eb-menu-pop left" style={{ position: "fixed", left: 66, bottom: 24, top: "auto" }} role="menu">
+        <div className="eb-menu-label">
+          {operator.name}
+          <br />
+          {operator.email}
+          <br />
+          K!larity staff
+        </div>
+        <form action={operatorSignOut}>
+          <button type="submit" className="eb-menu-item" role="menuitem">
+            <Icon name="logout" size={14} /> Sign out
+          </button>
+        </form>
       </div>
-    </>
+    </details>
+  );
+  const tenant = impersonating ? (
+    <span className="eb-tenant" role="status" style={{ cursor: "default" }}>
+      <Icon name="mask" size={12} />
+      <span className="nm">Viewing {impersonating.tenantName}</span>
+    </span>
+  ) : (
+    <span className="eb-tenant" style={{ cursor: "default", opacity: 0.7 }}>
+      <span className="nm">No tenant in view</span>
+    </span>
   );
   return (
     <ToastProvider>
-      <ShellFrame
-        routeKey={pathname}
-        sidebar={sidebar}
-        title={title}
-        banner={impersonating ? <ImpersonationBanner {...impersonating} /> : undefined}
-        topbarRight={
-          <details className="menu">
-            <summary className="btn btn-ghost btn-icon" aria-label={`Operator: ${operator.name}`}>
-              <span className="avatar">{initials(operator.name)}</span>
-            </summary>
-            <div className="menu-panel right" role="menu">
-              <div className="menu-label">
-                {operator.name}
-                <br />
-                {operator.email}
+      <EbShell
+        pathname={pathname}
+        brandHref="/tenants"
+        routeLabel={pathname}
+        rail={rail}
+        launcher={launcher}
+        tenant={tenant}
+        account={account}
+        Link={ShellLinkImpl}
+        banner={
+          <>
+            {devMode ? (
+              <div className="eb-dev-banner" role="note">
+                Development data: the control-plane API is not connected, so this console shows a seeded fleet that resets when the server restarts.
               </div>
-              <form action={operatorSignOut}>
-                <button type="submit" className="menu-item" role="menuitem">
-                  <Icon name="logout" size={16} /> Sign out
-                </button>
-              </form>
-            </div>
-          </details>
+            ) : null}
+            {impersonating ? <ImpersonationBanner {...impersonating} /> : null}
+          </>
         }
       >
         {children}
-      </ShellFrame>
+      </EbShell>
     </ToastProvider>
   );
 }
@@ -92,15 +96,17 @@ function ImpersonationBanner({ tenantName, reason, expiresAt }: ShellImpersonati
     return () => clearInterval(t);
   }, [expiresAt, router]);
   return (
-    <div className="banner banner-impersonate" role="region" aria-label="Impersonation in progress">
-      <Icon name="mask" />
+    <div className="eb-imp-banner" role="region" aria-label="Impersonation in progress">
+      <Icon name="mask" size={14} />
       <span>
         Viewing <strong>{tenantName}</strong> as an operator · reason: “{reason}” · {Math.ceil(left / 60_000)} min left · every query is audited
       </span>
-      <span className="topbar-spacer" />
+      <span style={{ flex: 1 }} />
       <button
         type="button"
-        className="btn btn-dark btn-sm"
+        className="eb-pill"
+        data-tone="black"
+        data-size="sm"
         disabled={busy}
         onClick={() =>
           start(async () => {

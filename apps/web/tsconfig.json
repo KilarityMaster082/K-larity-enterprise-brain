@@ -32,6 +32,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "../../packages/ui/src/assets.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",

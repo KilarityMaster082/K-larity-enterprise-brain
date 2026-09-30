@@ -51,3 +51,15 @@ export async function switchTenant(formData: FormData): Promise<void> {
   await writeSession({ mode: session.mode, user: session.user, tenantId, memberships: session.memberships });
   redirect("/ask"); // never keep a page from the previous workspace on screen
 }
+
+/** Development only: look at the app as another role without signing in again. Production ignores it (403-equivalent). */
+export async function previewRole(formData: FormData): Promise<void> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.mode !== "dev" || authMode() !== "dev") throw new Error("role preview is a development feature");
+  const roleIn = String(formData.get("role") ?? "");
+  if (!(ROLES as string[]).includes(roleIn)) throw new Error("unknown role");
+  const memberships = session.memberships.map((m) => (m.tenantId === session.tenantId ? { ...m, role: roleIn as Role } : m));
+  await writeSession({ mode: session.mode, user: session.user, tenantId: session.tenantId, memberships });
+  redirect("/ask");
+}

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { AdminError, audit, changePlan, getTenant, provisionTenant, setStatus } from "./data";
+import { dismissDeadLetter, replayDeadLetter, setGatewayBudget } from "./ops";
 import { adminAuthMode, clearOperator, getOperator, IMPERSONATION_MINUTES, writeOperator } from "./session";
 
 export type Result = { ok: true; message?: string } | { ok: false; error: string };
@@ -91,4 +92,28 @@ export async function stopImpersonationAction(): Promise<Result> {
     await writeOperator({ operator: s.operator, exp: s.exp });
     return "Stopped viewing the tenant.";
   }, ["/", "/tenants", "/retrieval", "/audit"]);
+}
+
+export async function replayDeadLetterAction(id: string, reason: string): Promise<Result> {
+  return run(async () => {
+    const s = await op();
+    const d = replayDeadLetter(s.operator.name, id, reason);
+    return `Replay started for ${d.itemRef}. It runs under the same idempotency key, so nothing is ingested twice.`;
+  }, ["/dead-letter", "/sources-health", "/audit", "/tenants"]);
+}
+
+export async function dismissDeadLetterAction(id: string, reason: string): Promise<Result> {
+  return run(async () => {
+    const s = await op();
+    dismissDeadLetter(s.operator.name, id, reason);
+    return "Dismissed. The item stays in the audit log.";
+  }, ["/dead-letter", "/sources-health", "/audit"]);
+}
+
+export async function setGatewayBudgetAction(tenantId: string, capUsd: number, reason: string): Promise<Result> {
+  return run(async () => {
+    const s = await op();
+    setGatewayBudget(s.operator.name, tenantId, capUsd, reason);
+    return `Monthly cap set to $${Math.round(capUsd)}.`;
+  }, ["/gateway", "/audit"]);
 }

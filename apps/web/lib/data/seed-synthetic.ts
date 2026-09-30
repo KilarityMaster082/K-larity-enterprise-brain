@@ -3,6 +3,7 @@
 // another workspace. The tenant starts with no sources, which is how onboarding is demonstrated; its data
 // becomes visible only after a source has been connected and its (simulated) first sync has finished.
 import type { Evidence } from "../contracts";
+import { EMPTY_WORKSPACE } from "./empty";
 import type { TenantDataset } from "./types";
 
 export const CANARY = "CANARY-7f3e";
@@ -103,4 +104,30 @@ export const SYNTHETIC_DATA: TenantDataset = {
   ],
   audit: [],
   evidence,
+  // One row per workspace screen, each carrying the canary token, so a leak across tenants is caught by a string search.
+  workspace: {
+    ...EMPTY_WORKSPACE,
+    mail: [
+      {
+        threadId: "t-canary-1",
+        projectId: "canary-build",
+        subject: `${CANARY} canary thread`,
+        fromName: `${CANARY} sender`,
+        fromOrg: `${CANARY} org`,
+        category: "General",
+        folder: "inbox",
+        starred: false,
+        unread: true,
+        lastAt: "2026-09-29T10:00:00+05:30",
+        messages: [{ messageId: "m-canary-1", fromName: `${CANARY} sender`, fromOrg: `${CANARY} org`, at: "2026-09-29T10:00:00+05:30", body: `Canary message body ${CANARY}.` }],
+        attachments: [],
+        extraction: { decisions: [], commitments: [], variations: [] },
+        evidenceId: "ev-canary-1",
+      },
+    ],
+    todos: [{ todoId: "td-canary-1", text: `${CANARY} canary todo`, projectId: "canary-build", assignee: `${CANARY} member`, done: false, source: { kind: "email", label: `${CANARY} thread`, evidenceId: "ev-canary-1" } }],
+    spaces: [
+      { spaceId: "sp-canary", name: "canary-space", topic: `${CANARY} canary topic`, members: [`${CANARY} member`], unread: 0, pinnedDocumentIds: [], agentRuns: 0, messages: [{ messageId: "sm-canary-1", author: `${CANARY} member`, at: "2026-09-29T10:00:00+05:30", text: `Canary chat ${CANARY}` }] },
+    ],
+  },
 };

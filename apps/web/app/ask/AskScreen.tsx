@@ -1,8 +1,8 @@
 "use client";
-// Owner task: EB-94 First-run onboarding and empty-state journeys — checklist above Ask until the workspace can
-// answer: connect a source → first sync finishes → ask a first question. Refreshes itself while syncing.
-import { Icon } from "@klarity/ui";
-import Link from "next/link";
+// Owner task: EB-94 First-run onboarding and empty-state journeys — a short setup strip above Ask until the workspace
+// can answer: connect a source → first sync finishes → ask a first question. Refreshes itself while syncing.
+// The full walkthrough is the Onboarding Wizard (/onboarding, screen 4).
+import { Bento, Icon, PillLink, ProgressTrack } from "@klarity/ui";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -16,6 +16,7 @@ interface Onboarding {
 }
 
 export function AskScreen({
+  firstName,
   workspace,
   suggestions,
   scope,
@@ -24,6 +25,7 @@ export function AskScreen({
   syncProgress,
   canConnect,
 }: {
+  firstName: string;
   workspace: string;
   suggestions: string[];
   scope?: { id: string; name: string };
@@ -39,86 +41,57 @@ export function AskScreen({
     return () => clearInterval(t);
   }, [syncProgress, router]);
 
+  const steps = [
+    { key: "connect", done: onboarding.connected, title: "Connect a source" },
+    { key: "sync", done: onboarding.synced, title: "First sync" },
+    { key: "ask", done: onboarding.askedFirstQuestion, title: "Ask a first question" },
+  ];
+  const current = steps.findIndex((s) => !s.done);
+
   return (
-    <>
+    <div className="eb-stack">
       {!onboarding.done ? (
-        <Checklist onboarding={onboarding} syncProgress={syncProgress} canConnect={canConnect} />
+        <Bento tone="sky" aria-labelledby="setup-title">
+          <div className="eb-row" style={{ justifyContent: "space-between" }}>
+            <h2 id="setup-title" className="eb-eyebrow">
+              First-run setup · {steps.filter((s) => s.done).length} of {steps.length} done
+            </h2>
+            {canConnect ? (
+              <PillLink tone="black" href="/onboarding">
+                Open the setup wizard <Icon name="arrowRight" size={12} />
+              </PillLink>
+            ) : (
+              <span className="eb-note">Ask a workspace owner to connect a source.</span>
+            )}
+          </div>
+          <ol className="eb-row" style={{ listStyle: "none", margin: "8px 0 0", padding: 0, gap: 14 }}>
+            {steps.map((s, i) => (
+              <li key={s.key} className="eb-row" style={{ fontWeight: i === current ? 600 : 400 }}>
+                <span className="eb-avatar eb-avatar-sm" style={{ background: s.done ? "var(--eb-lime)" : "#fff" }}>
+                  {s.done ? <Icon name="check" size={11} /> : i + 1}
+                </span>
+                {s.title}
+                <span className="visually-hidden">{s.done ? " (done)" : i === current ? " (next step)" : ""}</span>
+              </li>
+            ))}
+          </ol>
+          {syncProgress !== undefined ? (
+            <div style={{ marginTop: 8 }} role="status">
+              <p className="eb-note">Reading your sources… {Math.round(syncProgress * 100)}%</p>
+              <ProgressTrack pct={syncProgress * 100} label="First sync progress" />
+            </div>
+          ) : null}
+        </Bento>
       ) : null}
       <AskView
+        firstName={firstName}
         workspace={workspace}
         suggestions={onboarding.synced ? suggestions : []}
         scope={scope}
         initialQuestion={initialQuestion}
         onFirstAnswer={onboarding.done ? undefined : () => router.refresh()}
+        disabledReason={onboarding.synced ? undefined : "No source has finished its first sync yet, so there is nothing to answer from."}
       />
-    </>
-  );
-}
-
-function Checklist({ onboarding, syncProgress, canConnect }: { onboarding: Onboarding; syncProgress?: number; canConnect: boolean }) {
-  const steps = [
-    {
-      key: "connect",
-      done: onboarding.connected,
-      title: "Connect a source",
-      body: canConnect ? "Gmail, Google Drive, Sheets or a WhatsApp export." : "Ask a workspace owner to connect Gmail, Drive, Sheets or WhatsApp.",
-      action: canConnect && !onboarding.connected ? <Link className="btn btn-primary btn-sm" href="/settings?tab=sources">Connect</Link> : null,
-    },
-    {
-      key: "sync",
-      done: onboarding.synced,
-      title: "Wait for the first sync",
-      body:
-        syncProgress !== undefined
-          ? `Reading your sources… ${Math.round(syncProgress * 100)}%`
-          : onboarding.synced
-            ? "Sources are synced."
-            : "Starts as soon as a source is connected.",
-      action:
-        syncProgress !== undefined ? (
-          <div className="meter-track" style={{ width: 120 }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(syncProgress * 100)} aria-label="First sync progress">
-            <div className="meter-fill" style={{ width: `${syncProgress * 100}%`, background: "var(--brand)" }} />
-          </div>
-        ) : null,
-    },
-    {
-      key: "ask",
-      done: onboarding.askedFirstQuestion,
-      title: "Ask your first question",
-      body: "Every answer shows its sources. Try a project, a payment or a decision.",
-      action: null,
-    },
-  ];
-  const current = steps.findIndex((s) => !s.done);
-  return (
-    <section className="card card-pad stack" aria-labelledby="onboarding-title" style={{ marginBottom: "var(--s-6)" }}>
-      <div className="row-between">
-        <h2 id="onboarding-title" style={{ fontSize: "var(--fs-lg)" }}>
-          Get your Brain ready
-        </h2>
-        <span className="muted" style={{ fontSize: "var(--fs-sm)" }}>
-          {steps.filter((s) => s.done).length} of {steps.length} done
-        </span>
-      </div>
-      <ol className="checklist">
-        {steps.map((s, i) => (
-          <li key={s.key} className="check-item" data-done={s.done} data-current={i === current}>
-            <span className="check-dot" aria-hidden="true">
-              {s.done ? <Icon name="check" size={14} /> : i + 1}
-            </span>
-            <span className="stack-sm" style={{ gap: 0 }}>
-              <strong>
-                {s.title}
-                <span className="visually-hidden">{s.done ? " (done)" : i === current ? " (next step)" : ""}</span>
-              </strong>
-              <span className="muted" style={{ fontSize: "var(--fs-sm)" }} role={s.key === "sync" && syncProgress !== undefined ? "status" : undefined}>
-                {s.body}
-              </span>
-            </span>
-            {s.action}
-          </li>
-        ))}
-      </ol>
-    </section>
+    </div>
   );
 }

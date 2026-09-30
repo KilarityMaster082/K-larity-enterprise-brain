@@ -1,0 +1,25 @@
+{
+  "version": "1.1.0",
+  "question": "Why is Project Phoenix over budget?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "This workspace has no synced sources yet, so there is nothing to answer from.",
+  "conflicts": [],
+  "status": "insufficient_evidence",
+  "answer": [
+    {
+      "text": "This workspace has no synced sources yet, so there is nothing to answer from."
+    }
+  ],
+  "facts": [],
+  "causes": [],
+  "risks": [],
+  "unknowns": [
+    "Connect Gmail, Google Drive, Sheets or a WhatsApp export in Settings → Sources."
+  ],
+  "confidence": {
+    "level": "low",
+    "reason": "No sources connected."
+  },
+  "actions": [],
+  "evidence": []
+}

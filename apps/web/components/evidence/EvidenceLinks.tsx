@@ -1,45 +1,42 @@
 "use client";
 // Owner task: EB-97 Shared data components — "where did this come from?" on any page: one chip per source;
-// each opens the source sheet at the exact supporting passage. Pages pass only evidence of their own tenant.
+// each opens the Evidence Side-Sheet at the exact supporting passage. Pages pass only evidence of their own tenant;
+// the sheet re-checks the caller's role on the server before showing anything sensitive.
 import { Icon } from "@klarity/ui";
-import { useState } from "react";
 
-import { SOURCE_META } from "@/lib/sources";
-import { SourcePanel } from "@/components/sources/SourcePanel";
+import { useOverlay } from "@/components/overlays/useOverlay";
+import { useTenantId } from "@/components/shell/TenantContext";
 import type { Evidence } from "@/lib/contracts";
+import { rememberEvidence } from "@/lib/evidence-cache";
+import { SOURCE_META } from "@/lib/sources";
 
-export function EvidenceLinks({
-  evidence,
-  citedFor = [],
-  compact,
-}: {
-  evidence: Evidence[];
-  citedFor?: string[];
-  compact?: boolean;
-}) {
-  const [open, setOpen] = useState<Evidence | null>(null);
+export function EvidenceLinks({ evidence, citedFor = [], compact }: { evidence: Evidence[]; citedFor?: string[]; compact?: boolean }) {
+  const open = useOverlay();
+  const tenantId = useTenantId();
   if (!evidence.length) return null;
   return (
-    <>
-      <span className="evidence-links">
-        {evidence.map((e) => {
-          const meta = SOURCE_META[e.sourceType];
-          return (
-            <button
-              key={e.id}
-              type="button"
-              className="source-tag"
-              onClick={() => setOpen(e)}
-              aria-label={`View source: ${e.title}`}
-              title={e.title}
-            >
-              <Icon name={meta.icon} size={12} />
-              {compact ? meta.label : e.title.length > 38 ? `${e.title.slice(0, 36)}…` : e.title}
-            </button>
-          );
-        })}
-      </span>
-      <SourcePanel evidence={open} citedFor={citedFor} onClose={() => setOpen(null)} />
-    </>
+    <span className="eb-row" style={{ gap: 5 }}>
+      {evidence.map((e, i) => {
+        const meta = SOURCE_META[e.sourceType];
+        return (
+          <button
+            key={e.id}
+            type="button"
+            className="eb-pill"
+            data-tone="outline"
+            data-size="sm"
+            onClick={() => {
+              rememberEvidence(tenantId, { evidence: e, citedFor, number: i + 1 });
+              open("source", e.id);
+            }}
+            aria-label={`View source: ${e.title}`}
+            title={e.title}
+          >
+            <Icon name={meta.icon} size={11} />
+            {compact ? meta.label : e.title.length > 34 ? `${e.title.slice(0, 32)}…` : e.title}
+          </button>
+        );
+      })}
+    </span>
   );
 }

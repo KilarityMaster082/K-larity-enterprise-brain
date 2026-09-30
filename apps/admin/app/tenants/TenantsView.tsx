@@ -1,12 +1,12 @@
 "use client";
 // Owner task: EB-88 Tenant admin console — tenant table and the provision dialog.
-import { Badge, DataTable, formatNumber, Icon, Modal, Money, useToast, type Column } from "@klarity/ui";
+import { Bento, DataTable, formatNumber, Icon, Modal, Money, Pill, PillButton, useToast, type Column } from "@klarity/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { provisionAction } from "@/lib/actions";
-import { STATUS_TONE } from "@/lib/plans";
+import { STATUS_PILL } from "@/lib/plans";
 
 export interface TenantRow {
   tenantId: string;
@@ -47,7 +47,7 @@ export function TenantsView({ rows }: { rows: TenantRow[] }) {
       sort: (r) => r.name,
       text: (r) => `${r.name} ${r.slug} ${r.plan} ${r.status}`,
     },
-    { key: "status", header: "Status", cell: (r) => <Badge tone={STATUS_TONE[r.status] ?? "neutral"}>{r.status}</Badge>, sort: (r) => r.status },
+    { key: "status", header: "Status", cell: (r) => <Pill size="sm" tone={STATUS_PILL[r.status] ?? "outline"}>{r.status}</Pill>, sort: (r) => r.status },
     { key: "tier", header: "Tier", cell: (r) => r.tier, sort: (r) => r.tier },
     { key: "plan", header: "Plan", cell: (r) => r.plan, sort: (r) => r.plan },
     { key: "region", header: "Region · cell", cell: (r) => r.region },
@@ -60,7 +60,7 @@ export function TenantsView({ rows }: { rows: TenantRow[] }) {
         ) : (
           <span className="row">
             {r.sourcesOk}/{r.sourcesTotal} healthy
-            {r.sourcesBad ? <Badge tone="danger">{r.sourcesBad} failing</Badge> : null}
+            {r.sourcesBad ? <Pill size="sm" tone="pink">{r.sourcesBad} failing</Pill> : null}
           </span>
         ),
       sort: (r) => r.sourcesBad,
@@ -69,7 +69,7 @@ export function TenantsView({ rows }: { rows: TenantRow[] }) {
     { key: "cost", header: "Cost to serve (month)", numeric: true, cell: (r) => <Money amount={r.cost} exact />, sort: (r) => r.cost },
   ];
   return (
-    <>
+    <Bento tone="strong" aria-label="Tenants">
       <DataTable
         rows={rows}
         columns={cols}
@@ -77,9 +77,11 @@ export function TenantsView({ rows }: { rows: TenantRow[] }) {
         caption="Tenants"
         searchPlaceholder="Filter tenants"
         toolbar={
-          <button type="button" className="btn btn-primary" onClick={() => setOpen(true)} style={{ marginLeft: "auto" }}>
-            <Icon name="plus" size={16} /> Provision tenant
-          </button>
+          <span style={{ marginLeft: "auto" }}>
+            <PillButton tone="black" onClick={() => setOpen(true)}>
+              <Icon name="plus" size={14} /> Provision tenant
+            </PillButton>
+          </span>
         }
       />
       <Modal open={open} onClose={() => setOpen(false)} title="Provision a tenant">
@@ -126,12 +128,12 @@ export function TenantsView({ rows }: { rows: TenantRow[] }) {
           </div>
           <p className="note note-info">Region: India (ap-south-2), cell pool-in-1. Silo tenants need a dedicated cell and are provisioned by the platform team.</p>
           <div className="row">
-            <button type="submit" className="btn btn-primary" disabled={busy}>
+            <button type="submit" className="eb-pill" data-tone="black" disabled={busy}>
               Provision
             </button>
           </div>
         </form>
       </Modal>
-    </>
+    </Bento>
   );
 }

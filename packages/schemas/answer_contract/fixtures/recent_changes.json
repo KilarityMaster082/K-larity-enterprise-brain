@@ -1,0 +1,115 @@
+{
+  "version": "1.1.0",
+  "question": "What changed on Marigold Clinic recently?",
+  "generatedAt": "2026-09-30T06:30:00.000Z",
+  "summary": "In the last three weeks on Marigold Clinic: 24 Sept — Client asks for PVC in the OT.",
+  "conflicts": [],
+  "status": "answered",
+  "answer": [
+    {
+      "text": "In the last three weeks on Marigold Clinic:"
+    },
+    {
+      "text": " 24 Sept — Client asks for PVC in the OT.",
+      "evidenceIds": [
+        "ev-mc-flooring"
+      ]
+    },
+    {
+      "text": " 16 Sept — Client delays RA-2 payment.",
+      "evidenceIds": [
+        "ev-mc-reminder"
+      ]
+    },
+    {
+      "text": " 10 Sept — HVAC layout Rev C.",
+      "evidenceIds": [
+        "ev-mc-hvac-c"
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "f-e-mc-05",
+      "text": "Client asks for PVC in the OT",
+      "evidenceIds": [
+        "ev-mc-flooring"
+      ]
+    },
+    {
+      "id": "f-e-mc-04",
+      "text": "Client delays RA-2 payment",
+      "evidenceIds": [
+        "ev-mc-reminder"
+      ]
+    },
+    {
+      "id": "f-e-mc-03",
+      "text": "HVAC layout Rev C",
+      "evidenceIds": [
+        "ev-mc-hvac-c"
+      ]
+    }
+  ],
+  "causes": [],
+  "risks": [],
+  "unknowns": [
+    "Only connected sources are included; phone calls and site visits are not recorded unless someone writes them down."
+  ],
+  "confidence": {
+    "level": "high",
+    "reason": "Each change is taken from a dated source."
+  },
+  "actions": [],
+  "evidence": [
+    {
+      "id": "ev-mc-flooring",
+      "sourceType": "whatsapp",
+      "title": "Marigold site group",
+      "excerpt": "For the minor OT, can we do seamless PVC instead of epoxy? Infection control team prefers coved PVC. Please share the cost difference.",
+      "highlight": {
+        "start": 18,
+        "end": 57
+      },
+      "project": "Marigold Clinic",
+      "occurredAt": "2026-09-24T09:40:00+05:30",
+      "author": "Clinic administrator"
+    },
+    {
+      "id": "ev-mc-reminder",
+      "sourceType": "email",
+      "title": "Re: RA-2 payment",
+      "excerpt": "We will process RA-2 after the board meeting. Please bear with us for a few more days.",
+      "highlight": {
+        "start": 0,
+        "end": 44
+      },
+      "project": "Marigold Clinic",
+      "occurredAt": "2026-09-16T15:05:00+05:30",
+      "author": "Clinic administrator"
+    },
+    {
+      "id": "ev-mc-hvac-c",
+      "sourceType": "drawing",
+      "title": "MC-MEP-110 Rev C — HVAC layout",
+      "excerpt": "Rev C: OT air changes increased to 25 per hour with HEPA terminal filters; AHU relocated to the terrace.",
+      "highlight": {
+        "start": 7,
+        "end": 46
+      },
+      "project": "Marigold Clinic",
+      "occurredAt": "2026-09-10T10:00:00+05:30",
+      "author": "MEP consultant",
+      "locator": {
+        "page": 1,
+        "bbox": {
+          "x0": 0.58,
+          "y0": 0.82,
+          "x1": 0.96,
+          "y1": 0.93
+        },
+        "parser": "docling"
+      }
+    }
+  ]
+}

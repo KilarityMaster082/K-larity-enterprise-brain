@@ -10,8 +10,17 @@ export function validateContract(c: AnswerContract): string[] {
   if (ids.size !== c.evidence.length) problems.push("duplicate evidence ids");
 
   for (const e of c.evidence) {
-    const { start, end } = e.highlight;
-    if (!(start >= 0 && end > start && end <= e.excerpt.length)) problems.push(`evidence ${e.id}: highlight is outside the excerpt`);
+    if (e.highlight) {
+      const { start, end } = e.highlight;
+      if (!(start >= 0 && end > start && end <= e.excerpt.length)) problems.push(`evidence ${e.id}: highlight is outside the excerpt`);
+    }
+    const b = e.locator?.bbox;
+    if (b) {
+      const unit = [b.x0, b.y0, b.x1, b.y1].every((v) => v >= 0 && v <= 1);
+      if (!unit || b.x1 <= b.x0 || b.y1 <= b.y0) problems.push(`evidence ${e.id}: bounding box must be a positive box inside the page (0..1)`);
+    }
+    const t = e.locator?.table;
+    if (t && t.rowEnd < t.rowStart) problems.push(`evidence ${e.id}: table row range is reversed`);
   }
 
   const cites = (where: string, list?: string[]) => {
@@ -19,6 +28,7 @@ export function validateContract(c: AnswerContract): string[] {
   };
   const answered = c.status === "answered" || c.status === "partial";
 
+  if (c.status === "answered" && !c.facts.length) problems.push("an answered contract needs at least one cited fact (canonical schema)");
   if (answered) {
     c.answer.forEach((s, i) => cites(`answer[${i}]`, s.evidenceIds));
     if (!c.answer.some((s) => s.evidenceIds?.length)) problems.push("an answered contract has no cited statement");

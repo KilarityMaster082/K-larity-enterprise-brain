@@ -1,9 +1,10 @@
-// Owner task: EB-88 Tenant admin console — every tenant with tier, plan, status, connector health, usage and
-// cost; provision new tenants without touching the database.
-import { PageHeader } from "@klarity/ui";
+// Owner task: EB-88 Tenant admin console — Tenant Registry Fleet Overview (screen 47): every tenant with tier, plan, status,
+// connector health, usage and cost; provision new tenants without touching the database.
+import { formatINRShort, formatNumber } from "@klarity/ui";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { OpScreen } from "@/components/OpScreen";
 import { listTenants } from "@/lib/data";
 import { getOperator } from "@/lib/session";
 
@@ -13,7 +14,8 @@ export const metadata: Metadata = { title: "Tenants" };
 
 export default async function TenantsPage() {
   if (!(await getOperator())) redirect("/login?next=/tenants");
-  const rows: TenantRow[] = listTenants().map((t) => ({
+  const tenants = listTenants();
+  const rows: TenantRow[] = tenants.map((t) => ({
     tenantId: t.tenantId,
     name: t.name,
     slug: t.slug,
@@ -28,10 +30,19 @@ export default async function TenantsPage() {
     questions: t.usage.questionsMonth,
     cost: t.usage.costMonthINR,
   }));
+  const real = tenants.filter((t) => !t.isSynthetic);
+  const bad = rows.reduce((a, r) => a + r.sourcesBad, 0);
   return (
-    <div className="content content-wide">
-      <PageHeader title="Tenants" lead="Every customer workspace: where it lives, how healthy its sources are, and what it costs to serve." />
+    <OpScreen
+      n={47}
+      brief={[
+        { label: "Customer tenants", value: real.length, note: `${tenants.length - real.length} synthetic`, tone: "lime" },
+        { label: "Questions this month", value: formatNumber(tenants.reduce((a, t) => a + t.usage.questionsMonth, 0)), note: "all tenants", tone: "sky" },
+        { label: "Cost to serve", value: formatINRShort(tenants.reduce((a, t) => a + t.usage.costMonthINR, 0)), note: "this month", tone: "lavender" },
+        { label: "Sources needing attention", value: bad, note: bad ? "re-authorise or fix" : "all healthy", tone: "pink" },
+      ]}
+    >
       <TenantsView rows={rows} />
-    </div>
+    </OpScreen>
   );
 }

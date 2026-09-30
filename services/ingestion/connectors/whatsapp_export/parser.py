@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import io
 import logging
 import re
@@ -16,12 +16,12 @@ from connectors_sdk.models import sha256_hex
 logger = logging.getLogger(__name__)
 
 # Indian Standard Time (UTC+05:30)
-IST = timezone(datetime.now(timezone.utc).astimezone().utcoffset() or timezone.utc.utcoffset(None) or timezone.utc)
+IST = timezone(timedelta(hours=5, minutes=30))
 try:
     from zoneinfo import ZoneInfo
     IST_ZONE = ZoneInfo("Asia/Kolkata")
 except Exception:
-    IST_ZONE = timezone(datetime.now().astimezone().utcoffset() or timezone.utc)
+    IST_ZONE = IST
 
 # Regex patterns for Android and iOS chat formats
 # Android format:
