@@ -231,6 +231,8 @@ export interface VaultFile {
   status: "parsed" | "ocr" | "uploading" | "failed";
   progress: number;
   documentId?: string;
+  /** When an upload began; progress and status are derived from the clock until parsing finishes. */
+  startedAt?: string;
 }
 
 export interface BaseColumn {
@@ -363,6 +365,8 @@ export interface AppDef {
   kind: "connector" | "mcp";
   description: string;
   scopes: string[];
+  /** Scopes the owner has switched off; the rest are synced. */
+  disabledScopes?: string[];
   status: "connected" | "available" | "attention";
   /** Source rows this app feeds (Settings → Sources). */
   connectorType?: Source["connectorType"];

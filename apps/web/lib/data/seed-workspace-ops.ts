@@ -30,7 +30,20 @@ export const WORKSPACE_DOC_EVIDENCE: Evidence[] = WORKSPACE_DOCUMENTS.map((d) =>
 );
 
 // ---------------------------------------------------------------- file contents
+
+/** An issued drawing as the parsers return it: general notes, then the title block at the foot of the sheet. */
+const drawing = (series: string, rev: string, title: string, notes: string[], issue: string): FileContent => ({
+  kind: "pdf",
+  pages: [
+    { n: 1, heading: `${series} Rev ${rev} · ${title}`, lines: [...notes, `Sheet ${series} · Revision ${rev} · ${issue}`, "Drawn by: Studio 8 Hats · Checked by: Principal architect"], marks: [{ line: notes.length, start: 0, end: `Sheet ${series} · Revision ${rev}`.length }] },
+  ],
+});
 export const STUDIO8_CONTENTS: Record<string, FileContent> = {
+  "d-phx-str204-c": drawing("PHX-STR-204", "C", "Transfer beam details", ["General notes", "1. Transfer beam at level 2 in steel, ISMB 600.", "2. All welds to be full-penetration unless noted.", "3. Supersedes Rev B (RCC transfer beam)."], "Issued for construction, 30 Jul 2026"),
+  "d-phx-str204-b": drawing("PHX-STR-204", "B", "Transfer beam details", ["General notes", "1. Transfer beam at level 2 in reinforced concrete.", "2. Superseded by Rev C."], "Issued for coordination, 18 Jun 2026"),
+  "d-phx-arc101-d": drawing("PHX-ARC-101", "D", "Ground floor plan", ["General notes", "1. Dimensions in millimetres.", "2. Refer to structural drawings for all column sizes."], "Issued for construction, 22 Jul 2026"),
+  "d-phx-fac301-b": drawing("PHX-FAC-301", "B", "Front elevation", ["General notes", "1. HPL cladding 8 mm on aluminium sub-frame.", "2. Refer to the facade contract for the approved finish."], "Issued for construction, 24 Aug 2026"),
+  "d-mc-hvac-c": drawing("MC-MEP-110", "C", "HVAC layout", ["General notes", "1. OT at 25 air changes per hour with HEPA filtration.", "2. AHU relocated to the terrace."], "Issued for construction, 10 Sep 2026"),
   "d-phx-boq": {
     kind: "xlsx",
     sheets: [

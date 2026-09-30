@@ -246,3 +246,102 @@ export function shortWhen(iso: string, now = DEMO_NOW): string {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: tz }).format(d);
 }
 
+
+// ---------------------------------------------------------------- presentation helpers
+const PASTELS = ["sky", "pink", "green", "lavender", "cream", "lime"] as const;
+export type Pastel = (typeof PASTELS)[number];
+
+/** A stable pastel for a key (project id, person, space) so the same thing is always the same colour. */
+export function toneFor(key: string): Pastel {
+  let h = 0;
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PASTELS[h % PASTELS.length]!;
+}
+
+export function initialsOf(name: string): string {
+  return name
+    .replace(/\(.*?\)/g, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+}
+
+/** Keyword ranking over a thread's subject, sender, messages and extraction, used by the inbox search box. */
+export function searchThreads(threads: MailThread[], query: string): MailThread[] {
+  const terms = query.toLowerCase().split(/\s+/).filter((t) => t.length > 1);
+  if (!terms.length) return threads;
+  return threads
+    .map((t) => {
+      const hay = [t.subject, t.fromName, t.fromOrg, t.category, ...t.messages.map((m) => m.body), ...t.extraction.decisions.map((d) => d.text), ...t.extraction.commitments.map((c) => c.text)].join(" ").toLowerCase();
+      const score = terms.reduce((a, w) => a + (hay.includes(w) ? 1 : 0) + (t.subject.toLowerCase().includes(w) ? 2 : 0), 0);
+      return { t, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || b.t.lastAt.localeCompare(a.t.lastAt))
+    .map((x) => x.t);
+}
+
+// ---------------------------------------------------------------- knowledge search
+export interface KnowledgeHit {
+  kind: "Document" | "Email" | "File" | "Base row" | "Graph node";
+  label: string;
+  sub?: string;
+  href: string;
+}
+
+/** Quick search across everything the workspace has indexed that this role may see. */
+export function knowledgeSearch(view: TenantView, can: Can, query: string, limit = 24): KnowledgeHit[] {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const has = (...xs: (string | number | undefined)[]) => xs.some((x) => String(x ?? "").toLowerCase().includes(q));
+  const hits: KnowledgeHit[] = [];
+  if (can("documents.view")) {
+    for (const d of view.data.documents.filter((d) => has(d.title, d.series, d.summary, d.fileName, ...d.facts))) hits.push({ kind: "Document", label: d.series ? `${d.series} Rev ${d.revision} — ${d.title}` : d.title, sub: projectName(view, d.projectId), href: `/documents?q=${encodeURIComponent(d.series ?? d.title)}` });
+  }
+  if (can("comms.view")) {
+    for (const t of visibleMail(view, can).filter((t) => has(t.subject, t.fromOrg, ...t.messages.map((m) => m.body)))) hits.push({ kind: "Email", label: t.subject, sub: t.fromOrg, href: `/communications/${t.threadId}` });
+  }
+  for (const f of view.data.workspace.files.filter((f) => has(f.name))) hits.push({ kind: "File", label: f.name, sub: f.meta, href: `/knowledge/files?folder=${f.folderId}` });
+  for (const b of view.data.workspace.bases) {
+    for (const r of b.rows.filter((r) => has(...Object.values(r)))) hits.push({ kind: "Base row", label: String(Object.values(r)[0]), sub: b.name, href: `/knowledge/bases?base=${b.baseId}&q=${encodeURIComponent(String(Object.values(r)[0]))}` });
+  }
+  for (const n of view.data.workspace.graph.nodes.filter((n) => has(n.label))) hits.push({ kind: "Graph node", label: n.label, sub: n.kind, href: `/knowledge/graph?node=${n.id}` });
+  return hits.slice(0, limit);
+}
+
+// ---------------------------------------------------------------- agent run log
+export interface LogLine {
+  t: string;
+  kind: "PLAN" | "TOOL" | "RESULT" | "ERROR" | "RETRY" | "LLM" | "DONE";
+  text: string;
+}
+
+/** The terminal-style log of a run: what it planned, each tool call and its result, errors and retries. */
+export function runLog(job: { name: string }, run: { status: string; attempt: number; steps: { at: string; tool: string; detail: string; tokens: number; error?: string }[] }): LogLine[] {
+  const out: LogLine[] = [];
+  const first = run.steps[0];
+  if (first) out.push({ t: first.at, kind: "PLAN", text: job.name });
+  for (const s of run.steps) {
+    out.push({ t: s.at, kind: s.tool.startsWith("llm.") ? "LLM" : "TOOL", text: s.tool });
+    if (s.error) {
+      out.push({ t: s.at, kind: "ERROR", text: s.error });
+      out.push({ t: s.at, kind: "RETRY", text: `attempt ${Math.min(run.attempt + 1, 5)} of 5` });
+    } else {
+      out.push({ t: s.at, kind: "RESULT", text: s.detail });
+    }
+  }
+  const last = run.steps[run.steps.length - 1];
+  if (last) out.push({ t: last.at, kind: "DONE", text: run.status === "running" ? "still running" : run.status === "ok" ? "run finished" : `run ${run.status}` });
+  return out;
+}
+
+export function runStats(run: { attempt: number; steps: { tokens: number; error?: string }[] }, durationSec: number): { tokens: number; duration: string; retries: number; errors: number } {
+  return {
+    tokens: run.steps.reduce((a, s) => a + s.tokens, 0),
+    duration: `${String(Math.floor(durationSec / 60)).padStart(2, "0")}:${String(durationSec % 60).padStart(2, "0")}`,
+    retries: Math.max(0, run.attempt - 1),
+    errors: run.steps.filter((s) => s.error).length,
+  };
+}

@@ -10,8 +10,8 @@ export function useOverlay() {
   const router = useRouter();
   const search = useSearchParams();
   return useCallback(
-    (name: OverlayParam, value: string) => {
-      router.push(overlayHref(pathname, new URLSearchParams(search.toString()), name, value), { scroll: false });
+    (name: OverlayParam, value: string, extra?: Record<string, string>) => {
+      router.push(overlayHref(pathname, new URLSearchParams(search.toString()), name, value, extra), { scroll: false });
     },
     [pathname, router, search],
   );

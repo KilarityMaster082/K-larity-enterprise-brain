@@ -9,10 +9,22 @@ import { can, ROLES, type Capability } from "../permissions";
 import {
   connectSource,
   createApproval,
+  createFolder,
+  deleteEntry,
+  endMeeting,
+  postSpaceMessage,
+  reactToMessage,
+  registerUploads,
+  renameEntry,
+  sendThreadDecisionToLog,
+  setAppScopes,
+  setTodoDone,
+  toggleStar,
   decideApproval,
   disconnectSource,
   inviteMember,
   markAskedFirstQuestion,
+  markThreadRead,
   reconnectSource,
   RETENTION_CHOICES,
   reviewDecision,
@@ -185,4 +197,137 @@ export async function markAskedAction(): Promise<void> {
   if (!session) return;
   const m = activeMembership(session);
   markAskedFirstQuestion(m.tenantId, m.slug);
+}
+
+// ---------------------------------------------------------------- communications
+export async function sendToDecisionLogAction(threadId: string, index: number): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("decisions.view");
+    const v = tenantView(a.tenantId, a.slug);
+    if (v.data.workspace.mail.find((t) => t.threadId === threadId)?.financial && !can(a.role, "finance.view")) throw new StoreError("your role cannot open this thread");
+    const d = sendThreadDecisionToLog(a.tenantId, a.slug, a.name, threadId, index);
+    return `Sent to the decision queue as a draft. Open it in Decisions to confirm: ${d.decisionId}`;
+  }, ["/communications", "/decisions", "/executive"]);
+}
+
+/** Composer "Send": creates an approval with the drafted reply. Nothing is sent until someone approves it (rule 10). */
+export async function submitReplyAction(threadId: string, mode: "reply" | "reply_all" | "forward", body: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("comms.view");
+    const v = tenantView(a.tenantId, a.slug);
+    const t = v.data.workspace.mail.find((x) => x.threadId === threadId);
+    if (!t || (t.financial && !can(a.role, "finance.view"))) throw new StoreError("thread not found");
+    const text = body.trim();
+    if (!text) throw new StoreError("write the message first");
+    const verb = mode === "forward" ? "Forward" : mode === "reply_all" ? "Reply all" : "Reply";
+    const approval = createApproval(a.tenantId, a.slug, a.name, {
+      kind: "draft_message",
+      title: `${verb}: ${t.subject}`.slice(0, 200),
+      body: text.slice(0, 4000),
+      reason: `Drafted in the email composer by ${a.name}.`,
+      evidenceIds: t.evidenceId ? [t.evidenceId] : [],
+      projectId: t.projectId,
+    });
+    return approval.approvalId;
+  }, ["/approvals", "/executive", "/communications"]);
+}
+
+export async function toggleStarAction(threadId: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("comms.view");
+    return toggleStar(a.tenantId, a.slug, threadId) ? "Starred." : "Unstarred.";
+  }, ["/communications"]);
+}
+
+// ---------------------------------------------------------------- todos, spaces, meetings
+export async function setTodoDoneAction(todoId: string, done: boolean): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("todos.view");
+    if (a.role === "viewer") throw new StoreError("viewers cannot change todos");
+    const t = setTodoDone(a.tenantId, a.slug, a.name, todoId, done);
+    return done ? `Done: ${t.text}` : `Reopened: ${t.text}`;
+  }, ["/todos", "/meetings"]);
+}
+
+export async function postSpaceMessageAction(spaceId: string, text: string, documentId?: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("spaces.view");
+    if (a.role === "viewer") throw new StoreError("viewers can read spaces but not post");
+    postSpaceMessage(a.tenantId, a.slug, a.name, spaceId, text, documentId);
+    return "Posted.";
+  }, [`/spaces/${spaceId}`, "/spaces", "/activity"]);
+}
+
+export async function reactAction(spaceId: string, messageId: string, emoji: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("spaces.view");
+    if (a.role === "viewer") throw new StoreError("viewers can read spaces but not react");
+    reactToMessage(a.tenantId, a.slug, a.name, spaceId, messageId, emoji);
+    return undefined;
+  }, [`/spaces/${spaceId}`]);
+}
+
+export async function endMeetingAction(meetingId: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("meetings.view");
+    if (a.role === "viewer") throw new StoreError("viewers cannot end a meeting");
+    const r = endMeeting(a.tenantId, a.slug, a.name, meetingId);
+    return `Meeting ended. ${r.todos.length} action item${r.todos.length === 1 ? "" : "s"} added to Todos.`;
+  }, ["/meetings", "/todos", "/activity"]);
+}
+
+// ---------------------------------------------------------------- knowledge vault
+export async function uploadFilesAction(folderId: string, files: { name: string; bytes: number }[]): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("knowledge.view");
+    if (a.role === "viewer") throw new StoreError("viewers cannot upload");
+    const clean = files.slice(0, 20).map((f) => ({ name: String(f.name), bytes: Math.max(0, Number(f.bytes) || 0) }));
+    const added = registerUploads(a.tenantId, a.slug, a.name, folderId, clean);
+    return `${added.length} file${added.length === 1 ? "" : "s"} queued for parsing. In development the bytes are not stored; production writes them to the tenant bucket.`;
+  }, ["/knowledge/files", "/knowledge", "/activity"]);
+}
+
+export async function createFolderAction(parentId: string | undefined, name: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("knowledge.view");
+    if (a.role === "viewer") throw new StoreError("viewers cannot create folders");
+    createFolder(a.tenantId, a.slug, a.name, parentId, name);
+    return "Folder created.";
+  }, ["/knowledge/files"]);
+}
+
+export async function renameEntryAction(kind: "folder" | "file", id: string, name: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("knowledge.view");
+    if (a.role === "viewer") throw new StoreError("viewers cannot rename");
+    renameEntry(a.tenantId, a.slug, a.name, kind, id, name);
+    return "Renamed.";
+  }, ["/knowledge/files"]);
+}
+
+export async function deleteEntryAction(kind: "folder" | "file", id: string): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("knowledge.view");
+    if (a.role === "viewer" || a.role === "member") throw new StoreError("only partners and owners can delete from the vault");
+    deleteEntry(a.tenantId, a.slug, a.name, kind, id);
+    return "Deleted from the vault.";
+  }, ["/knowledge/files", "/knowledge"]);
+}
+
+// ---------------------------------------------------------------- apps
+export async function setAppScopesAction(appId: string, disabledScopes: string[]): Promise<ActionResult> {
+  return run(async () => {
+    const a = await actor("apps.manage");
+    setAppScopes(a.tenantId, a.slug, a.name, appId, disabledScopes);
+    return "Sync scopes saved.";
+  }, [`/apps/${appId}`, "/apps"]);
+}
+
+export async function markThreadReadAction(threadId: string): Promise<void> {
+  const session = await getSession();
+  if (!session) return;
+  const m = activeMembership(session);
+  if (!can(m.role, "comms.view")) return;
+  markThreadRead(m.tenantId, m.slug, threadId);
+  revalidatePath("/communications");
 }
