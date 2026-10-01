@@ -98,7 +98,11 @@ class CoreApiRouter:
         await handler(scope, receive, send)
 
 
-def create_app(resolver: PlacementResolver) -> TenantMiddleware:
-    """Factory creating the complete API application wrapped in TenantMiddleware."""
+def create_app(resolver: PlacementResolver, *, verifier: Any = None, auth_mode: str | None = None) -> TenantMiddleware:
+    """Factory creating the complete API application wrapped in TenantMiddleware.
+
+    Fails closed: with no ``auth_mode`` argument and no KLARITY_AUTH_MODE, the app is in production mode and
+    accepts only signature-verified bearer tokens.
+    """
     router = CoreApiRouter()
-    return TenantMiddleware(app=router, resolver=resolver)
+    return TenantMiddleware(app=router, resolver=resolver, verifier=verifier, auth_mode=auth_mode)

@@ -60,6 +60,24 @@ def _b64url_decode(payload: str) -> bytes:
     return base64.urlsafe_b64decode(payload.encode("ascii"))
 
 
+def _verify_rs256(jwk: dict[str, Any], signed_data: bytes, signature: bytes) -> None:
+    """RSASSA-PKCS1-v1_5 / SHA-256 verification straight from a JWK (no PyJWT dependency, no silent skip)."""
+    try:
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    except ImportError as e:  # pragma: no cover - cryptography is a pinned CI dependency
+        raise TokenError("cryptography is required to verify token signatures") from e
+    if jwk.get("kty") != "RSA" or "n" not in jwk or "e" not in jwk:
+        raise TokenError("Signing key is not a usable RSA JWK")
+    try:
+        n = int.from_bytes(_b64url_decode(jwk["n"]), "big")
+        exp = int.from_bytes(_b64url_decode(jwk["e"]), "big")
+        public_key = rsa.RSAPublicNumbers(exp, n).public_key()
+        public_key.verify(signature, signed_data, padding.PKCS1v15(), hashes.SHA256())
+    except Exception as e:
+        raise TokenError(f"Invalid signature: {e}") from e
+
+
 class KeycloakTokenVerifier:
     """Verifies Keycloak JWT tokens against JSON Web Key Sets (JWKS)."""
 
@@ -124,26 +142,18 @@ class KeycloakTokenVerifier:
         if header.get("alg") != "RS256":
             raise TokenError(f"Unsupported token algorithm: {header.get('alg')}; only RS256 allowed")
 
-        # 2. Signature verification (if public keys configured)
-        if not skip_sig_check and self._keys:
+        # 2. Signature verification — fail closed. An unsigned or unverifiable token is never accepted: with no
+        # signing keys loaded, or no crypto library, verification fails instead of being skipped.
+        if not skip_sig_check:
+            if not self._keys:
+                self.load_jwks()
+            if not self._keys:
+                raise TokenError("No signing keys configured; refusing to accept an unverified token")
             kid = header.get("kid")
-            jwk = self._keys.get(kid) if kid else next(iter(self._keys.values()), None)
+            jwk = self._keys.get(kid) if kid else (next(iter(self._keys.values())) if len(self._keys) == 1 else None)
             if not jwk:
                 raise TokenError(f"Key ID {kid!r} not found in JWKS")
-            # When cryptography is present, perform cryptographic signature verification
-            try:
-                from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
-                from cryptography.hazmat.primitives.hashes import SHA256
-                from jwt.algorithms import RSAAlgorithm  # type: ignore[import-untyped]
-                public_key = RSAAlgorithm.from_jwk(json.dumps(jwk))
-                signed_data = f"{header_raw}.{payload_raw}".encode("ascii")
-                sig_bytes = _b64url_decode(sig_raw)
-                public_key.verify(sig_bytes, signed_data, PKCS1v15(), SHA256())
-            except ImportError:
-                # If pyjwt RSAAlgorithm not installed, fallback or allow standard verification
-                pass
-            except Exception as e:
-                raise TokenError(f"Invalid signature: {e}") from e
+            _verify_rs256(jwk, f"{header_raw}.{payload_raw}".encode("ascii"), _b64url_decode(sig_raw))
 
         # 3. Claims validations
         current_time = now if now is not None else time.time()

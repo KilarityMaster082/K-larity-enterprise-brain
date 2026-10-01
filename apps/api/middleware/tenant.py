@@ -10,8 +10,13 @@ with `SET LOCAL app.tenant_id = :tenant_id` inside transactions (Risk R-6).
 from __future__ import annotations
 
 import json
+import logging
+import os
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any, Sequence
+
+from apps.api.auth.token_verifier import KeycloakTokenVerifier, TokenError
 
 from storage import bind_session_tenant
 from tenant_context import (
@@ -25,6 +30,8 @@ from tenant_context import (
     tenant_scope,
     validate_tenant_id,
 )
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_EXEMPT_PATHS = frozenset({
     "/healthz",
@@ -62,15 +69,28 @@ class TenantAccessDeniedError(TenantMiddlewareError):
         super().__init__(403, "tenant_access_denied", message)
 
 
-def extract_tenant_id(headers: Sequence[tuple[bytes, bytes]] | dict[str, str]) -> str | None:
-    """Extract tenant_id from HTTP headers or Bearer token claims."""
-    # Convert ASGI headers list to lowercase string dict
-    header_map: dict[str, str] = {}
+@dataclass(frozen=True)
+class RequestUser:
+    """Who is calling. In production this only ever comes from a signature-verified token."""
+
+    user_id: str
+    roles: tuple[str, ...] = ()
+    verified: bool = False
+
+
+def _header_map(headers: Sequence[tuple[bytes, bytes]] | dict[str, str]) -> dict[str, str]:
     if isinstance(headers, dict):
-        header_map = {k.lower(): v for k, v in headers.items()}
-    else:
-        for k, v in headers:
-            header_map[k.decode("latin1").lower()] = v.decode("latin1")
+        return {k.lower(): v for k, v in headers.items()}
+    return {k.decode("latin1").lower(): v.decode("latin1") for k, v in headers}
+
+
+def extract_tenant_id(headers: Sequence[tuple[bytes, bytes]] | dict[str, str]) -> str | None:
+    """UNTRUSTED tenant hint from a header or an unverified token payload — development mode only.
+
+    Production never calls this: the tenant comes from a verified token (see TenantMiddleware._identify).
+    """
+    # Convert ASGI headers list to lowercase string dict
+    header_map = _header_map(headers)
 
     # 1. Direct tenant header (X-Tenant-ID)
     if "x-tenant-id" in header_map:
@@ -107,10 +127,57 @@ class TenantMiddleware:
         app: Any,
         resolver: PlacementResolver,
         exempt_paths: frozenset[str] | set[str] | None = None,
+        verifier: KeycloakTokenVerifier | None = None,
+        auth_mode: str | None = None,
     ) -> None:
+        """``auth_mode``: "production" (default, also from KLARITY_AUTH_MODE) trusts only a verified bearer token;
+        "development" additionally accepts X-Tenant-ID / X-User-ID headers and is refused when KLARITY_ENV=production.
+        """
+        mode = auth_mode or os.environ.get("KLARITY_AUTH_MODE", "production")
+        if mode not in ("production", "development"):
+            raise ValueError(f"unknown auth_mode: {mode!r}")
+        if mode == "development" and os.environ.get("KLARITY_ENV") == "production":
+            raise RuntimeError("development auth mode is refused when KLARITY_ENV=production")
         self.app = app
         self.resolver = resolver
         self.exempt_paths = frozenset(exempt_paths or DEFAULT_EXEMPT_PATHS)
+        self.verifier = verifier
+        self.auth_mode = mode
+        if mode == "development":
+            logger.warning("API running in DEVELOPMENT auth mode: tenant and user are taken from unauthenticated headers")
+
+    def _identify(self, headers: Any) -> tuple[str, RequestUser | None] | TenantMiddlewareError:
+        """Resolve (tenant_id, user). Production: verified token only, header may only *select* a tenant the token grants."""
+        hm = _header_map(headers)
+        if self.auth_mode == "development":
+            tenant = extract_tenant_id(headers)
+            if not tenant:
+                return MissingTenantError("Tenant identification is required (X-Tenant-ID or token)")
+            uid = hm.get("x-user-id", "").strip()
+            return tenant, (RequestUser(uid, tuple(r for r in hm.get("x-user-roles", "").split(",") if r)) if uid else None)
+
+        auth = hm.get("authorization", "")
+        if not auth.startswith("Bearer "):
+            return MissingTenantError("A bearer token is required")
+        if self.verifier is None:
+            return TenantMiddlewareError(503, "auth_not_configured", "Token verification is not configured")
+        try:
+            verified = self.verifier.verify(auth[7:].strip())
+        except TokenError as e:
+            return TenantMiddlewareError(401, "invalid_token", str(e))
+        granted = [t for t in dict.fromkeys([verified.tenant_id or "", *verified.organizations]) if t]
+        if not granted:
+            return TenantAccessDeniedError("Token grants no tenant")
+        requested = hm.get("x-tenant-id", "").strip()
+        if requested:
+            if requested not in granted:
+                return TenantAccessDeniedError("Token does not grant the requested tenant")
+            tenant = requested
+        elif len(granted) == 1:
+            tenant = granted[0]
+        else:
+            return InvalidTenantError("Token grants several tenants; select one with X-Tenant-ID")
+        return tenant, RequestUser(verified.sub, tuple(verified.roles), True)
 
     async def __call__(
         self,
@@ -127,14 +194,11 @@ class TenantMiddleware:
             await self.app(scope, receive, send)
             return
 
-        headers = scope.get("headers", [])
-        tenant_id = extract_tenant_id(headers)
-
-        if not tenant_id:
-            await self._send_json_error(
-                send, 401, "missing_tenant", "Tenant identification is required (X-Tenant-ID or verified token)"
-            )
+        identified = self._identify(scope.get("headers", []))
+        if isinstance(identified, TenantMiddlewareError):
+            await self._send_json_error(send, identified.status_code, identified.error_code, identified.message)
             return
+        tenant_id, user = identified
 
         # Validate tenant ID format
         try:
@@ -167,6 +231,7 @@ class TenantMiddleware:
             if "state" not in scope:
                 scope["state"] = {}
             scope["state"]["tenant"] = ctx
+            scope["state"]["user"] = user
             await self.app(scope, receive, send)
 
     async def _send_json_error(

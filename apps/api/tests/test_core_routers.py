@@ -22,7 +22,7 @@ def core_resolver(tmp_path: Any) -> PlacementResolver:
 
 
 def test_finance_summary_endpoint(core_resolver: PlacementResolver) -> None:
-    app = create_app(core_resolver)
+    app = create_app(core_resolver, auth_mode="development")
     headers = {"X-Tenant-ID": STUDIO8_ID}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/finance/summary", headers=headers))
     assert status == 200
@@ -32,7 +32,7 @@ def test_finance_summary_endpoint(core_resolver: PlacementResolver) -> None:
 
 
 def test_finance_variance_endpoint(core_resolver: PlacementResolver) -> None:
-    app = create_app(core_resolver)
+    app = create_app(core_resolver, auth_mode="development")
     headers = {"X-Tenant-ID": STUDIO8_ID}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/finance/variance", headers=headers))
     assert status == 200
@@ -41,7 +41,7 @@ def test_finance_variance_endpoint(core_resolver: PlacementResolver) -> None:
 
 
 def test_finance_cash_endpoint(core_resolver: PlacementResolver) -> None:
-    app = create_app(core_resolver)
+    app = create_app(core_resolver, auth_mode="development")
     headers = {"X-Tenant-ID": STUDIO8_ID}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/finance/cash", headers=headers))
     assert status == 200
@@ -50,7 +50,7 @@ def test_finance_cash_endpoint(core_resolver: PlacementResolver) -> None:
 
 
 def test_decisions_list_and_triage(core_resolver: PlacementResolver) -> None:
-    app = create_app(core_resolver)
+    app = create_app(core_resolver, auth_mode="development")
     headers = {"X-Tenant-ID": STUDIO8_ID}
 
     # 1. List decisions
@@ -74,7 +74,7 @@ def test_decisions_list_and_triage(core_resolver: PlacementResolver) -> None:
 
 
 def test_projects_endpoint(core_resolver: PlacementResolver) -> None:
-    app = create_app(core_resolver)
+    app = create_app(core_resolver, auth_mode="development")
     headers = {"X-Tenant-ID": STUDIO8_ID}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/projects", headers=headers))
     assert status == 200

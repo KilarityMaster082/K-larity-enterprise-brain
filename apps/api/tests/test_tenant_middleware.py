@@ -73,7 +73,7 @@ async def call_asgi(app: Any, method: str, path: str, headers: dict[str, str] | 
 
 
 def test_public_route_exempt(test_resolver: PlacementResolver) -> None:
-    app = create_app(test_resolver)
+    app = create_app(test_resolver, auth_mode="development")
     status, body = asyncio.run(call_asgi(app, "GET", "/healthz"))
     assert status == 200
     assert body["status"] == "ok"
@@ -81,35 +81,35 @@ def test_public_route_exempt(test_resolver: PlacementResolver) -> None:
 
 
 def test_missing_tenant_returns_401(test_resolver: PlacementResolver) -> None:
-    app = create_app(test_resolver)
+    app = create_app(test_resolver, auth_mode="development")
     status, body = asyncio.run(call_asgi(app, "GET", "/api/v1/tenant/current"))
     assert status == 401
     assert body["error"] == "missing_tenant"
 
 
 def test_malformed_tenant_returns_400(test_resolver: PlacementResolver) -> None:
-    app = create_app(test_resolver)
+    app = create_app(test_resolver, auth_mode="development")
     status, body = asyncio.run(call_asgi(app, "GET", "/api/v1/tenant/current", {"X-Tenant-ID": "UPPERCASE_NOT_ALLOWED!"}))
     assert status == 400
     assert body["error"] == "invalid_tenant"
 
 
 def test_unknown_tenant_returns_403(test_resolver: PlacementResolver) -> None:
-    app = create_app(test_resolver)
+    app = create_app(test_resolver, auth_mode="development")
     status, body = asyncio.run(call_asgi(app, "GET", "/api/v1/tenant/current", {"X-Tenant-ID": "ghost-tenant"}))
     assert status == 403
     assert body["error"] == "unknown_tenant"
 
 
 def test_suspended_tenant_returns_403(test_resolver: PlacementResolver) -> None:
-    app = create_app(test_resolver)
+    app = create_app(test_resolver, auth_mode="development")
     status, body = asyncio.run(call_asgi(app, "GET", "/api/v1/tenant/current", {"X-Tenant-ID": SYNTHETIC_ID}))
     assert status == 403
     assert body["error"] == "tenant_unavailable" or body["error"] == "tenant_suspended"
 
 
 def test_active_tenant_succeeds_and_enters_scope(test_resolver: PlacementResolver) -> None:
-    app = create_app(test_resolver)
+    app = create_app(test_resolver, auth_mode="development")
     status, body = asyncio.run(call_asgi(app, "GET", "/api/v1/tenant/current", {"X-Tenant-ID": STUDIO8_ID}))
     assert status == 200
     assert body["tenant_id"] == STUDIO8_ID
