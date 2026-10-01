@@ -25,6 +25,8 @@ jobs:
         run: python ops/ci/check_tenant_scope.py
       - name: Borrow map is up to date with the register snapshot
         run: python ops/ci/borrow_map.py --check
+      - name: Dev stack compose file — pinned images, localhost-only ports, no literal secrets
+        run: pip install pyyaml && python ops/ci/check_compose.py
 
   tests:
     name: Unit tests

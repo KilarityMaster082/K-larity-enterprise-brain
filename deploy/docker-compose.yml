@@ -1,2 +1,188 @@
 # Owner task: EB-18 Docker Compose dev stack
-# Status: scaffold placeholder — not implemented
+# Local development stack: PostgreSQL 16 (RLS), Keycloak, OpenFGA, Qdrant, OpenSearch, Valkey, Temporal, SeaweedFS.
+#
+#   make dev-env     # once: generates deploy/.env.dev with random secrets (gitignored, mode 0600)
+#   make dev-up      # start everything and wait until healthy
+#   make dev-down    # stop (data kept);  make dev-reset  # stop and delete all data
+#
+# Rules (enforced by ops/ci/check_compose.py): every image is pinned, every published port is bound to
+# 127.0.0.1, and no secret is written in this file — passwords come only from ${VAR:?} interpolation.
+# Development only. Production lives in deploy/prod (managed services, TLS, security plugins on).
+
+name: klarity-dev
+
+x-infra-db: &infra-db
+  INFRA_DB_USER: klarity_infra
+  INFRA_DB_PASSWORD: ${INFRA_DB_PASSWORD:?run make dev-env}
+
+services:
+  postgres:
+    image: postgres:16.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?run make dev-env}
+      KLARITY_ADMIN_PASSWORD: ${KLARITY_ADMIN_PASSWORD:?run make dev-env}
+      KLARITY_APP_PASSWORD: ${KLARITY_APP_PASSWORD:?run make dev-env}
+      KLARITY_CONTROL_PASSWORD: ${KLARITY_CONTROL_PASSWORD:?run make dev-env}
+      <<: *infra-db
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # One-shot: applies db/migrations, policies, views and the control schema, then exits 0.
+  migrate:
+    image: postgres:16.4
+    restart: "no"
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      PGHOST: postgres
+      POSTGRES_SUPERUSER_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?run make dev-env}
+      KLARITY_ADMIN_PASSWORD: ${KLARITY_ADMIN_PASSWORD:?run make dev-env}
+      KLARITY_APP_PASSWORD: ${KLARITY_APP_PASSWORD:?run make dev-env}
+      KLARITY_CONTROL_PASSWORD: ${KLARITY_CONTROL_PASSWORD:?run make dev-env}
+    volumes:
+      - ../db:/db:ro
+      - ./postgres/migrate.sh:/migrate.sh:ro
+    entrypoint: ["bash", "/migrate.sh"]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: klarity_infra
+      KC_DB_PASSWORD: ${INFRA_DB_PASSWORD:?run make dev-env}
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?run make dev-env}
+      KC_HEALTH_ENABLED: "true"
+      KEYCLOAK_WEB_CLIENT_SECRET: ${KEYCLOAK_WEB_CLIENT_SECRET:?run make dev-env}
+    ports: ["127.0.0.1:8080:8080"]
+    volumes:
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  openfga-migrate:
+    image: openfga/openfga:v1.8.4
+    restart: "no"
+    depends_on:
+      postgres: {condition: service_healthy}
+    command: ["migrate"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://klarity_infra:${INFRA_DB_PASSWORD:?run make dev-env}@postgres:5432/openfga?sslmode=disable
+
+  openfga:
+    image: openfga/openfga:v1.8.4
+    restart: unless-stopped
+    depends_on:
+      openfga-migrate: {condition: service_completed_successfully}
+    command: ["run"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://klarity_infra:${INFRA_DB_PASSWORD:?run make dev-env}@postgres:5432/openfga?sslmode=disable
+      OPENFGA_AUTHN_METHOD: preshared
+      OPENFGA_AUTHN_PRESHARED_KEYS: ${OPENFGA_PRESHARED_KEY:?run make dev-env}
+    ports: ["127.0.0.1:8081:8080"]
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:8081"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?run make dev-env}
+    ports: ["127.0.0.1:6333:6333"]
+    volumes: [qdrantdata:/qdrant/storage]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"   # dev only, bound to 127.0.0.1; production runs the security plugin
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits:
+      memlock: {soft: -1, hard: -1}
+    ports: ["127.0.0.1:9200:9200"]
+    volumes: [osdata:/usr/share/opensearch/data]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=2s'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  valkey:
+    image: valkey/valkey:8.0
+    restart: unless-stopped
+    command: ["valkey-server", "--requirepass", "${VALKEY_PASSWORD:?run make dev-env}"]
+    environment:
+      REDISCLI_AUTH: ${VALKEY_PASSWORD:?run make dev-env}
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_USER: klarity_infra
+      POSTGRES_PWD: ${INFRA_DB_PASSWORD:?run make dev-env}
+      POSTGRES_SEEDS: postgres
+    ports: ["127.0.0.1:7233:7233"]
+    healthcheck:
+      test: ["CMD-SHELL", "tctl --address temporal:7233 cluster health | grep -q SERVING"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.80
+    restart: unless-stopped
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-ip.bind=0.0.0.0"]
+    ports: ["127.0.0.1:8333:8333"]
+    volumes: [s3data:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9333/cluster/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pgdata:
+  qdrantdata:
+  osdata:
+  s3data:
