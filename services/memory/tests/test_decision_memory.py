@@ -21,11 +21,16 @@ def _ctx(tid="studio8") -> TenantContext:
     return TenantContext(tid, tid, TenantStatus.ACTIVE, Tier.POOL, p)
 
 
-@pytest.fixture
-def env():
+@pytest.fixture(params=["memory", "sql"])
+def env(request):
+    """Every behaviour below must hold for both the in-memory store and the SQL store."""
+    from decision_sql_store import SqlDecisionStore
+    from storage.testing import sqlite_engine
+
     audit = []
+    store = None if request.param == "memory" else SqlDecisionStore(sqlite_engine())
     mem = DecisionMemory(can_review=lambda u, d: u in {"priya", "vikram"}, audit=lambda **kw: audit.append(kw),
-                         clock=lambda: datetime(2026, 10, 1, tzinfo=timezone.utc))
+                         clock=lambda: datetime(2026, 10, 1, tzinfo=timezone.utc), store=store)
     return mem, audit
 
 
@@ -54,7 +59,7 @@ def test_evidence_required_and_idempotent_proposal(env) -> None:
         with pytest.raises(InvalidChange):
             mem.propose(decision_id="x", project_id="p", title="t", description="d", evidence_ids=())
         a, b = draft(mem), draft(mem)
-        assert a is b and len(mem.list()) == 1
+        assert a == b and len(mem.list()) == 1
 
 
 def test_only_authorized_humans_review(env) -> None:
@@ -127,9 +132,40 @@ def test_draft_from_extracted_decision_event(env) -> None:
     with tenant_scope(_ctx()):
         d = mem.propose_from_event(event, "ev_chunk_7")
         assert d.status is DecisionStatus.PROPOSED and d.project_id == "phoenix" and d.source_ref == "gmail:1"
-        assert mem.propose_from_event(event, "ev_chunk_7") is d
+        assert mem.propose_from_event(event, "ev_chunk_7") == d
         web = d.to_web()
         assert web["status"] == "proposed" and web["evidenceIds"] == ["ev_chunk_7"] and "confidence" in web
     with tenant_scope(_ctx("other")):
         with pytest.raises(NotAuthorized):
             mem.propose_from_event(event, "ev")
+
+
+def test_stale_review_is_rejected_not_silently_overwritten() -> None:
+    """Two reviewers act on the same draft: the second must be told to reload, on both stores."""
+    from decision_sql_store import SqlDecisionStore
+    from storage.testing import sqlite_engine
+
+    mem = DecisionMemory(can_review=lambda u, d: True, store=SqlDecisionStore(sqlite_engine()))
+    with tenant_scope(_ctx()):
+        d = draft(mem)
+        stale = mem.get("dec-1")
+        mem.confirm("dec-1", "priya")
+        assert mem.store.compare_and_set(stale, stale.__class__(**{**stale.__dict__, "title": "tampered", "version": 2})) is False
+        assert mem.get("dec-1").title == d.title
+
+
+def test_sql_roundtrip_preserves_every_field() -> None:
+    from decision_sql_store import SqlDecisionStore
+    from storage.testing import sqlite_engine
+
+    mem = DecisionMemory(can_review=lambda u, d: True, store=SqlDecisionStore(sqlite_engine()),
+                         clock=lambda: datetime(2026, 10, 1, 12, 30, tzinfo=timezone.utc))
+    with tenant_scope(_ctx()):
+        mem.propose(decision_id="dec-9", project_id="phoenix", title="Use M40", description="d", evidence_ids=("ev_1", "ev_2"),
+                    confidence=0.7, source_ref="gmail:1")
+        mem.edit("dec-9", "priya", alternatives=["M35", "M45"], cost_impact="1800000", time_impact_days=3, rationale="IS 456")
+        mem.confirm("dec-9", "priya", "agreed")
+        d = mem.get("dec-9")
+    assert d.evidence_ids == ("ev_1", "ev_2") and d.alternatives == ("M35", "M45") and d.confidence == 0.7
+    assert d.time_impact_days == 3 and d.decided_by == "priya" and d.decided_at == datetime(2026, 10, 1, 12, 30, tzinfo=timezone.utc)
+    assert float(d.cost_impact) == 1800000.0 and d.status is DecisionStatus.DECIDED and d.version == 3

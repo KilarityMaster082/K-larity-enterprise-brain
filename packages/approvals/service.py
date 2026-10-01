@@ -33,12 +33,14 @@ class AuditSink(Protocol):
 
 class ApprovalStore(Protocol):
     def get(self, tenant_id: str, approval_id: str) -> ApprovalRequest | None: ...
-    def put(self, request: ApprovalRequest) -> None: ...
+    def insert(self, request: ApprovalRequest) -> None: ...
     def list(self, tenant_id: str) -> list[ApprovalRequest]: ...
+    def compare_and_set(self, old: ApprovalRequest, new: ApprovalRequest) -> bool:
+        """Replace ``old`` with ``new`` only if the stored row still has ``old.rev``. Atomic."""
 
 
 class InMemoryApprovalStore:
-    """Dev/test store. Production uses a Postgres table behind RLS (db/migrations)."""
+    """Dev/test store. Production uses SqlApprovalStore (PostgreSQL, row-level security)."""
 
     def __init__(self) -> None:
         self._rows: dict[tuple[str, str], ApprovalRequest] = {}
@@ -47,18 +49,21 @@ class InMemoryApprovalStore:
     def get(self, tenant_id: str, approval_id: str) -> ApprovalRequest | None:
         return self._rows.get((tenant_id, approval_id))
 
-    def put(self, request: ApprovalRequest) -> None:
+    def insert(self, request: ApprovalRequest) -> None:
         with self._lock:
-            self._rows[(request.tenant_id, request.approval_id)] = request
+            key = (request.tenant_id, request.approval_id)
+            if key in self._rows:
+                raise ValueError(f"approval {request.approval_id} already exists")
+            self._rows[key] = request
 
     def list(self, tenant_id: str) -> list[ApprovalRequest]:
-        return sorted((r for (t, _), r in self._rows.items() if t == tenant_id), key=lambda r: r.requested_at)
+        return sorted((r for (t, _), r in self._rows.items() if t == tenant_id), key=lambda r: (r.requested_at, r.approval_id))
 
     def compare_and_set(self, old: ApprovalRequest, new: ApprovalRequest) -> bool:
-        """Atomic transition: succeeds only if the stored row is still ``old`` (guards double consume)."""
         with self._lock:
             key = (old.tenant_id, old.approval_id)
-            if self._rows.get(key) is not old:
+            current = self._rows.get(key)
+            if current is None or current.rev != old.rev:
                 return False
             self._rows[key] = new
             return True
@@ -71,7 +76,7 @@ def _no_audit(**_: object) -> None:
 class ApprovalService:
     def __init__(
         self,
-        store: InMemoryApprovalStore,
+        store: ApprovalStore,
         can_decide: Callable[[str, ApprovalRequest], bool],
         audit: AuditSink = _no_audit,
         ttl: timedelta = DEFAULT_TTL,
@@ -93,9 +98,10 @@ class ApprovalService:
     def _expire_if_due(self, req: ApprovalRequest) -> ApprovalRequest:
         if req.status in (ApprovalStatus.PENDING, ApprovalStatus.APPROVED) and req.expires_at and self.clock() >= req.expires_at:
             expired = req.with_(status=ApprovalStatus.EXPIRED)
-            self.store.put(expired)
-            self._log("approval.expired", expired, None)
-            return expired
+            if self.store.compare_and_set(req, expired):
+                self._log("approval.expired", expired, None)
+                return expired
+            return self.store.get(req.tenant_id, req.approval_id) or req  # someone else changed it first
         return req
 
     def _log(self, action: str, req: ApprovalRequest, user_id: str | None, **details: object) -> None:
@@ -116,7 +122,7 @@ class ApprovalService:
             requested_via=requested_via, reason=reason, evidence_ids=tuple(evidence_ids), project_id=project_id,
             payload=dict(payload or {}), requested_at=now, expires_at=now + self.ttl,
         )
-        self.store.put(req)
+        self.store.insert(req)
         self._log("approval.requested", req, requested_by, via=requested_via.value)
         return req
 

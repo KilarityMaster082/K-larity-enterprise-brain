@@ -7,6 +7,7 @@ from .decorator import (
     get_audit_writer,
     set_audit_writer,
 )
+from .sql_writer import SqlAuditWriter
 from .events import (
     AuditEvent,
     DEFAULT_RETENTION_DAYS,
@@ -22,6 +23,7 @@ __all__ = [
     "DEFAULT_RETENTION_DAYS",
     "DatabaseAuditWriter",
     "InMemoryAuditWriter",
+    "SqlAuditWriter",
     "TenantRetentionPolicy",
     "audit_action",
     "create_retrieval_audit_event",

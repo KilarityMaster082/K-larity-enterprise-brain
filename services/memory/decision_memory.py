@@ -19,7 +19,7 @@ import threading
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
 
 from tenant_context import current_tenant
 
@@ -90,26 +90,65 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class DecisionStore(Protocol):
+    def get(self, tenant_id: str, decision_id: str) -> "Decision | None": ...
+    def insert(self, decision: "Decision") -> None: ...
+    def list(self, tenant_id: str) -> "list[Decision]": ...
+    def compare_and_set(self, old: "Decision", new: "Decision") -> bool:
+        """Replace ``old`` with ``new`` only if the stored row still has ``old.version``. Atomic."""
+
+
+class InMemoryDecisionStore:
+    def __init__(self) -> None:
+        self._rows: "dict[tuple[str, str], Decision]" = {}
+        self._lock = threading.Lock()
+
+    def get(self, tenant_id: str, decision_id: str) -> "Decision | None":
+        return self._rows.get((tenant_id, decision_id))
+
+    def insert(self, decision: "Decision") -> None:
+        with self._lock:
+            key = (decision.tenant_id, decision.decision_id)
+            if key in self._rows:
+                raise InvalidChange(f"{decision.decision_id} already exists")
+            self._rows[key] = decision
+
+    def list(self, tenant_id: str) -> "list[Decision]":
+        return [d for (t, _), d in self._rows.items() if t == tenant_id]
+
+    def compare_and_set(self, old: "Decision", new: "Decision") -> bool:
+        with self._lock:
+            key = (old.tenant_id, old.decision_id)
+            current = self._rows.get(key)
+            if current is None or current.version != old.version:
+                return False
+            self._rows[key] = new
+            return True
+
+
 class DecisionMemory:
     def __init__(self, can_review: Callable[[str, Decision], bool], audit: Callable[..., None] | None = None,
-                 clock: Callable[[], datetime] = _utcnow) -> None:
-        self._rows: dict[tuple[str, str], Decision] = {}
-        self._lock = threading.Lock()
+                 clock: Callable[[], datetime] = _utcnow, store: DecisionStore | None = None) -> None:
+        self.store: DecisionStore = store or InMemoryDecisionStore()
         self.can_review, self._audit, self.clock = can_review, audit or (lambda **_: None), clock
 
     # -- helpers ---------------------------------------------------------------------------------------------
     def _get(self, decision_id: str) -> Decision:
-        d = self._rows.get((current_tenant().tenant_id, decision_id))
+        d = self.store.get(current_tenant().tenant_id, decision_id)
         if d is None:
             raise NotFound(decision_id)
         return d
 
-    def _put(self, d: Decision, action: str, user: str | None, **details: Any) -> Decision:
-        with self._lock:
-            self._rows[(d.tenant_id, d.decision_id)] = d
+    def _audit_write(self, d: Decision, action: str, user: str | None, **details: Any) -> Decision:
         self._audit(tenant_id=d.tenant_id, action=f"decision.{action}", entity_id=d.decision_id, user_id=user,
                     details={"status": d.status.value, **details})
         return d
+
+    def _commit(self, old: Decision, new: Decision, action: str, user: str | None, **details: Any) -> Decision:
+        """Write a change only if nobody changed the decision since it was read (optimistic concurrency)."""
+        if not self.store.compare_and_set(old, new):
+            raise InvalidChange(f"{old.decision_id} was changed by someone else; reload and retry")
+        return self._audit_write(new, action, user, **details)
 
     def _authorize(self, user: str, d: Decision) -> None:
         if user.startswith("agent:") or not self.can_review(user, d):
@@ -124,12 +163,19 @@ class DecisionMemory:
         if not title.strip():
             raise InvalidChange("a decision needs a title")
         tenant = current_tenant().tenant_id
-        existing = self._rows.get((tenant, decision_id))
+        existing = self.store.get(tenant, decision_id)
         if existing is not None:
             return existing  # idempotent: same source re-ingested
         d = Decision(tenant, decision_id, project_id, title.strip(), description, tuple(evidence_ids), confidence=confidence,
                      source_ref=source_ref, rationale=rationale, cost_impact=cost_impact)
-        return self._put(d, "proposed", None, source_ref=source_ref, confidence=confidence)
+        try:
+            self.store.insert(d)
+        except InvalidChange:  # lost a race with an identical proposal: return the winner
+            winner = self.store.get(tenant, decision_id)
+            if winner is None:
+                raise
+            return winner
+        return self._audit_write(d, "proposed", None, source_ref=source_ref, confidence=confidence)
 
     def propose_from_event(self, event: Any, evidence_id: str) -> Decision:
         """Create a draft from an EB-37 ``ExtractedEvent`` of type ``decision`` (id derived from the event id)."""
@@ -149,8 +195,8 @@ class DecisionMemory:
             raise InvalidChange(f"{decision_id} is {d.status.value}, not proposed")
         if not d.evidence_ids:
             raise InvalidChange("cannot confirm a decision without evidence")
-        return self._put(replace(d, status=DecisionStatus.DECIDED, decided_by=reviewer, decided_at=self.clock(),
-                                 reviewed_by=reviewer, review_note=note, version=d.version + 1), "confirmed", reviewer, note=note)
+        return self._commit(d, replace(d, status=DecisionStatus.DECIDED, decided_by=reviewer, decided_at=self.clock(),
+                                       reviewed_by=reviewer, review_note=note, version=d.version + 1), "confirmed", reviewer, note=note)
 
     def edit(self, decision_id: str, reviewer: str, **changes: Any) -> Decision:
         d = self._get(decision_id)
@@ -162,16 +208,16 @@ class DecisionMemory:
             raise InvalidChange(f"{decision_id} is {d.status.value} and read-only")
         if "alternatives" in changes:
             changes["alternatives"] = tuple(changes["alternatives"])
-        return self._put(replace(d, **changes, reviewed_by=reviewer, version=d.version + 1), "edited", reviewer,
-                         fields=sorted(changes))
+        return self._commit(d, replace(d, **changes, reviewed_by=reviewer, version=d.version + 1), "edited", reviewer,
+                            fields=sorted(changes))
 
     def reject(self, decision_id: str, reviewer: str, note: str | None = None) -> Decision:
         d = self._get(decision_id)
         self._authorize(reviewer, d)
         if d.status not in (DecisionStatus.PROPOSED, DecisionStatus.DECIDED):
             raise InvalidChange(f"{decision_id} is {d.status.value}")
-        return self._put(replace(d, status=DecisionStatus.REVOKED, reviewed_by=reviewer, review_note=note,
-                                 version=d.version + 1), "rejected", reviewer, note=note)
+        return self._commit(d, replace(d, status=DecisionStatus.REVOKED, reviewed_by=reviewer, review_note=note,
+                                       version=d.version + 1), "rejected", reviewer, note=note)
 
     def supersede(self, old_id: str, new_id: str, reviewer: str) -> Decision:
         old, new = self._get(old_id), self._get(new_id)
@@ -188,16 +234,15 @@ class DecisionMemory:
                 raise InvalidChange("supersession would create a cycle")
             seen.add(cursor.superseded_by)
             cursor = self._get(cursor.superseded_by)
-        return self._put(replace(old, status=DecisionStatus.SUPERSEDED, superseded_by=new_id, version=old.version + 1),
-                         "superseded", reviewer, superseded_by=new_id)
+        return self._commit(old, replace(old, status=DecisionStatus.SUPERSEDED, superseded_by=new_id, version=old.version + 1),
+                            "superseded", reviewer, superseded_by=new_id)
 
     # -- reads -----------------------------------------------------------------------------------------------
     def get(self, decision_id: str) -> Decision:
         return self._get(decision_id)
 
     def list(self, project_id: str | None = None, status: DecisionStatus | None = None) -> list[Decision]:
-        tenant = current_tenant().tenant_id
-        rows = [d for (t, _), d in self._rows.items() if t == tenant]
+        rows = self.store.list(current_tenant().tenant_id)
         return [d for d in rows if (project_id is None or d.project_id == project_id) and (status is None or d.status == status)]
 
     def history(self, decision_id: str) -> list[Decision]:

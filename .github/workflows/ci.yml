@@ -78,3 +78,48 @@ jobs:
       - run: make test-web
       - name: Tenant-scope and layout gates still pass with the JS workspace present
         run: python ops/ci/check_structure.py && python ops/ci/check_tenant_scope.py
+
+  stores:
+    name: SQL stores on PostgreSQL (migrations twice, RLS as the app role, append-only audit)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      POSTGRES_USER: postgres
+      POSTGRES_SUPERUSER_PASSWORD: postgres
+      PGPASSWORD: postgres
+      KLARITY_ADMIN_PASSWORD: ci-admin-pw
+      KLARITY_APP_PASSWORD: ci-app-pw
+      KLARITY_CONTROL_PASSWORD: ci-control-pw
+      INFRA_DB_PASSWORD: ci-infra-pw
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # psycopg2-binary is a CI-only test driver (licence review pending, CLAUDE.md rule 7); not an application dependency yet.
+      - run: pip install pytest==8.3.3 cryptography==50.0.1 boto3==1.35.30 sqlalchemy==2.0.34 pydantic pyyaml psycopg2-binary
+      - name: Create roles and databases exactly as the dev stack does
+        run: bash deploy/postgres/init/00-roles-and-databases.sh
+      - name: Migrate, then migrate again (the second run must be a no-op)
+        env:
+          DB_DIR: ${{ github.workspace }}/db
+        run: |
+          export PGPASSWORD=postgres
+          bash deploy/postgres/migrate.sh
+          second="$(bash deploy/postgres/migrate.sh)"
+          echo "$second"
+          echo "$second" | grep -q "0006_decisions_approvals_audit.sql (already applied)"
+      - name: Stores against real PostgreSQL as klarity_app (NOBYPASSRLS)
+        env:
+          KLARITY_TEST_APP_URL: postgresql+psycopg2://klarity_app:ci-app-pw@localhost:5432/brain
+          KLARITY_TEST_ADMIN_URL: postgresql+psycopg2://klarity_admin:ci-admin-pw@localhost:5432/brain
+          PYTHONPATH: .:packages/tenant-context:packages/storage:packages/permissions:packages/approvals:services/memory:services/context-engine:apps/api:services/knowledge-graph
+        run: python -m pytest -q -p no:cacheprovider --import-mode=importlib packages/storage/tests/test_sql_stores_postgres.py

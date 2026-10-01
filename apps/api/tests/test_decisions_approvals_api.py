@@ -152,3 +152,40 @@ def test_production_without_a_data_source_never_serves_fixture_numbers(tmp_path:
     assert call(app, "GET", "/api/v1/projects", user=DEV_ADMIN)[0] == 501
     status, res = call(app, "POST", "/api/v1/ask", {"question": "Why is Project Phoenix over budget?"}, user=DEV_ADMIN)
     assert status == 200 and res["facts"] == [] and res["status"] == "insufficient_evidence"
+
+
+# ---- the same API on the SQL stores: persistence across restarts, audit rows, tenant isolation in the database ----
+
+def test_api_on_sql_stores_persists_across_restart_and_writes_audit_rows(tmp_path: Any) -> None:
+    from apps.api.composition.container import Services
+    from storage.testing import sqlite_engine
+    from tenant_context import tenant_scope
+
+    reg = FileTenantRegistry(tmp_path / "c.json")
+    seed(reg, activate=True)
+    resolver = PlacementResolver(reg, ttl_seconds=60)
+    engine = sqlite_engine()
+
+    first = create_app(resolver, auth_mode="development", services=Services.from_engine(engine, demo=True))
+    assert call(first, "POST", "/api/v1/decisions", {"decision_id": "dec-002", "action": "confirm", "note": "ok"}, user="dev-admin")[0] == 200
+    aid = call(first, "GET", "/api/v1/approvals?status=pending")[1]["approvals"][0]["approvalId"]
+    assert call(first, "POST", f"/api/v1/approvals/{aid}/approve", {}, user="dev-admin")[0] == 200
+
+    # "restart": a brand-new application and service container on the same database
+    second = create_app(resolver, auth_mode="development", services=Services.from_engine(engine, demo=True))
+    decisions = {d["decisionId"]: d for d in call(second, "GET", "/api/v1/decisions")[1]["decisions"]}
+    assert decisions["dec-002"]["status"] == "decided" and decisions["dec-002"]["decidedBy"] == "dev-admin"
+    approvals = call(second, "GET", "/api/v1/approvals")[1]["approvals"]
+    assert [a["status"] for a in approvals] == ["approved"]  # not re-seeded, not reset
+
+    ctx = resolver.resolve(STUDIO8_ID)
+    with tenant_scope(ctx):
+        rows = second.app.services.audit.by_tenant(STUDIO8_ID)
+    actions = [r.action for r in rows]
+    assert "decision.confirmed" in actions and "approval.approved" in actions and "approval.requested" in actions
+    assert all(r.tenant_id == STUDIO8_ID for r in rows)
+    with tenant_scope(resolver.resolve(SYNTHETIC_ID)):
+        assert not any(r.entity_id == "dec-002" and r.action == "decision.confirmed"
+                       for r in second.app.services.audit.by_tenant(SYNTHETIC_ID))
+    synth = {d["decisionId"]: d["status"] for d in call(second, "GET", "/api/v1/decisions", tenant=SYNTHETIC_ID)[1]["decisions"]}
+    assert synth["dec-002"] == "proposed"  # same id, other tenant, untouched

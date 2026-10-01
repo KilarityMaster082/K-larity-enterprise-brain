@@ -113,5 +113,5 @@ def create_app(resolver: PlacementResolver, *, verifier: Any = None, auth_mode: 
     accepts only signature-verified bearer tokens.
     """
     app = TenantMiddleware(app=None, resolver=resolver, verifier=verifier, auth_mode=auth_mode)
-    app.app = CoreApiRouter(services or Services.in_memory(demo=app.auth_mode == "development"))
+    app.app = CoreApiRouter(services or Services.from_env(demo=app.auth_mode == "development"))
     return app

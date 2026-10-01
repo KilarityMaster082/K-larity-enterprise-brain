@@ -48,4 +48,14 @@ GRANT EXECUTE ON FUNCTION klarity_set_tenant(text) TO klarity_app;
 GRANT EXECUTE ON FUNCTION klarity_current_tenant() TO klarity_app;
 GRANT EXECUTE ON FUNCTION klarity_reset_tenant() TO klarity_app;
 
+-- 7. The audit trail is append-only for the application role. (The trigger in migration 0006 enforces it for every
+-- role; this removes the grants too, after the blanket GRANT above.)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'audit_log') THEN
+        REVOKE UPDATE, DELETE, TRUNCATE ON audit_log FROM klarity_app;
+    END IF;
+END;
+$$;
+
 COMMIT;

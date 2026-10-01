@@ -28,11 +28,16 @@ class Clock:
         return self.now
 
 
-@pytest.fixture
-def env():
+@pytest.fixture(params=["memory", "sql"])
+def env(request):
+    """Every behaviour below must hold for both the in-memory store and the SQL store."""
+    from packages.approvals.sql_store import SqlApprovalStore
+    from storage.testing import sqlite_engine
+
     clock, audit = Clock(), []
+    store = InMemoryApprovalStore() if request.param == "memory" else SqlApprovalStore(sqlite_engine())
     svc = ApprovalService(
-        InMemoryApprovalStore(),
+        store,
         can_decide=lambda user, req: user in {"asha", "ravi"},
         audit=lambda **kw: audit.append(kw),
         clock=clock,
@@ -136,3 +141,33 @@ def test_wire_shape_matches_web_type(env) -> None:
                 "evidenceIds", "status", "projectId"):
         assert key in d
     assert d["status"] == "pending" and d["requestedVia"] == "agent"
+
+
+def test_database_refuses_self_approval_even_if_the_service_were_bypassed() -> None:
+    """Defence in depth: the approvals table has its own CHECK for separation of duties."""
+    from packages.approvals.sql_store import SqlApprovalStore, to_row
+    from storage import SqlRecordStore
+    from storage.testing import sqlite_engine
+
+    store = SqlApprovalStore(sqlite_engine())
+    svc = ApprovalService(store, can_decide=lambda u, r: True, clock=Clock())
+    with tenant_scope(_ctx("studio8")):
+        a = _new(svc)
+        sneaky = a.with_(status=ApprovalStatus.APPROVED, decided_by=a.requested_by)  # requester "decides" own request
+        with pytest.raises(Exception, match="(?i)check|constraint"):
+            store.compare_and_set(a, sneaky)
+        assert svc.get(a.approval_id).status is ApprovalStatus.PENDING
+
+
+def test_concurrent_consume_runs_once_on_sql() -> None:
+    from packages.approvals.sql_store import SqlApprovalStore
+    from storage.testing import sqlite_engine
+
+    store = SqlApprovalStore(sqlite_engine())
+    svc = ApprovalService(store, can_decide=lambda u, r: True, clock=Clock())
+    with tenant_scope(_ctx("studio8")):
+        a = _new(svc)
+        svc.approve(a.approval_id, "asha")
+        stale = svc.get(a.approval_id)  # a second worker read the approved row before the first consumed it
+        svc.consume(a.approval_id, "w1")
+        assert store.compare_and_set(stale, stale.with_(status=ApprovalStatus.EXECUTED, executed_at=Clock()())) is False

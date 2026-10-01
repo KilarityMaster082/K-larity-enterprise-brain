@@ -52,6 +52,12 @@ class Issuer:
         return f"{head}.{payload}.{_b64(sig)}"
 
 
+@pytest.fixture(autouse=True)
+def _throwaway_stores(monkeypatch):
+    """These tests are about authentication; stores are irrelevant, so allow the in-memory fallback explicitly."""
+    monkeypatch.setenv("KLARITY_ALLOW_MEMORY_STORES", "1")
+
+
 @pytest.fixture
 def resolver(tmp_path: Any) -> PlacementResolver:
     reg = FileTenantRegistry(tmp_path / "control.json")
@@ -160,3 +166,10 @@ def test_development_mode_reads_headers_and_marks_user_unverified(resolver) -> N
     mw = TenantMiddleware(inner, resolver, auth_mode="development")
     asyncio.run(call_api(mw, "GET", "/x", headers={"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-user"}))
     assert seen["user"].user_id == "dev-user" and seen["user"].verified is False
+
+
+def test_production_refuses_to_start_on_in_memory_stores_by_default(resolver, monkeypatch) -> None:
+    monkeypatch.delenv("KLARITY_ALLOW_MEMORY_STORES")
+    monkeypatch.delenv("DATABASE_APP_ROLE_URL", raising=False)
+    with pytest.raises(RuntimeError, match="DATABASE_APP_ROLE_URL"):
+        create_app(resolver)

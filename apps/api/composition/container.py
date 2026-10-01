@@ -10,13 +10,14 @@ Demo data is seeded lazily per tenant and ONLY in development auth mode, so a pr
 
 from __future__ import annotations
 
+import os
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-from apps.api.audit import AuditEvent, InMemoryAuditWriter
-from decision_memory import Decision, DecisionMemory
+from apps.api.audit import AuditEvent, InMemoryAuditWriter, SqlAuditWriter
+from decision_memory import Decision, DecisionMemory, DecisionStatus
 from packages.approvals import ApprovalKind, ApprovalRequest, ApprovalService, InMemoryApprovalStore, RequestedVia
 from packages.permissions import PermissionsClient
 from storage import FgaStore, LocalFgaBackend, TupleKey
@@ -32,7 +33,7 @@ class Services:
     approvals: ApprovalService
     permissions: PermissionsClient
     fga: FgaStore
-    audit: InMemoryAuditWriter
+    audit: Any  # InMemoryAuditWriter | SqlAuditWriter: write(event) / by_tenant(tenant_id)
     demo: bool = False
     finance_executor: Callable[..., Any] | None = None  # reviewed-SQL executor; None until the DB is wired
     _seeded: set[str] = field(default_factory=set)
@@ -40,7 +41,32 @@ class Services:
 
     @classmethod
     def in_memory(cls, *, demo: bool = False) -> "Services":
-        audit = InMemoryAuditWriter()
+        return cls._build(InMemoryAuditWriter(), None, None, demo)
+
+    @classmethod
+    def from_engine(cls, engine: Any, *, demo: bool = False) -> "Services":
+        """PostgreSQL-backed decisions, approvals and audit trail (connect as the NOBYPASSRLS application role)."""
+        from decision_sql_store import SqlDecisionStore
+        from packages.approvals.sql_store import SqlApprovalStore
+
+        return cls._build(SqlAuditWriter(engine), SqlDecisionStore(engine), SqlApprovalStore(engine), demo)
+
+    @classmethod
+    def from_env(cls, *, demo: bool = False) -> "Services":
+        """Production composition: DATABASE_APP_ROLE_URL selects PostgreSQL. Without it, refuse to start rather than
+        silently keep decisions, approvals and the audit trail in memory — unless KLARITY_ALLOW_MEMORY_STORES=1."""
+        url = os.environ.get("DATABASE_APP_ROLE_URL")
+        if url:
+            from storage import create_app_engine
+
+            return cls.from_engine(create_app_engine(url), demo=demo)
+        if os.environ.get("KLARITY_ALLOW_MEMORY_STORES") == "1" or demo:
+            return cls.in_memory(demo=demo)
+        raise RuntimeError("DATABASE_APP_ROLE_URL is not set: refusing to run with in-memory decisions/approvals/audit "
+                           "(set KLARITY_ALLOW_MEMORY_STORES=1 for a throwaway run)")
+
+    @classmethod
+    def _build(cls, audit: Any, decision_store: Any, approval_store: Any, demo: bool) -> "Services":
         fga = FgaStore(LocalFgaBackend(), cache_ttl_seconds=0)
         perms = PermissionsClient(fga)
 
@@ -58,8 +84,8 @@ class Services:
             return perms.can_review_decision(user, d.decision_id)
 
         return cls(
-            decisions=DecisionMemory(can_review=can_review_decision, audit=lambda **kw: write_audit(**kw)),
-            approvals=ApprovalService(InMemoryApprovalStore(), can_decide=can_decide_approval, audit=write_audit),
+            decisions=DecisionMemory(can_review=can_review_decision, audit=lambda **kw: write_audit(**kw), store=decision_store),
+            approvals=ApprovalService(approval_store or InMemoryApprovalStore(), can_decide=can_decide_approval, audit=write_audit),
             permissions=perms, fga=fga, audit=audit, demo=demo,
         )
 
@@ -98,8 +124,10 @@ class Services:
             self.fga.write_tuples([TupleKey(f"project:{project}", "parent", f"decision:{did}")], [])
             self.decisions.propose(decision_id=did, project_id=project, title=title, description=desc,
                                    evidence_ids=(f"ev_{did}",), confidence=conf, source_ref="demo")
-            if confirm:
+            if confirm and self.decisions.get(did).status is DecisionStatus.PROPOSED:  # idempotent across restarts
                 self.decisions.confirm(did, DEV_ADMIN, "demo seed")
+        if self.approvals.list():
+            return  # already seeded (a restart against a persistent database)
         self.approvals.request(kind=ApprovalKind.DRAFT_MESSAGE, title="Chase RA bill 14", body="Dear team ...",
                                requested_by="agent:project_manager", requested_via=RequestedVia.AGENT,
                                reason="RA bill 14 is 12 days overdue", evidence_ids=("ev_dec-001",), project_id="prj-phoenix")

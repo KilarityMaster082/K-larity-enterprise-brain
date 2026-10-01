@@ -1,3 +1,4 @@
+<!-- Owner task: EB-18 Docker Compose dev stack -->
 # Local development stack (EB-18)
 
 PostgreSQL 16 (row-level security), Keycloak (realm imported from `deploy/keycloak/realm.json`), OpenFGA, Qdrant,

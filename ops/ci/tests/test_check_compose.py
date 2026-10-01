@@ -69,8 +69,11 @@ def test_postgres_init_pins_the_app_role_and_isolates_databases() -> None:
     assert "PASSWORD :'" in sql and "PASSWORD '" not in sql  # never a literal password
 
 
-def test_migrate_script_orders_files_and_skips_down_migrations() -> None:
+def test_migrate_script_is_ledgered_ordered_and_skips_down_migrations() -> None:
     script = (ROOT / "deploy" / "postgres" / "migrate.sh").read_text()
-    assert "grep -v '\\.down\\.sql$'" in script and "sort" in script
-    assert "-U postgres -d brain -f /db/policies/roles.sql" in script  # superuser: pins NOBYPASSRLS
+    assert "! -name '*.down.sql'" in script and "sort -z" in script            # up files only, in order, spaces-safe
+    assert "schema_migrations" in script and "already applied" in script         # 0001 is not re-runnable, so a ledger
+    assert "--single-transaction" in script                                      # a file and its ledger row commit together
+    assert "-U postgres -d brain -f \"$DB_DIR\"/policies/roles.sql" in script    # superuser: pins NOBYPASSRLS
+    assert "REVOKE ALL ON schema_migrations FROM klarity_app" in script
     assert script.index("migrations") < script.index("policies/tenant.sql") < script.index("views/finance.sql")

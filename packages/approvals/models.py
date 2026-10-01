@@ -91,9 +91,10 @@ class ApprovalRequest:
     note: str | None = None
     executed_at: datetime | None = None
     version: int = MODEL_VERSION
+    rev: int = 0  # row revision: bumped by every change, used for compare-and-set in stores
 
     def with_(self, **changes: Any) -> "ApprovalRequest":
-        return replace(self, **changes)
+        return replace(self, **{"rev": self.rev + 1, **changes})
 
     def to_dict(self) -> dict[str, Any]:
         """Wire shape used by the web approvals screen (camelCase, ISO times)."""
