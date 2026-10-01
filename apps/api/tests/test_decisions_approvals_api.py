@@ -103,3 +103,52 @@ def test_production_container_starts_empty_without_demo_data(tmp_path: Any) -> N
     app = create_app(PlacementResolver(reg, ttl_seconds=60), auth_mode="development", services=Services.in_memory(demo=False))
     assert call(app, "GET", "/api/v1/decisions")[1]["decisions"] == []
     assert call(app, "GET", "/api/v1/approvals")[1]["approvals"] == []
+
+
+# ---- data endpoints: authentication, finance permission (rule 2), no fixture numbers outside development ----
+
+def test_data_endpoints_require_a_signed_in_user(app) -> None:
+    for method, path, body in (("GET", "/api/v1/finance/summary", None), ("GET", "/api/v1/finance/cash", None),
+                               ("GET", "/api/v1/projects", None), ("POST", "/api/v1/ask", {"question": "Phoenix overrun?"})):
+        assert call(app, method, path, body)[0] == 401, path
+
+
+def test_finance_needs_finance_permission(app) -> None:
+    # dev-member belongs to a project but is not a finance viewer
+    assert call(app, "GET", "/api/v1/finance/summary", user="dev-member")[0] == 403
+    status, res = call(app, "GET", "/api/v1/finance/summary", user="dev-admin")
+    assert status == 200 and res["demo"] is True
+
+
+def test_ask_denies_before_retrieval_without_finance_access(app) -> None:
+    status, res = call(app, "POST", "/api/v1/ask", {"question": "Why is Project Phoenix over budget?", "projectId": "prj-phoenix"},
+                       user="dev-member")
+    assert status == 200 and res["status"] == "no_access" and res["facts"] == [] and res["evidence"] == []
+    status, res = call(app, "POST", "/api/v1/ask", {"question": "Why is Project Phoenix over budget?", "projectId": "prj-phoenix"},
+                       user="dev-admin")
+    assert res["status"] == "answered" and res["facts"]
+
+
+def test_projects_are_filtered_by_what_the_user_can_see(app) -> None:
+    ids = lambda u: {p["project_id"] for p in call(app, "GET", "/api/v1/projects", user=u)[1]["projects"]}  # noqa: E731
+    assert ids("dev-admin") == {"prj-phoenix", "prj-studio8"}
+    assert ids("dev-member") == {"prj-phoenix"}
+    assert ids("stranger") == set()
+
+
+def test_production_without_a_data_source_never_serves_fixture_numbers(tmp_path: Any) -> None:
+    from apps.api.composition.container import DEV_ADMIN, Services
+
+    reg = FileTenantRegistry(tmp_path / "c.json")
+    seed(reg, activate=True)
+    svc = Services.in_memory(demo=False)
+    app = create_app(PlacementResolver(reg, ttl_seconds=60), auth_mode="development", services=svc)
+    from tenant_context import tenant_scope
+    from storage import TupleKey
+    ctx = PlacementResolver(reg, ttl_seconds=60).resolve(STUDIO8_ID)
+    with tenant_scope(ctx):
+        svc.fga.write_tuples([TupleKey(f"user:{DEV_ADMIN}", "admin", f"tenant:{STUDIO8_ID}")], [])
+    assert call(app, "GET", "/api/v1/finance/summary", user=DEV_ADMIN)[0] == 501
+    assert call(app, "GET", "/api/v1/projects", user=DEV_ADMIN)[0] == 501
+    status, res = call(app, "POST", "/api/v1/ask", {"question": "Why is Project Phoenix over budget?"}, user=DEV_ADMIN)
+    assert status == 200 and res["facts"] == [] and res["status"] == "insufficient_evidence"

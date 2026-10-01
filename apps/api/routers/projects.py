@@ -13,6 +13,8 @@ from typing import Any, Callable
 
 from tenant_context import current_tenant
 
+from apps.api.routers._http import require_user, send_json
+
 logger = logging.getLogger(__name__)
 
 _SEED_PROJECTS = [
@@ -50,9 +52,19 @@ async def handle_projects(
 ) -> None:
     """GET /api/v1/projects returns tenant projects."""
     ctx = current_tenant()
+    user = await require_user(scope, send)
+    if user is None:
+        return
+    services = scope["state"]["services"]
+    services.ensure_demo()
+    if not services.demo:
+        await send_json(send, 501, {"error": "data_source_not_configured", "detail": "No project data source is connected"})
+        return
+    visible = [p for p in _SEED_PROJECTS if services.can_see_project(user.user_id, p["project_id"])]
     data = {
         "tenant_id": ctx.tenant_id,
-        "projects": _SEED_PROJECTS,
+        "demo": True,
+        "projects": visible,
     }
     await _send_json(send, 200, data)
 

@@ -90,7 +90,7 @@ def test_ask_requires_tenant(api_resolver: PlacementResolver) -> None:
 
 def test_ask_validates_question_length(api_resolver: PlacementResolver) -> None:
     app = create_app(api_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}
     status, res = asyncio.run(call_api(app, "POST", "/api/v1/ask", {"question": ""}, headers=headers))
     assert status == 400
     assert res["error"] == "invalid_question"
@@ -98,7 +98,7 @@ def test_ask_validates_question_length(api_resolver: PlacementResolver) -> None:
 
 def test_ask_returns_valid_contract_with_sql_facts(api_resolver: PlacementResolver) -> None:
     app = create_app(api_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}
     status, res = asyncio.run(
         call_api(
             app,
@@ -124,7 +124,7 @@ def test_ask_returns_valid_contract_with_sql_facts(api_resolver: PlacementResolv
 
 def test_ask_supports_streaming_ndjson(api_resolver: PlacementResolver) -> None:
     app = create_app(api_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID, "Accept": "application/x-ndjson"}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin", "Accept": "application/x-ndjson"}
     status, res = asyncio.run(
         call_api(
             app,

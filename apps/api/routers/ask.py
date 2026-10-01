@@ -15,6 +15,7 @@ import logging
 from typing import Any, Callable
 
 from sql_tools import FinanceSqlRouter
+from apps.api.routers._http import require_user
 from tenant_context import current_tenant
 from packages.schemas.answer_contract.schema import (
     AnswerContract,
@@ -72,13 +73,33 @@ async def handle_ask(
         )
         return
 
-    # 3. Retrieve tenant context (Rule 1)
+    # 3. Retrieve tenant context (Rule 1) and the authenticated caller
     ctx = current_tenant()
     tenant_id = ctx.tenant_id
+    user = await require_user(scope, send)
+    if user is None:
+        return
+    services = scope["state"]["services"]
+    services.ensure_demo()
 
-    # 4. Route financial SQL queries on reviewed views (Rule 3)
-    sql_router = FinanceSqlRouter()
-    sql_facts = sql_router.execute_and_format(question, tenant_id=tenant_id, project_id=project_id)
+    # 4. Permissions BEFORE any retrieval (Rule 2): without finance access nothing is queried or revealed.
+    if not services.can_see_finance(user.user_id, project_id):
+        denied = AnswerContract(
+            question=question, status=AnswerStatus.NO_ACCESS,
+            summary="You do not have access to the records needed to answer this question.",
+            answer=[Segment(text="You do not have access to the records needed to answer this question.", evidenceIds=[])],
+            evidence=[], facts=[], actions=[],
+            confidence=Confidence(level=ConfidenceLevel.LOW, reason="Access denied."),
+        )
+        await _send_json(send, 200, json.loads(denied.model_dump_json(by_alias=True)))
+        return
+
+    # 5. Route financial SQL queries on reviewed views (Rule 3). Fixture figures exist only in development mode;
+    # a production app with no SQL executor answers "insufficient evidence" rather than inventing numbers.
+    sql_facts: list[dict[str, Any]] = []
+    if services.finance_available:
+        sql_router = FinanceSqlRouter(db_executor=services.finance_executor)
+        sql_facts = sql_router.execute_and_format(question, tenant_id=tenant_id, project_id=project_id)
 
     # 5. Build AnswerContract
     evidence_list: list[Evidence] = []

@@ -23,7 +23,7 @@ def core_resolver(tmp_path: Any) -> PlacementResolver:
 
 def test_finance_summary_endpoint(core_resolver: PlacementResolver) -> None:
     app = create_app(core_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/finance/summary", headers=headers))
     assert status == 200
     assert res["view"] == "finance_project_summary"
@@ -33,7 +33,7 @@ def test_finance_summary_endpoint(core_resolver: PlacementResolver) -> None:
 
 def test_finance_variance_endpoint(core_resolver: PlacementResolver) -> None:
     app = create_app(core_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/finance/variance", headers=headers))
     assert status == 200
     assert res["view"] == "finance_variance_by_package"
@@ -42,7 +42,7 @@ def test_finance_variance_endpoint(core_resolver: PlacementResolver) -> None:
 
 def test_finance_cash_endpoint(core_resolver: PlacementResolver) -> None:
     app = create_app(core_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/finance/cash", headers=headers))
     assert status == 200
     assert res["function"] == "finance_cash_position"
@@ -51,13 +51,13 @@ def test_finance_cash_endpoint(core_resolver: PlacementResolver) -> None:
 
 def test_decisions_list_in_development_demo(core_resolver: PlacementResolver) -> None:
     app = create_app(core_resolver, auth_mode="development")
-    status, res = asyncio.run(call_api(app, "GET", "/api/v1/decisions", headers={"X-Tenant-ID": STUDIO8_ID}))
+    status, res = asyncio.run(call_api(app, "GET", "/api/v1/decisions", headers={"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}))
     assert status == 200 and len(res["decisions"]) >= 3  # demo seed exists only in development mode
 
 
 def test_projects_endpoint(core_resolver: PlacementResolver) -> None:
     app = create_app(core_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
+    headers = {"X-Tenant-ID": STUDIO8_ID, "X-User-ID": "dev-admin"}
     status, res = asyncio.run(call_api(app, "GET", "/api/v1/projects", headers=headers))
     assert status == 200
     assert any(p["project_id"] == "prj-phoenix" for p in res["projects"])

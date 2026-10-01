@@ -13,7 +13,7 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 from apps.api.audit import AuditEvent, InMemoryAuditWriter
 from decision_memory import Decision, DecisionMemory
@@ -34,6 +34,7 @@ class Services:
     fga: FgaStore
     audit: InMemoryAuditWriter
     demo: bool = False
+    finance_executor: Callable[..., Any] | None = None  # reviewed-SQL executor; None until the DB is wired
     _seeded: set[str] = field(default_factory=set)
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -61,6 +62,20 @@ class Services:
             approvals=ApprovalService(InMemoryApprovalStore(), can_decide=can_decide_approval, audit=write_audit),
             permissions=perms, fga=fga, audit=audit, demo=demo,
         )
+
+    def can_see_finance(self, user_id: str, project_id: str | None) -> bool:
+        """Finance figures need ``finance_viewer``: on the project, or on the tenant when no project is named."""
+        if project_id:
+            return self.permissions.can_view_finance(user_id, project_id)
+        return self.fga.check(f"user:{user_id}", "finance_viewer", f"tenant:{current_tenant().tenant_id}")
+
+    def can_see_project(self, user_id: str, project_id: str) -> bool:
+        return self.permissions.can_view_project(user_id, project_id)
+
+    @property
+    def finance_available(self) -> bool:
+        """True when figures come from a configured SQL executor, or from demo fixtures in development mode."""
+        return self.finance_executor is not None or self.demo
 
     def ensure_demo(self) -> None:
         """Development only: seed one tenant's demo decisions, approvals and the dev reviewer's tuples."""

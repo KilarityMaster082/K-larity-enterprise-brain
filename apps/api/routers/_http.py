@@ -29,3 +29,11 @@ async def send_json(send: Callable[..., Any], status: int, data: dict[str, Any])
     await send({"type": "http.response.start", "status": status,
                 "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(raw)).encode("ascii"))]})
     await send({"type": "http.response.body", "body": raw})
+
+
+async def require_user(scope: dict[str, Any], send: Callable[..., Any]) -> Any | None:
+    """The authenticated caller, or send 401 and return None. Every data endpoint calls this first."""
+    user = scope.get("state", {}).get("user")
+    if user is None:
+        await send_json(send, 401, {"error": "authentication_required", "detail": "Sign in to use this endpoint"})
+    return user
