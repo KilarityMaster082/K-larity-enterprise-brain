@@ -1,118 +1,84 @@
 # Owner task: EB-53 Decision Memory
-"""Decision Memory API routers for triage and auditability.
+"""Decision Memory API.
 
-Enforces:
-- Rule 1: tenant_id required at data boundary (guaranteed by TenantMiddleware).
-- Rule 10: Side-effects (confirm/edit/reject) require human approval and write an audit event.
+* GET  /api/v1/decisions[?project_id=&status=] — decisions in the caller's tenant, newest first by id.
+* POST /api/v1/decisions — {"decision_id", "action": "confirm"|"edit"|"reject", "note"?, "fields"?}.
+
+Enforces: rule 1 (tenant from TenantMiddleware), rule 10 (a human reviews; the reviewer is the *authenticated*
+user, never a field in the body), audit on every change (written by DecisionMemory). Reviewing needs the OpenFGA
+``reviewer`` relation, so an unauthenticated or unauthorised caller changes nothing.
 """
 
 from __future__ import annotations
 
 import json
-import logging
 from typing import Any, Callable
+from urllib.parse import parse_qs
 
+from decision_memory import DecisionError, DecisionStatus, InvalidChange, NotAuthorized, NotFound
 from tenant_context import current_tenant
 
-logger = logging.getLogger(__name__)
-
-# Development seeded decision memory
-_SEED_DECISIONS = [
-    {
-        "decision_id": "dec-001",
-        "title": "Approve Facade Specification Change for Tower B",
-        "project_id": "prj-phoenix",
-        "status": "decided",
-        "decision_maker": "Priya Sharma (Partner)",
-        "source": "Site Coordination Meeting #14",
-        "date": "2026-09-24",
-        "impact": "INR 18,00,000 cost variance",
-        "rationale": "Upgraded acoustic glazing to meet updated civic sound attenuation norms.",
-    },
-    {
-        "decision_id": "dec-002",
-        "title": "HVAC Chiller Unit Substitution",
-        "project_id": "prj-phoenix",
-        "status": "draft",
-        "decision_maker": "Pending Confirmation",
-        "source": "Vendor Email thread (Voltas)",
-        "date": "2026-09-28",
-        "impact": "INR 7,00,000 cost variance",
-        "rationale": "Lead time on Daikin units extended to 16 weeks; Voltas alternate available in 4 weeks.",
-    },
-    {
-        "decision_id": "dec-003",
-        "title": "Reject Additional Marble Scope in Lobby",
-        "project_id": "prj-studio8",
-        "status": "rejected",
-        "decision_maker": "Vikram Seth (Owner)",
-        "source": "Client Review Meeting",
-        "date": "2026-09-20",
-        "impact": "Saved INR 5,50,000",
-        "rationale": "Retained specified vitrified tiles to preserve design contingency margin.",
-    },
-]
+from apps.api.routers._http import read_json, send_json
 
 
-async def handle_decisions(
-    scope: dict[str, Any],
-    receive: Callable[..., Any],
-    send: Callable[..., Any],
-) -> None:
-    """GET /api/v1/decisions lists decisions; POST /api/v1/decisions triages a decision."""
+async def handle_decisions(scope: dict[str, Any], receive: Callable[..., Any], send: Callable[..., Any]) -> None:
     ctx = current_tenant()
+    services = scope["state"]["services"]
+    services.ensure_demo()
     method = scope.get("method", "GET")
 
     if method == "GET":
-        await _send_json(send, 200, {"tenant_id": ctx.tenant_id, "decisions": _SEED_DECISIONS})
-        return
-
-    if method == "POST":
-        body_bytes = bytearray()
-        more_body = True
-        while more_body:
-            message = await receive()
-            if message["type"] == "http.request":
-                body_bytes.extend(message.get("body", b""))
-                more_body = message.get("more_body", False)
-            elif message["type"] == "http.disconnect":
+        q = parse_qs(scope.get("query_string", b"").decode("ascii", "ignore"))
+        status = None
+        if "status" in q:
+            try:
+                status = DecisionStatus(q["status"][0])
+            except ValueError:
+                await send_json(send, 400, {"error": "invalid_status"})
                 return
-
-        try:
-            payload = json.loads(body_bytes.decode("utf-8") if body_bytes else "{}")
-        except Exception:
-            await _send_json(send, 400, {"error": "invalid_json"})
-            return
-
-        decision_id = str(payload.get("decision_id", "")).strip()
-        action = str(payload.get("action", "")).strip().lower()
-        if not decision_id or action not in ("confirm", "edit", "reject"):
-            await _send_json(send, 400, {"error": "invalid_triage_request", "detail": "decision_id and action (confirm/edit/reject) are required"})
-            return
-
-        new_status = "decided" if action == "confirm" else "rejected" if action == "reject" else "draft"
-        result = {
-            "decision_id": decision_id,
-            "status": new_status,
-            "action": action,
-            "audited": True,
-            "tenant_id": ctx.tenant_id,
-        }
-        await _send_json(send, 200, result)
+        rows = services.decisions.list(project_id=(q.get("project_id") or [None])[0], status=status)
+        rows.sort(key=lambda d: d.decision_id)
+        await send_json(send, 200, {"tenant_id": ctx.tenant_id, "decisions": [d.to_web() for d in rows]})
         return
 
-    await _send_json(send, 405, {"error": "method_not_allowed"})
+    if method != "POST":
+        await send_json(send, 405, {"error": "method_not_allowed"})
+        return
 
-
-async def _send_json(send: Callable[..., Any], status: int, data: dict[str, Any]) -> None:
-    body = json.dumps(data).encode("utf-8")
-    await send({
-        "type": "http.response.start",
-        "status": status,
-        "headers": [
-            (b"content-type", b"application/json"),
-            (b"content-length", str(len(body)).encode("ascii")),
-        ],
-    })
-    await send({"type": "http.response.body", "body": body})
-
+    user = scope["state"].get("user")
+    if user is None:
+        await send_json(send, 401, {"error": "authentication_required", "detail": "Reviewing a decision requires a signed-in user"})
+        return
+    payload = await read_json(receive)
+    if payload is None:
+        await send_json(send, 400, {"error": "invalid_json"})
+        return
+    decision_id = str(payload.get("decision_id", "")).strip()
+    action = str(payload.get("action", "")).strip().lower()
+    if not decision_id or action not in ("confirm", "edit", "reject"):
+        await send_json(send, 400, {"error": "invalid_triage_request",
+                                    "detail": "decision_id and action (confirm/edit/reject) are required"})
+        return
+    memory = services.decisions
+    try:
+        if action == "confirm":
+            result = memory.confirm(decision_id, user.user_id, payload.get("note"))
+        elif action == "reject":
+            result = memory.reject(decision_id, user.user_id, payload.get("note"))
+        else:
+            fields = payload.get("fields")
+            if not isinstance(fields, dict) or not fields:
+                await send_json(send, 400, {"error": "invalid_triage_request", "detail": "edit needs a non-empty 'fields' object"})
+                return
+            result = memory.edit(decision_id, user.user_id, **fields)
+    except NotFound:
+        await send_json(send, 404, {"error": "not_found"})
+    except NotAuthorized as e:
+        await send_json(send, 403, {"error": "forbidden", "detail": str(e)})
+    except InvalidChange as e:
+        await send_json(send, 409, {"error": "invalid_change", "detail": str(e)})
+    except DecisionError as e:  # pragma: no cover - defensive
+        await send_json(send, 400, {"error": "decision_error", "detail": str(e)})
+    else:
+        await send_json(send, 200, {"tenant_id": ctx.tenant_id, "action": action, "audited": True,
+                                    "decision": result.to_web(), "status": result.status.value})

@@ -49,28 +49,10 @@ def test_finance_cash_endpoint(core_resolver: PlacementResolver) -> None:
     assert res["current_cash"] > 0
 
 
-def test_decisions_list_and_triage(core_resolver: PlacementResolver) -> None:
+def test_decisions_list_in_development_demo(core_resolver: PlacementResolver) -> None:
     app = create_app(core_resolver, auth_mode="development")
-    headers = {"X-Tenant-ID": STUDIO8_ID}
-
-    # 1. List decisions
-    status, res = asyncio.run(call_api(app, "GET", "/api/v1/decisions", headers=headers))
-    assert status == 200
-    assert len(res["decisions"]) >= 3
-
-    # 2. Triage a decision (confirm)
-    status, triage_res = asyncio.run(
-        call_api(
-            app,
-            "POST",
-            "/api/v1/decisions",
-            {"decision_id": "dec-002", "action": "confirm"},
-            headers=headers,
-        )
-    )
-    assert status == 200
-    assert triage_res["status"] == "decided"
-    assert triage_res["audited"] is True
+    status, res = asyncio.run(call_api(app, "GET", "/api/v1/decisions", headers={"X-Tenant-ID": STUDIO8_ID}))
+    assert status == 200 and len(res["decisions"]) >= 3  # demo seed exists only in development mode
 
 
 def test_projects_endpoint(core_resolver: PlacementResolver) -> None:
